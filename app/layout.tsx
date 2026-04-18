@@ -81,7 +81,7 @@ export default function RootLayout({
         <meta name="msapplication-TileColor" content="#f3e1d7" />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
       </head>
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col bg-[#f3e1d7]">
         <Navbar />
         <main className="flex-1">{children}</main>
         <Footer />

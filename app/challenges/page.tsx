@@ -787,15 +787,8 @@ export default function ChallengesPage() {
     const [activeAsset, setActiveAsset] = useState("All Assets");
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    // Calculate progress for the price bar
-    const getProgress = (challenge: Challenge) => {
-        const range = challenge.startPrice - challenge.targetPrice;
-        const current = challenge.startPrice - challenge.currentPrice;
-        return Math.min(Math.max((current / range) * 100, 0), 100);
-    };
-
     return (
-        <div className="min-h-full bg-[#f3e1d7]">
+        <div className="min-h-full">
             {/* Header Section */}
             <div className="max-w-7xl mx-auto px-6 lg:px-8 pt-8 pb-6">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -854,134 +847,166 @@ export default function ChallengesPage() {
 
             {/* Challenges Grid */}
             <div className="max-w-7xl mx-auto px-6 lg:px-8 pb-16">
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {challenges.map((challenge) => (
-                        <Link
-                            key={challenge.id}
-                            href={`/challenges/${challenge.id}`}
-                            className="bg-[#f8ede7] rounded-3xl p-6 shadow-sm border border-white/50 hover:shadow-lg transition-shadow block"
-                        >
-                            {/* Header */}
-                            <div className="flex items-start justify-between mb-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center overflow-hidden">
-                                        <Image
-                                            src={challenge.assetLogo}
-                                            alt={challenge.asset}
-                                            width={40}
-                                            height={40}
-                                            className="w-10 h-10 object-contain"
-                                        />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-semibold text-gray-900 text-lg leading-tight">
-                                            {challenge.title}
-                                        </h3>
-                                        <div className="flex items-center gap-2 mt-1">
-                                            <div className="w-5 h-5 rounded-full bg-gray-200 overflow-hidden">
-                                                <Image
-                                                    src={challenge.creator.avatar}
-                                                    alt={challenge.creator.name}
-                                                    width={20}
-                                                    height={20}
-                                                    className="w-full h-full object-cover"
-                                                />
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    {challenges.map((challenge) => {
+                        // Calculate price position for the progress bar (0-100%)
+                        // Center (50%) is the target price
+                        const isAbovePrediction = challenge.prediction.includes(">");
+                        const priceRange = Math.abs(challenge.targetPrice - challenge.startPrice);
+                        const currentDiff = challenge.currentPrice - challenge.startPrice;
+                        const targetDiff = challenge.targetPrice - challenge.startPrice;
+
+                        // Calculate progress: 50% is target, <50% is below, >50% is above
+                        let priceProgress = 50;
+                        if (priceRange > 0) {
+                            const normalizedProgress = (challenge.currentPrice - challenge.startPrice) / targetDiff;
+                            priceProgress = 50 + (normalizedProgress * 50);
+                        }
+                        const clampedProgress = Math.min(Math.max(priceProgress, 0), 100);
+
+                        return (
+                            <Link
+                                key={challenge.id}
+                                href={`/challenges/${challenge.id}`}
+                                className="bg-[#f8ede7] rounded-2xl p-4 shadow-sm border border-white/50 hover:shadow-lg transition-shadow block"
+                            >
+                                {/* Header */}
+                                <div className="flex items-start justify-between mb-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center overflow-hidden">
+                                            <Image
+                                                src={challenge.assetLogo}
+                                                alt={challenge.asset}
+                                                width={32}
+                                                height={32}
+                                                className="w-8 h-8 object-contain"
+                                            />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-semibold text-gray-900 text-base leading-tight">
+                                                {challenge.title}
+                                            </h3>
+                                            <div className="flex items-center gap-2 mt-0.5">
+                                                <div className="w-4 h-4 rounded-full bg-gray-200 overflow-hidden">
+                                                    <Image
+                                                        src={challenge.creator.avatar}
+                                                        alt={challenge.creator.name}
+                                                        width={16}
+                                                        height={16}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                </div>
+                                                <span className="text-sm text-gray-600">{challenge.creator.name}</span>
                                             </div>
-                                            <span className="text-sm text-gray-600">{challenge.creator.name}</span>
+                                        </div>
+                                    </div>
+                                    {/* Watchlist Icon (replaced edit icon) */}
+                                    <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                                        </svg>
+                                    </button>
+                                </div>
+
+                                {/* Divider */}
+                                <div className="border-t border-gray-200 my-3"></div>
+
+                                {/* Bet Info */}
+                                <div className="text-center mb-3">
+                                    <p className="text-xl font-bold text-gray-900">
+                                        <span className="text-emerald-600">${challenge.betAmount}</span>{" "}
+                                        <span className="text-gray-700">Bet on {challenge.prediction}</span>
+                                    </p>
+                                </div>
+
+                                {/* Price Progress Bar - Red to Left, Bet Price Center, Green to Right */}
+                                <div className="mb-5">
+                                    {/* Price labels */}
+                                    <div className="flex justify-between text-sm text-gray-500 mb-2">
+                                        <span>${challenge.startPrice.toLocaleString()}</span>
+                                        <span className="font-semibold text-gray-700">Target: ${challenge.targetPrice.toLocaleString()}</span>
+                                    </div>
+
+                                    {/* Progress bar container */}
+                                    <div className="relative h-6 bg-gray-200 rounded-full overflow-hidden">
+                                        {/* Left side - Red (below target) */}
+                                        <div
+                                            className="absolute inset-y-0 left-0 bg-gradient-to-r from-red-500 to-red-400"
+                                            style={{ width: '50%' }}
+                                        />
+                                        {/* Right side - Green (above target) */}
+                                        <div
+                                            className="absolute inset-y-0 right-0 bg-gradient-to-r from-emerald-400 to-emerald-500"
+                                            style={{ width: '50%' }}
+                                        />
+
+                                        {/* Center marker for target price */}
+                                        <div className="absolute inset-y-0 left-1/2 w-0.5 bg-white/50" />
+
+                                        {/* Current price indicator - moves based on actual price */}
+                                        <div
+                                            className="absolute top-0 bottom-0 flex items-center justify-center"
+                                            style={{ left: `${clampedProgress}%`, transform: 'translateX(-50%)' }}
+                                        >
+                                            <div className="w-4 h-4 bg-white border-2 border-amber-600 rounded-full shadow-lg z-10" />
+                                        </div>
+                                    </div>
+
+                                    {/* Moving price tag */}
+                                    <div className="relative mt-2 h-7">
+                                        <div
+                                            className="absolute -translate-x-1/2 bg-gradient-to-r from-amber-800 to-amber-700 text-white px-2 py-0.5 rounded-full text-xs font-medium shadow-md whitespace-nowrap"
+                                            style={{ left: `${clampedProgress}%` }}
+                                        >
+                                            ${challenge.currentPrice.toLocaleString()}{" "}
+                                            <span className={challenge.priceChange >= 0 ? "text-emerald-200" : "text-red-200"}>
+                                                {challenge.priceChange >= 0 ? "+" : ""}{challenge.priceChange}%
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
-                                <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                                    </svg>
+
+                                {/* CTA Button */}
+                                <button className="w-full py-2.5 px-4 bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-300 rounded-xl text-gray-900 font-bold text-base shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all border-2 border-amber-400/50 flex items-center justify-center gap-2">
+                                    REKT HIM
+                                    <span className="text-xl">😈</span>
                                 </button>
-                            </div>
 
-                            {/* Divider */}
-                            <div className="border-t border-gray-200 my-4"></div>
-
-                            {/* Bet Info */}
-                            <div className="text-center mb-4">
-                                <p className="text-2xl font-bold text-gray-900">
-                                    <span className="text-emerald-600">${challenge.betAmount}</span>{" "}
-                                    <span className="text-gray-700">Bet on {challenge.prediction}</span>
+                                {/* Challenge Expiry */}
+                                <p className="text-center text-xs text-gray-600 mt-1.5">
+                                    Challenge expires in <span className="font-medium text-gray-900">{challenge.timeRemaining}</span>
                                 </p>
-                            </div>
 
-                            {/* Price Progress Bar */}
-                            <div className="mb-6">
-                                <div className="flex justify-between text-sm text-gray-500 mb-2">
-                                    <span>${challenge.startPrice}</span>
-                                    <span>${challenge.targetPrice}</span>
-                                </div>
-                                <div className="relative h-4 bg-gray-200 rounded-full overflow-hidden">
-                                    {/* Background gradient */}
-                                    <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-red-400"></div>
-                                    <div
-                                        className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-emerald-500"
-                                        style={{
-                                            left: `${getProgress(challenge)}%`,
-                                            right: 0
-                                        }}
-                                    ></div>
-                                    {/* Current price indicator */}
-                                    <div
-                                        className="absolute top-1/2 -translate-y-1/2 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-amber-700"
-                                        style={{ left: `${getProgress(challenge)}%`, transform: `translateX(-50%) translateY(2px)` }}
-                                    ></div>
-                                </div>
-                                {/* Price tag */}
-                                <div
-                                    className="relative mt-2"
-                                >
-                                    <div
-                                        className="absolute -translate-x-1/2 bg-gradient-to-r from-amber-800 to-amber-700 text-white px-3 py-1 rounded-full text-sm font-medium shadow-md"
-                                        style={{ left: `${getProgress(challenge)}%` }}
-                                    >
-                                        ${challenge.currentPrice.toLocaleString()}{" "}
-                                        <span className={challenge.priceChange >= 0 ? "text-emerald-200" : "text-red-200"}>
-                                            {challenge.priceChange >= 0 ? "+" : ""}{challenge.priceChange}%
-                                        </span>
-                                    </div>
-                                </div>
-                                <div className="flex justify-between text-sm text-gray-500 mt-10">
-                                    <span>${challenge.startPrice}</span>
-                                    <span className="text-gray-400">${challenge.targetPrice} Target</span>
-                                </div>
-                            </div>
+                                {/* Divider */}
+                                <div className="border-t border-gray-200 my-2"></div>
 
-                            {/* CTA Button */}
-                            <button className="w-full py-4 bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-300 rounded-full text-gray-900 font-bold text-lg shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all border-2 border-amber-400/50 flex items-center justify-center gap-2">
-                                REKT HIM
-                                <span className="text-2xl">😈</span>
-                            </button>
-
-                            {/* Divider */}
-                            <div className="border-t border-gray-200 my-4"></div>
-
-                            {/* Footer */}
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2 text-gray-600">
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    <span className="text-sm">Expires in <span className="font-semibold text-gray-900">{challenge.timeRemaining}</span></span>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                                        <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                                {/* Footer */}
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2 text-gray-600">
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
-                                    </button>
-                                    <div className="flex items-center gap-1">
-                                        <span className="font-semibold text-gray-900">{challenge.likes}</span>
-                                        <span className="text-xl">🔥</span>
+                                        <span className="text-sm">Created <span className="font-semibold text-gray-900">2h ago</span></span>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                                            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                                            </svg>
+                                        </button>
+                                        {/* Eye Icon (replaced fire icon) */}
+                                        <div className="flex items-center gap-1">
+                                            <span className="font-semibold text-gray-900">{challenge.likes}</span>
+                                            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                            </svg>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </Link>
-                    ))}
+                            </Link>
+                        );
+                    })}
                 </div>
             </div>
 
@@ -990,3 +1015,4 @@ export default function ChallengesPage() {
         </div>
     );
 }
+
