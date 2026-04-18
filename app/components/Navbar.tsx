@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Navbar() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -12,8 +13,15 @@ export default function Navbar() {
                 <div className="flex items-center justify-between h-20">
                     {/* Logo */}
                     <div className="flex items-center gap-2">
-                        <Link href="/" className="text-xl font-semibold tracking-tight hover:opacity-80 transition-opacity">
-                            REKTO
+                        <Link href="/" className="hover:opacity-80 transition-opacity">
+                            <Image
+                                src="/logos/mainlogo.png"
+                                alt="REKTO"
+                                width={220}
+                                height={60}
+                                className="h-8 w-auto"
+                                priority
+                            />
                         </Link>
                     </div>
 
