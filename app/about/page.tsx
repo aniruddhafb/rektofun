@@ -24,7 +24,7 @@ export default function AboutPage() {
         <div className="min-h-screen bg-[#f5f5f5] font-sans">
 
             {/* Hero Section */}
-            <section className="bg-[#f3e1d7] py-16 md:py-24">
+            <section className=" py-16 md:py-24">
                 <div className="max-w-4xl mx-auto px-6 lg:px-8 text-center">
                     <h1 className="text-4xl md:text-6xl font-bold text-black mb-6">
                         About RektoFun
@@ -125,26 +125,6 @@ export default function AboutPage() {
                                 as a top market analyst.
                             </p>
                         </div>
-                    </div>
-                </section>
-
-                {/* Team */}
-                <section className="mt-16">
-                    <h2 className="text-3xl font-bold text-black mb-8 text-center">
-                        Join the Community
-                    </h2>
-                    <div className="bg-[#f3e1d7] rounded-2xl p-8 md:p-12 text-center">
-                        <p className="text-lg text-gray-800 mb-6 max-w-2xl mx-auto">
-                            Ready to test your prediction skills? Join thousands of users
-                            already competing on RektoFun and become part of the Prediction
-                            Markets 2.0 revolution.
-                        </p>
-                        <a
-                            href="/"
-                            className="inline-block px-8 py-3 bg-black text-white font-semibold rounded-full hover:bg-gray-800 transition-colors cursor-pointer"
-                        >
-                            Start Predicting
-                        </a>
                     </div>
                 </section>
             </main>

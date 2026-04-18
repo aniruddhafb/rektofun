@@ -30,13 +30,16 @@ export default function Navbar() {
                         <Link href="/challenges" className="text-sm font-medium text-gray-700 hover:text-black transition-colors cursor-pointer">
                             Challenges
                         </Link>
-                        <Link href="#" className="text-sm font-medium text-gray-700 hover:text-black transition-colors cursor-pointer">
+                        <Link href="/markets" className="text-sm font-medium text-gray-700 hover:text-black transition-colors cursor-pointer">
+                            Markets
+                        </Link>
+                        <Link href="/leaderboard" className="text-sm font-medium text-gray-700 hover:text-black transition-colors cursor-pointer">
                             Leaderboard
                         </Link>
-                        <Link href="#" className="text-sm font-medium text-gray-700 hover:text-black transition-colors cursor-pointer">
+                        <Link href="/referral" className="text-sm font-medium text-gray-700 hover:text-black transition-colors cursor-pointer">
                             Referral
                         </Link>
-                        <Link href="#" className="text-sm font-medium text-gray-700 hover:text-black transition-colors cursor-pointer">
+                        <Link href="/" className="text-sm font-medium text-gray-700 hover:text-black transition-colors cursor-pointer">
                             Roadmap
                         </Link>
                     </div>
