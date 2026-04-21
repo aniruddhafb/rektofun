@@ -164,8 +164,6 @@ const marketsData: Market[] = [
     },
 ];
 
-const filterTabs = ["All", "BTC", "ETH", "SOL", "PEPE", "BONK"];
-
 type SortOption = "Recently Added" | "Trending" | "Price Markets" | "Most Watchlisted";
 
 const sortOptions: { label: SortOption; icon: React.ReactNode }[] = [
