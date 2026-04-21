@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: "https://rekto.fun",
     siteName: "RektoFun",
-    title: "RektoFun - PvP Prediction Markets",
+    title: "RektoFun - PvP battleground for price predictions",
     description: "The first PvP battleground for price predictions. Compete, battle, and win rewards.",
     images: [
       {
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "RektoFun - PvP Prediction Markets",
+    title: "RektoFun - PvP battleground for price predictions",
     description: "The first PvP battleground for price predictions. Compete, battle, and win rewards.",
     images: ["/logos/BG.png"],
     creator: "@rekto_fun",

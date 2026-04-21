@@ -536,3 +536,13 @@ body {
     0 0 15px rgba(255, 255, 255, 0.6);
   border: 2px solid rgba(255, 255, 255, 0.8);
 }
+
+/* Hide scrollbar for filter tabs */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
