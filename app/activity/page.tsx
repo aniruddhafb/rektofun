@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 // Activity types
-type ActivityType = "all" | "bets" | "wins" | "follows" | "buys";
+type ActivityType = "all" | "bets" | "wins" | "follows";
 
 // Activity item interface
 interface ActivityItem {
@@ -138,10 +138,9 @@ const activityData: ActivityItem[] = [
 // Filter tabs
 const filterTabs: { label: string; value: ActivityType; count?: number }[] = [
     { label: "All Activity", value: "all" },
-    { label: "Bets", value: "bets" },
-    { label: "Wins", value: "wins" },
-    { label: "Follows", value: "follows" },
-    { label: "Buys", value: "buys" },
+    { label: "Created", value: "bets" },
+    { label: "Accepted", value: "wins" },
+    { label: "Expired", value: "follows" }
 ];
 
 export default function ActivityPage() {
@@ -161,14 +160,21 @@ export default function ActivityPage() {
         return "text-amber-600";
     };
 
+
+
     return (
         <div className="min-h-screen bg-[#f3e1d7]">
             {/* Header Section */}
             <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-6">
-                <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
-                    Activity
-                </h1>
-                <p className="text-gray-600 text-sm sm:text-base">
+                <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 rounded-xl bg-[#2d1f1a] flex items-center justify-center text-xl shadow-lg">
+                        📊
+                    </div>
+                    <h1 className="text-3xl sm:text-4xl font-bold text-[#2d1f1a]">
+                        Activity
+                    </h1>
+                </div>
+                <p className="text-[#5c4a42] text-sm sm:text-base ml-13">
                     View the latest challenges and bets made across Rekto.fun.
                 </p>
             </div>
@@ -180,14 +186,16 @@ export default function ActivityPage() {
                         <button
                             key={tab.value}
                             onClick={() => setActiveFilter(tab.value)}
-                            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 ${activeFilter === tab.value
-                                ? "bg-gray-900 text-white"
-                                : "bg-white/60 text-gray-700 hover:bg-white hover:text-gray-900 border border-gray-300"
+                            className={`px-4 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-200 shadow-sm ${activeFilter === tab.value
+                                ? "bg-[#2d1f1a] text-[#f3e1d7] shadow-md"
+                                : "bg-white/80 text-[#5c4a42] hover:bg-white hover:text-[#2d1f1a] border border-[#d4b8a8]"
                                 }`}
                         >
                             {tab.label}
                             {tab.count !== undefined && (
-                                <span className="ml-1.5 text-xs opacity-70">{tab.count}</span>
+                                <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${activeFilter === tab.value ? "bg-[#f3e1d7]/20" : "bg-[#f3e1d7]"}`}>
+                                    {tab.count}
+                                </span>
                             )}
                         </button>
                     ))}
@@ -196,122 +204,121 @@ export default function ActivityPage() {
 
             {/* Activity Feed */}
             <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
-                <div className="space-y-0">
-                    {filteredActivities.map((item, index) => (
-                        <div
-                            key={item.id}
-                            className={`group flex items-start gap-4 py-4 ${index !== filteredActivities.length - 1
-                                ? "border-b border-gray-400/30"
-                                : ""
-                                }`}
-                        >
-                            {/* Avatar */}
-                            <div className="relative flex-shrink-0">
-                                <div className="w-12 h-12 rounded-full overflow-hidden bg-white border-2 border-gray-300 shadow-sm">
-                                    <Image
-                                        src={item.user.avatar}
-                                        alt={item.user.name}
-                                        width={48}
-                                        height={48}
-                                        className="w-full h-full object-cover"
-                                    />
-                                </div>
-                                {/* Status indicator for wins */}
-                                {item.type === "win" && (
-                                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-amber-400 rounded-full flex items-center justify-center text-xs border-2 border-[#f3e1d7]">
-                                        🎉
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Content */}
-                            <div className="flex-1 min-w-0">
-                                {/* Main Activity Line */}
-                                <div className="flex flex-wrap items-center gap-x-1.5 text-sm sm:text-base">
-                                    <Link
-                                        href={`/profile/${item.user.name}`}
-                                        className="font-semibold text-gray-900 hover:text-gray-700 transition-colors"
-                                    >
-                                        {item.user.name}
-                                    </Link>
-                                    <span className="text-gray-600">{item.action}</span>
-                                    {item.amount && (
-                                        <span className="font-semibold text-gray-900">
-                                            {item.amount}
-                                        </span>
-                                    )}
-                                    {item.target && (
-                                        <>
-                                            <span className="text-gray-600">on</span>
-                                            <span className="text-gray-900">{item.target}</span>
-                                        </>
-                                    )}
-                                    {item.details && (
-                                        <span className="text-gray-500">{item.details}</span>
-                                    )}
-                                </div>
-
-                                {/* Sub Action Line */}
-                                {item.subAction && (
-                                    <div className="flex items-center gap-2 mt-1.5 text-sm">
-                                        <div className="w-5 h-5 rounded-full bg-white flex items-center justify-center overflow-hidden border border-gray-300">
+                <div className="space-y-3">
+                    {filteredActivities.map((item) => {
+                        return (
+                            <div
+                                key={item.id}
+                                className="group bg-[#f8ede7] hover:bg-white/50 rounded-2xl p-4 transition-all duration-200 border border-[#e8d5c8] hover:border-[#d4b8a8] hover:shadow-lg"
+                            >
+                                <div className="flex items-start gap-4">
+                                    {/* Avatar with status */}
+                                    <div className="relative flex-shrink-0">
+                                        <div className={`w-12 h-12 rounded-full overflow-hidden border-2 border-[#d4b8a8] shadow-md bg-white`}>
                                             <Image
                                                 src={item.user.avatar}
-                                                alt=""
-                                                width={16}
-                                                height={16}
-                                                className="w-4 h-4 object-cover"
+                                                alt={item.user.name}
+                                                width={48}
+                                                height={48}
+                                                className="w-full h-full object-cover"
                                             />
                                         </div>
-                                        <span className="text-gray-700">{item.subAction.user}</span>
-                                        <span className="text-gray-500">
-                                            {item.subAction.action}
-                                        </span>
-                                        {item.subAction.highlight && (
-                                            <span
-                                                className={`font-medium ${getHighlightColor(
-                                                    item.subAction.highlight
-                                                )}`}
-                                            >
-                                                {item.subAction.highlight}
-                                            </span>
-                                        )}
-                                        <span className="text-gray-400">@ {item.timestamp}</span>
                                     </div>
-                                )}
-                            </div>
 
-                            {/* Timestamp & Arrow */}
-                            <div className="flex items-center gap-2 flex-shrink-0">
-                                {!item.subAction && (
-                                    <span className="text-gray-500 text-sm">{item.timestamp}</span>
-                                )}
-                                <Link
-                                    href={`/activity/${item.id}`}
-                                    className="text-gray-400 hover:text-gray-700 transition-colors"
-                                >
-                                    <svg
-                                        className="w-5 h-5"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
+                                    {/* Content */}
+                                    <div className="flex-1 min-w-0">
+                                        {/* Main Activity Line */}
+                                        <div className="flex flex-wrap items-center gap-x-1.5 text-sm sm:text-base leading-relaxed">
+                                            <Link
+                                                href={`/profile/${item.user.name}`}
+                                                className="font-bold text-[#2d1f1a] hover:text-[#5c4a42] transition-colors"
+                                            >
+                                                {item.user.name}
+                                            </Link>
+                                            <span className="text-[#5c4a42]">{item.action}</span>
+                                            {item.amount && (
+                                                <span className={`font-bold ${item.amount.includes("+") ? "text-green-700" : item.amount.includes("Up") ? "text-green-700" : "text-[#2d1f1a]"}`}>
+                                                    {item.amount}
+                                                </span>
+                                            )}
+                                            {item.target && (
+                                                <>
+                                                    <span className="text-[#5c4a42]">on</span>
+                                                    <span className="font-semibold text-[#2d1f1a]">{item.target}</span>
+                                                </>
+                                            )}
+                                            {item.details && (
+                                                <span className="text-[#8b7355]">{item.details}</span>
+                                            )}
+                                        </div>
+
+                                        {/* Sub Action Line */}
+                                        {item.subAction && (
+                                            <div className="flex items-center gap-2 mt-2 text-sm flex-wrap">
+                                                <div className="flex items-center gap-1.5 bg-[#f3e1d7]/50 rounded-full px-2.5 py-1">
+                                                    <div className="w-4 h-4 rounded-full bg-white flex items-center justify-center overflow-hidden border border-[#d4b8a8]">
+                                                        <Image
+                                                            src={item.user.avatar}
+                                                            alt=""
+                                                            width={14}
+                                                            height={14}
+                                                            className="w-3.5 h-3.5 object-cover"
+                                                        />
+                                                    </div>
+                                                    <span className="text-[#5c4a42] font-medium">{item.subAction.user}</span>
+                                                    <span className="text-[#8b7355]">
+                                                        {item.subAction.action}
+                                                    </span>
+                                                    {item.subAction.highlight && (
+                                                        <span
+                                                            className={`font-semibold ${getHighlightColor(
+                                                                item.subAction.highlight
+                                                            )}`}
+                                                        >
+                                                            {item.subAction.highlight}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <span className="text-[#a08070] text-xs">• {item.timestamp}</span>
+                                            </div>
+                                        )}
+
+                                        {/* Timestamp for items without subAction */}
+                                        {!item.subAction && (
+                                            <div className="mt-1.5">
+                                                <span className="text-[#a08070] text-xs">{item.timestamp}</span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Action Button */}
+                                    <Link
+                                        href={`/activity/${item.id}`}
+                                        className="flex-shrink-0 w-8 h-8 rounded-full bg-[#f3e1d7]/50 hover:bg-[#2d1f1a] text-[#5c4a42] hover:text-[#f3e1d7] transition-all duration-200 flex items-center justify-center group-hover:shadow-md"
                                     >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M9 5l7 7-7 7"
-                                        />
-                                    </svg>
-                                </Link>
+                                        <svg
+                                            className="w-4 h-4"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2.5}
+                                                d="M9 5l7 7-7 7"
+                                            />
+                                        </svg>
+                                    </Link>
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
 
                 {/* Load More Button */}
                 <div className="mt-8 text-center">
-                    <button className="px-6 py-3 bg-white hover:bg-gray-50 text-gray-700 hover:text-gray-900 rounded-full text-sm font-medium transition-all duration-200 border border-gray-300 shadow-sm">
+                    <button className="px-8 py-3.5 bg-[#2d1f1a] hover:bg-[#3d2f2a] text-[#f3e1d7] rounded-full text-sm font-semibold transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95">
                         Load More Activity
                     </button>
                 </div>
