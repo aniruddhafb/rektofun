@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Navbar, Footer } from "./components";
+import { Analytics } from "@vercel/analytics/next"
 
 import Providers from "./providers/PrivyProvider";
 
@@ -70,6 +71,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full antialiased">
+      <Analytics />
       <head>
         <link rel="preconnect" href="https://fonts.cdnfonts.com" />
         <link

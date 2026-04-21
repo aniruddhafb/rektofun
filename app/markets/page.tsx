@@ -137,8 +137,8 @@ export default function MarketsPage() {
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
                                 className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-200 ${activeTab === tab
-                                        ? "bg-white text-gray-900 shadow-sm"
-                                        : "text-gray-600 hover:text-gray-900"
+                                    ? "bg-white text-gray-900 shadow-sm"
+                                    : "text-gray-600 hover:text-gray-900"
                                     }`}
                             >
                                 {tab}
@@ -244,16 +244,6 @@ export default function MarketsPage() {
 
                 {/* Pagination */}
                 <div className="flex items-center justify-center gap-2">
-                    {/* Dots indicator */}
-                    <div className="flex items-center gap-1.5 mr-4">
-                        {[1, 2, 3, 4, 5, 6].map((dot) => (
-                            <div
-                                key={dot}
-                                className={`w-2 h-2 rounded-full transition-colors ${dot <= currentPage ? "bg-gray-400" : "bg-gray-300"
-                                    }`}
-                            />
-                        ))}
-                    </div>
 
                     {/* Page Numbers */}
                     <div className="flex items-center gap-1">
@@ -262,8 +252,8 @@ export default function MarketsPage() {
                                 key={page}
                                 onClick={() => setCurrentPage(page)}
                                 className={`w-10 h-10 rounded-lg text-sm font-medium transition-colors ${currentPage === page
-                                        ? "bg-[#d4c4b5] text-gray-800"
-                                        : "text-gray-600 hover:bg-white/30"
+                                    ? "bg-[#d4c4b5] text-gray-800"
+                                    : "text-gray-600 hover:bg-white/30"
                                     }`}
                             >
                                 {page}
