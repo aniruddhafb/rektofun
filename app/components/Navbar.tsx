@@ -113,7 +113,7 @@ export default function Navbar() {
 
                         {/* Auth Buttons - Desktop & Mobile */}
                         <div className="flex items-center gap-2 sm:gap-4">
-                            {authenticated ? (
+                            {!authenticated ? (
                                 <div className="flex items-center gap-3">
                                     {/* Deposit Button */}
                                     <button
@@ -148,19 +148,19 @@ export default function Navbar() {
                                         {/* Dropdown Menu */}
                                         {isDropdownOpen && (
                                             <div className="absolute right-0 top-full pt-2 w-72">
-                                                <div className="bg-[#f3e1d7] rounded-2xl shadow-xl border border-gray-300 overflow-hidden">
+                                                <div className="bg-white rounded-2xl shadow-xl border border-gray-300 overflow-hidden">
                                                     {/* User Info Section */}
-                                                    <div className="p-4 bg-[#f1dbd0] from-gray-50 to-gray-100 border-b border-gray-300">
-                                                        <div className="flex items-center gap-3">
+                                                    <div className="p-4 bg-white from-gray-50 to-gray-100 border-b border-gray-300">
+                                                        <Link href="/profile/0x45454" className="flex items-center gap-3">
                                                             {/* Large Profile Avatar */}
                                                             <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-lg font-semibold flex-shrink-0">
                                                                 {username?.charAt(0).toUpperCase() || 'U'}
                                                             </div>
                                                             <div className="min-w-0">
-                                                                <p className="font-semibold text-gray-900 truncate">{username}</p>
-                                                                <p className="text-xs text-gray-500 font-mono truncate">{displayAddress}</p>
+                                                                <p className="font-semibold text-gray-900 truncate">{username}Username</p>
+                                                                <p className="text-xs text-gray-500 font-mono truncate">{displayAddress}0x4454333344</p>
                                                             </div>
-                                                        </div>
+                                                        </Link>
                                                     </div>
 
                                                     {/* Menu Items */}
@@ -178,7 +178,7 @@ export default function Navbar() {
 
                                                         {/* Settings */}
                                                         <Link
-                                                            href="/profile"
+                                                            href="/settings"
                                                             className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:text-black transition-colors cursor-pointer"
                                                         >
                                                             <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
