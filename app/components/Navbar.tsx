@@ -78,7 +78,7 @@ export default function Navbar() {
         { href: "/leaderboard", label: "Leaderboard" },
         { href: "/referral", label: "Referral" },
         { href: "/activity", label: "Activity" },
-        { href: "/roadmap", label: "Roadmap" },
+        { href: "https://rektofun.gitbook.io/rektofun/", label: "Roadmap" },
     ];
 
     return (
@@ -140,7 +140,8 @@ export default function Navbar() {
                                 </svg>
                             </div>
                             <Link
-                                href="/how-it-works"
+                                href="https://rektofun.gitbook.io/rektofun/"
+                                target="_blank"
                                 className="text-sm font-medium text-gray-700 hover:text-black transition-colors whitespace-nowrap"
                             >
                                 How it works?
@@ -266,7 +267,7 @@ export default function Navbar() {
 
                                                         {/* Docs */}
                                                         <a
-                                                            href="#"
+                                                            href="https://rektofun.gitbook.io/rektofun/"
                                                             target="_blank"
                                                             className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:text-black transition-colors cursor-pointer"
                                                         >

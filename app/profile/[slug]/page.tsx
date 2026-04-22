@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { Search, ChevronDown } from "lucide-react";
 
 // Types
 interface Challenge {
@@ -244,7 +245,7 @@ const activityData: ActivityItem[] = [
 ];
 
 // Filter options
-const filterOptions = ["All", "Created", "Ongoing", "Expired", "Accepted", "Won", "Rekt", "Latest"];
+const filterOptions = ["All Challenges", "Created", "Ongoing", "Expired", "Accepted", "Won", "Rekt", "Latest"];
 
 // Tab types
 type TabType = "challenges" | "activity";
@@ -252,24 +253,44 @@ type TabType = "challenges" | "activity";
 // Static params since profile page uses demo data
 export default function ProfilePage() {
     const [activeTab, setActiveTab] = useState<TabType>("challenges");
-    const [activeFilter, setActiveFilter] = useState("All");
+    const [activeFilter, setActiveFilter] = useState("All Challenges");
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsDropdownOpen(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
 
     const tabs: { id: TabType; label: string }[] = [
         { id: "challenges", label: "Challenges" },
         { id: "activity", label: "Activity" },
     ];
 
-    // Filter challenges based on selected filter
+    // Filter challenges based on selected filter and search query
     const filteredChallenges = userChallenges.filter((challenge) => {
-        if (activeFilter === "All") return true;
-        if (activeFilter === "Created") return challenge.status === "created";
-        if (activeFilter === "Ongoing") return challenge.status === "active";
-        if (activeFilter === "Expired") return challenge.status === "expired";
-        if (activeFilter === "Accepted") return challenge.status === "accepted";
-        if (activeFilter === "Won") return challenge.status === "won";
-        if (activeFilter === "Rekt") return challenge.status === "lost";
-        if (activeFilter === "Latest") return true;
-        return true;
+        // Search filter
+        const matchesSearch = searchQuery === "" ||
+            challenge.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            challenge.asset.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            challenge.prediction.toLowerCase().includes(searchQuery.toLowerCase());
+
+        if (activeFilter === "All Challenges") return matchesSearch;
+        if (activeFilter === "Created") return matchesSearch && challenge.status === "created";
+        if (activeFilter === "Ongoing") return matchesSearch && challenge.status === "active";
+        if (activeFilter === "Expired") return matchesSearch && challenge.status === "expired";
+        if (activeFilter === "Accepted") return matchesSearch && challenge.status === "accepted";
+        if (activeFilter === "Won") return matchesSearch && challenge.status === "won";
+        if (activeFilter === "Rekt") return matchesSearch && challenge.status === "lost";
+        if (activeFilter === "Latest") return matchesSearch;
+        return matchesSearch;
     });
 
     // Sort by latest if that filter is selected
@@ -424,22 +445,50 @@ export default function ProfilePage() {
                 {/* Challenges Tab Content */}
                 {activeTab === "challenges" && (
                     <>
-                        {/* Filters Section */}
-                        <div className="mt-6">
-                            <div className="flex flex-wrap gap-2">
-                                {filterOptions.map((filter) => (
-                                    <button
-                                        key={filter}
-                                        onClick={() => setActiveFilter(filter)}
-                                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${activeFilter === filter
-                                            ? "bg-black text-white"
-                                            : "bg-white/60 text-gray-700 hover:bg-white/80"
-                                            }`}
-                                    >
-                                        {filter}
-                                    </button>
-                                ))}
-                            </div>
+                        {/* Search and Filter Section */}
+                        <div className="mt-6 flex flex-wrap items-center gap-3">
+                            {/* Search Bar */}
+                            {/* <div className="relative flex-1 min-w-[200px] max-w-md">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                <input
+                                    type="text"
+                                    placeholder="Search challenges..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-2.5 bg-white/50 rounded-full text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                                />
+                            </div> */}
+
+                            {/* Filter Dropdown */}
+                            {/* <div className="relative" ref={dropdownRef}>
+                                <button
+                                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                    className="cursor-pointer flex items-center gap-2 px-4 py-2.5 bg-white/50 rounded-full text-sm text-gray-700 hover:bg-white/70 transition-colors"
+                                >
+                                    <span>{activeFilter}</span>
+                                    <ChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`} />
+                                </button>
+
+                                {isDropdownOpen && (
+                                    <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-10">
+                                        {filterOptions.map((filter) => (
+                                            <button
+                                                key={filter}
+                                                onClick={() => {
+                                                    setActiveFilter(filter);
+                                                    setIsDropdownOpen(false);
+                                                }}
+                                                className={`w-full cursor-pointer flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors ${activeFilter === filter
+                                                    ? "text-black font-semibold"
+                                                    : "text-gray-700 hover:bg-gray-50"
+                                                    }`}
+                                            >
+                                                {filter}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div> */}
                         </div>
 
                         {/* Challenges Grid */}
