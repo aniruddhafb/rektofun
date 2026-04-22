@@ -155,11 +155,9 @@ export default function Navbar() {
                                     {/* Deposit Button */}
                                     <button
                                         onClick={() => setIsDepositModalOpen(true)}
-                                        className="hidden sm:flex items-center gap-2 px-4 py-2 bg-black text-white text-sm font-medium rounded-full hover:bg-gray-800 transition-colors cursor-pointer"
+                                        className="hidden sm:flex items-center gap-2 px-4 py-2 bg-white/50 border border-gray-400 hover:bg-white/80 text-black text-sm font-medium rounded-full transition-colors cursor-pointer"
                                     >
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                        </svg>
+                                        $
                                         Deposit
                                     </button>
 

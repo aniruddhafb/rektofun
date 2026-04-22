@@ -506,24 +506,6 @@ export default function ProfilePage() {
                                 }
                                 const clampedProgress = Math.min(Math.max(priceProgress, 0), 100);
 
-                                // Status badge colors
-                                const getStatusBadge = () => {
-                                    switch (challenge.status) {
-                                        case "won":
-                                            return <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-medium rounded-full">Won</span>;
-                                        case "lost":
-                                            return <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-medium rounded-full">Rekt</span>;
-                                        case "expired":
-                                            return <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-medium rounded-full">Expired</span>;
-                                        case "created":
-                                            return <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">Created</span>;
-                                        case "accepted":
-                                            return <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-medium rounded-full">Accepted</span>;
-                                        default:
-                                            return <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-medium rounded-full">Active</span>;
-                                    }
-                                };
-
                                 return (
                                     <Link
                                         key={challenge.id}
@@ -560,8 +542,6 @@ export default function ProfilePage() {
                                                     </div>
                                                 </div>
                                             </div>
-                                            {/* Status Badge */}
-                                            {getStatusBadge()}
                                         </div>
 
                                         {/* Divider */}
@@ -624,10 +604,22 @@ export default function ProfilePage() {
                                         </div>
 
                                         {/* CTA Button */}
-                                        <button className="w-full py-2.5 px-4 bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-300 rounded-xl text-gray-900 font-bold text-base shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all border-2 border-amber-400/50 flex items-center justify-center gap-2">
-                                            REKT HIM
-                                            <span className="text-xl">😈</span>
+                                        <button className="w-full py-2.5 px-4 bg-[#246044] rounded-xl text-white font-bold text-base shadow-lg hover:bg-[#2b7351] hover:shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2">
+                                            ACCEPT
+                                            <span className="text-xl">⚔️</span>
                                         </button>
+                                        {/* <button disabled className="w-full py-2.5 px-4 bg-[#246044] rounded-xl text-white font-bold text-base shadow-lg hover:bg-[#2b7351] hover:shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2">
+                                            Ongoing
+                                            <span className="text-xl">⚔️</span>
+                                        </button>
+                                        <button className="w-full py-2.5 px-4 bg-[#C65A5A] rounded-xl text-white font-bold text-base shadow-lg hover:bg-[#c85656] hover:shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2">
+                                            Expired
+                                            <span className="text-xl">😓</span>
+                                        </button>
+                                        <button className="w-full py-2.5 px-4 bg-[#E6C15A] rounded-xl text-black font-bold text-base shadow-lg hover:bg-[#e7c25a] hover:shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2">
+                                            Completed
+                                            <span className="text-xl">🎊</span>
+                                        </button> */}
 
                                         {/* Challenge Expiry */}
                                         <div className="flex items-center justify-center gap-1.5 text-xs text-gray-600 mt-1.5">
