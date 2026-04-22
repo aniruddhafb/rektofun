@@ -119,7 +119,7 @@ export function CreateChallengeModal({
         <div className="sticky top-0 bg-[#f3e1d7] rounded-t-3xl px-6 pt-6 pb-4 border-b border-[#e8d5c8]">
           <div className="flex items-center justify-between">
             <div className="flex-1" />
-            <h2 className="text-2xl font-bold text-gray-900 flex-1 text-center">Create Challenge</h2>
+            <h2 className="cursor-pointer text-2xl font-bold text-gray-900 flex-1 text-center">Create Challenge</h2>
             <div className="flex-1 flex justify-end">
               <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-[#e8d5c8] hover:bg-[#dcc9bc] transition-colors">
                 <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

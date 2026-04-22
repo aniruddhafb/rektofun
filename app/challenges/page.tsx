@@ -91,9 +91,17 @@ export default function ChallengesPage() {
     return true;
   });
 
+  const handleOpenCreateModal = () => {
+    if (!authenticated) {
+      login();
+      return;
+    }
+    setIsModalOpen(true);
+  };
+
   return (
     <div className="min-h-full">
-      <ChallengeHeader onOpenModal={() => setIsModalOpen(true)} />
+      <ChallengeHeader onOpenModal={handleOpenCreateModal} />
 
       <ChallengeFiltersSection
         activeFilter={activeFilter}

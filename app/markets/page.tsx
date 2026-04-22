@@ -2,7 +2,9 @@
 
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
+import { usePrivy } from "@privy-io/react-auth";
 import { Search, SlidersHorizontal, ChevronDown, ArrowRight, Flame, Zap, TrendingUp, Clock, DollarSign, Eye, Bookmark } from "lucide-react";
+import { CreateMarketModal } from "./sections/CreateMarketModal";
 
 // Challenge data type
 interface Challenge {
@@ -164,23 +166,33 @@ const marketsData: Market[] = [
     },
 ];
 
-type SortOption = "Recently Added" | "Trending" | "Price Markets" | "Most Watchlisted";
+type SortOption = "Recently Added" | "Trending" | "Price Markets" | "My Watchlists";
 
 const sortOptions: { label: SortOption; icon: React.ReactNode }[] = [
     { label: "Recently Added", icon: <Clock className="w-4 h-4" /> },
     { label: "Trending", icon: <TrendingUp className="w-4 h-4" /> },
     { label: "Price Markets", icon: <DollarSign className="w-4 h-4" /> },
-    { label: "Most Watchlisted", icon: <Eye className="w-4 h-4" /> },
+    { label: "My Watchlists", icon: <Eye className="w-4 h-4" /> },
 ];
 
 export default function MarketsPage() {
+    const { authenticated, login } = usePrivy();
     const [activeTab, setActiveTab] = useState("All");
     const [currentPage, setCurrentPage] = useState(1);
     const [sortBy, setSortBy] = useState<SortOption>("Recently Added");
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [bookmarkedMarkets, setBookmarkedMarkets] = useState<Set<string>>(new Set());
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const totalPages = 3;
+
+    const handleOpenCreateModal = () => {
+        if (!authenticated) {
+            login();
+            return;
+        }
+        setIsModalOpen(true);
+    };
 
     const toggleBookmark = (marketId: string) => {
         setBookmarkedMarkets(prev => {
@@ -213,9 +225,20 @@ export default function MarketsPage() {
         <div className="min-h-screen bg-[#f3e1d7]">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
                 {/* Header Section */}
-                <div className="mb-6 sm:mb-8">
-                    <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2">Challenge Markets</h1>
-                    <p className="text-gray-600 text-base sm:text-lg">Predict trends and earn big on top challenge markets</p>
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 sm:mb-8">
+                    <div>
+                        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2">Challenge Markets</h1>
+                        <p className="text-gray-600 text-base sm:text-lg">Predict trends and earn big on top challenge markets</p>
+                    </div>
+                    <button
+                        onClick={handleOpenCreateModal}
+                        className="cursor-pointer inline-flex items-center justify-center px-6 py-3 bg-black text-white text-sm font-medium rounded-full hover:bg-gray-800 transition-colors"
+                    >
+                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                        Create Market
+                    </button>
                 </div>
 
                 {/* Filter Tabs and Search */}
@@ -386,6 +409,8 @@ export default function MarketsPage() {
                         </button>
                     </div>
                 </div>
+
+                <CreateMarketModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
             </div>
         </div>
     );

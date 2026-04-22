@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Search, ChevronDown, ChevronRight, Crown, Eye, EyeOff } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { CreateChallengeModal } from "../../challenges/sections/CreateChallengeModal";
 
 // TradingView Chart Component
 function TradingViewChart() {
@@ -334,6 +335,7 @@ export default function MarketPage({ params }: { params: { slug: string } }) {
     const [showTopTraders, setShowTopTraders] = useState(false);
     const [filterOpen, setFilterOpen] = useState(false);
     const [selectedFilter, setSelectedFilter] = useState("Latest");
+    const [isCreateChallengeOpen, setIsCreateChallengeOpen] = useState(false);
 
     const filterOptions = ["Latest", "Expired", "Expiring Soon", "Ongoing", "Completed"];
 
@@ -341,23 +343,34 @@ export default function MarketPage({ params }: { params: { slug: string } }) {
         <div className="min-h-screen" style={{ backgroundColor: "#f3e1d7" }}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
                 {/* Header Section */}
-                <div className="flex flex-col sm:flex-row items-start gap-4 mb-6 sm:mb-8">
-                    <div className="relative w-12 h-12 sm:w-16 sm:h-16 flex-shrink-0">
-                        <Image
-                            src="/scribbles/btc.png"
-                            alt="Bitcoin"
-                            fill
-                            className="object-contain"
-                        />
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 sm:mb-8">
+                    <div className="flex items-center gap-4">
+                        <div className="relative w-12 h-12 sm:w-16 sm:h-16 flex-shrink-0">
+                            <Image
+                                src="/scribbles/btc.png"
+                                alt="Bitcoin"
+                                fill
+                                className="object-contain"
+                            />
+                        </div>
+                        <div>
+                            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">
+                                Bitcoin Challenge Markets
+                            </h1>
+                            <p className="text-sm sm:text-base text-gray-600">
+                                Predict and earn by betting on Bitcoin market movements
+                            </p>
+                        </div>
                     </div>
-                    <div>
-                        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">
-                            Bitcoin Challenge Markets
-                        </h1>
-                        <p className="text-sm sm:text-base text-gray-600">
-                            Predict and earn by betting on Bitcoin market movements
-                        </p>
-                    </div>
+                    <button
+                        onClick={() => setIsCreateChallengeOpen(true)}
+                        className="cursor-pointer inline-flex items-center justify-center px-6 py-3 bg-black text-white text-sm font-medium rounded-full hover:bg-gray-800 transition-colors"
+                    >
+                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                        Create Challenge
+                    </button>
                 </div>
 
                 <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
@@ -584,8 +597,8 @@ export default function MarketPage({ params }: { params: { slug: string } }) {
                                                             setFilterOpen(false);
                                                         }}
                                                         className={`w-full flex items-center justify-between px-4 py-3 text-left hover:bg-gray-50 transition-colors ${selectedFilter === option
-                                                                ? "bg-amber-50 text-amber-700"
-                                                                : "text-gray-700"
+                                                            ? "bg-amber-50 text-amber-700"
+                                                            : "text-gray-700"
                                                             }`}
                                                     >
                                                         <span className="font-medium">{option}</span>
@@ -788,6 +801,12 @@ export default function MarketPage({ params }: { params: { slug: string } }) {
                     </div>
                 </div>
             </div>
+
+            <CreateChallengeModal
+                isOpen={isCreateChallengeOpen}
+                onClose={() => setIsCreateChallengeOpen(false)}
+                onCreated={() => { }}
+            />
         </div>
     );
 }
