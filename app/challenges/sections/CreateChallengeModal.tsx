@@ -59,8 +59,11 @@ export function CreateChallengeModal({
 
   if (!isOpen) return null;
 
-  const formatDate = (date: Date) =>
-    date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+  const formatDate = (date: Date) => {
+    const options: Intl.DateTimeFormatOptions = { month: "long", day: "numeric", year: "numeric" };
+    const timeOptions: Intl.DateTimeFormatOptions = { hour: "numeric", minute: "2-digit", hour12: true };
+    return `${date.toLocaleDateString("en-US", options)} at ${date.toLocaleTimeString("en-US", timeOptions)}`;
+  };
 
   const formatDuration = (dur: { hours: number; minutes: number }) => {
     if (dur.hours === 0 && dur.minutes === 0) return "Select duration";

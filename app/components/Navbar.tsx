@@ -5,11 +5,13 @@ import Link from "next/link";
 import { usePrivy } from '@privy-io/react-auth';
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { DepositModal } from "./DepositModal";
 
 export default function Navbar() {
     const { login, authenticated, user, logout, ready } = usePrivy();
     const [searchQuery, setSearchQuery] = useState("");
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
     const pathname = usePathname();
 
     const handleAuth = () => {
@@ -131,6 +133,7 @@ export default function Navbar() {
                                 <div className="flex items-center gap-3">
                                     {/* Deposit Button */}
                                     <button
+                                        onClick={() => setIsDepositModalOpen(true)}
                                         className="hidden sm:flex items-center gap-2 px-4 py-2 bg-black text-white text-sm font-medium rounded-full hover:bg-gray-800 transition-colors cursor-pointer"
                                     >
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -171,8 +174,8 @@ export default function Navbar() {
                                                                 {username?.charAt(0).toUpperCase() || 'U'}
                                                             </div>
                                                             <div className="min-w-0">
-                                                                <p className="font-semibold text-gray-900 truncate">{username}Username</p>
-                                                                <p className="text-xs text-gray-500 font-mono truncate">{displayAddress}0x4454333344</p>
+                                                                <p className="font-semibold text-gray-900 truncate">{username}</p>
+                                                                <p className="text-xs text-gray-500 font-mono truncate">{displayAddress}</p>
                                                             </div>
                                                         </Link>
                                                     </div>
@@ -369,6 +372,11 @@ export default function Navbar() {
                     display: none;
                 }
             `}</style>
+
+            <DepositModal
+                isOpen={isDepositModalOpen}
+                onClose={() => setIsDepositModalOpen(false)}
+            />
 
             {/* Mobile Bottom Navigation - Fixed at bottom */}
             <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#f3e1d7]/95 backdrop-blur-md border-t border-gray-200/50" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>

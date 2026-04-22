@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -249,7 +249,8 @@ const filterOptions = ["All", "Created", "Ongoing", "Expired", "Accepted", "Won"
 // Tab types
 type TabType = "challenges" | "activity";
 
-export default function ProfilePage({ params }: { params: { slug: string } }) {
+// Static params since profile page uses demo data
+export default function ProfilePage() {
     const [activeTab, setActiveTab] = useState<TabType>("challenges");
     const [activeFilter, setActiveFilter] = useState("All");
 
