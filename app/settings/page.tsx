@@ -4,6 +4,8 @@ import { useState, useRef } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import Image from "next/image";
 
+const PROFILE_SVGS = Array.from({ length: 31 }, (_, i) => `/profiles/${i + 1}.svg`);
+
 export default function SettingsPage() {
     const { user, authenticated, logout, linkWallet, linkTwitter, linkGoogle } = usePrivy();
 
@@ -11,8 +13,8 @@ export default function SettingsPage() {
     const [username, setUsername] = useState(user?.email?.address?.split('@')[0] || "trader_123");
     const [description, setDescription] = useState("Crypto enthusiast | DeFi degen | Prediction markets warrior 🚀");
     const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
-    const [isEditingUsername, setIsEditingUsername] = useState(false);
-    const [isEditingDescription, setIsEditingDescription] = useState(false);
+    const [editProfileIndex, setEditProfileIndex] = useState(0);
+    const [isEditingProfile, setIsEditingProfile] = useState(false);
     const [showExportModal, setShowExportModal] = useState(false);
     const [copiedAddress, setCopiedAddress] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -60,9 +62,15 @@ export default function SettingsPage() {
 
     // Save profile changes
     const saveProfile = () => {
-        // TODO: Implement API call to save profile
-        setIsEditingUsername(false);
-        setIsEditingDescription(false);
+        // TODO: Implement API call to save profile (username, description, profileIndex)
+        console.log("Saving profile:", { username, description, profileIndex: editProfileIndex });
+        setIsEditingProfile(false);
+    };
+
+    // Randomize profile function
+    const randomizeProfile = () => {
+        const randomIndex = Math.floor(Math.random() * 31);
+        setEditProfileIndex(randomIndex);
     };
 
     return (
@@ -86,14 +94,18 @@ export default function SettingsPage() {
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-6">
-                        {/* Profile Photo */}
+                        {/* Profile Photo Section */}
                         <div className="flex flex-col items-center">
                             <div className="relative">
-                                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-3xl font-bold overflow-hidden border-4 border-white shadow-lg">
+                                <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-lg">
                                     {profilePhoto ? (
                                         <Image src={profilePhoto} alt="Profile" width={96} height={96} className="w-full h-full object-cover" />
                                     ) : (
-                                        username.charAt(0).toUpperCase()
+                                        <img
+                                            src={PROFILE_SVGS[editProfileIndex]}
+                                            alt="Profile"
+                                            className="w-full h-full object-cover"
+                                        />
                                     )}
                                 </div>
                                 <button
@@ -113,78 +125,56 @@ export default function SettingsPage() {
                                     className="hidden"
                                 />
                             </div>
-                            <p className="text-xs text-gray-500 mt-2">Click to change photo</p>
+                            <p className="text-xs text-gray-500 mt-2">Click to upload image</p>
                         </div>
 
-                        {/* Username & Description */}
+                        {/* Profile Editor */}
                         <div className="flex-1 space-y-4">
-                            {/* Username */}
+                            {/* Profile Options */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
-                                <div className="flex gap-2">
-                                    {isEditingUsername ? (
-                                        <>
-                                            <input
-                                                type="text"
-                                                value={username}
-                                                onChange={(e) => setUsername(e.target.value)}
-                                                className="flex-1 px-4 py-2 bg-white/80 border border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-transparent"
-                                                placeholder="Enter username"
-                                            />
-                                            <button
-                                                onClick={saveProfile}
-                                                className="px-4 py-2 bg-black text-white rounded-xl hover:bg-gray-800 transition-colors cursor-pointer"
-                                            >
-                                                Save
-                                            </button>
-                                        </>
-                                    ) : (
-                                        <div className="flex-1 flex items-center justify-between px-4 py-2 bg-white/50 border border-gray-300/50 rounded-xl">
-                                            <span className="text-gray-900 font-medium">@{username}</span>
-                                            <button
-                                                onClick={() => setIsEditingUsername(true)}
-                                                className="text-gray-500 hover:text-black transition-colors cursor-pointer"
-                                            >
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                                                </svg>
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Or choose a character</label>
+                                <button
+                                    onClick={randomizeProfile}
+                                    className="flex items-center gap-2 px-4 py-2 bg-black text-white text-sm font-medium rounded-full hover:bg-gray-800 transition-colors cursor-pointer"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                    </svg>
+                                    Randomize Character
+                                </button>
                             </div>
 
-                            {/* Description */}
+                            {/* Username Field */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                                <input
+                                    type="text"
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
+                                    className="w-full px-4 py-2 bg-white/80 border border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-transparent"
+                                    placeholder="Enter username"
+                                />
+                            </div>
+
+                            {/* Bio Field */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
-                                {isEditingDescription ? (
-                                    <div className="flex gap-2">
-                                        <textarea
-                                            value={description}
-                                            onChange={(e) => setDescription(e.target.value)}
-                                            rows={3}
-                                            className="flex-1 px-4 py-2 bg-white/80 border border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-transparent resize-none"
-                                            placeholder="Tell us about yourself..."
-                                        />
-                                        <button
-                                            onClick={saveProfile}
-                                            className="px-4 py-2 bg-black text-white rounded-xl hover:bg-gray-800 transition-colors cursor-pointer self-start"
-                                        >
-                                            Save
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <div
-                                        onClick={() => setIsEditingDescription(true)}
-                                        className="px-4 py-3 bg-white/50 border border-gray-300/50 rounded-xl cursor-pointer hover:bg-white/80 transition-colors group"
-                                    >
-                                        <p className="text-gray-700">{description}</p>
-                                        <div className="flex justify-end mt-1">
-                                            <span className="text-xs text-gray-400 group-hover:text-gray-600">Click to edit</span>
-                                        </div>
-                                    </div>
-                                )}
+                                <textarea
+                                    value={description}
+                                    onChange={(e) => setDescription(e.target.value)}
+                                    rows={2}
+                                    className="w-full px-4 py-2 bg-white/80 border border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-transparent resize-none"
+                                    placeholder="Tell us about yourself..."
+                                />
                             </div>
+
+                            {/* Save Button */}
+                            <button
+                                onClick={saveProfile}
+                                className="w-full px-4 py-2 bg-black text-white rounded-xl hover:bg-gray-800 transition-colors cursor-pointer font-medium"
+                            >
+                                Save Changes
+                            </button>
                         </div>
                     </div>
                 </section>
