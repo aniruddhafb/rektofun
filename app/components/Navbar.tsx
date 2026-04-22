@@ -1,15 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePrivy } from '@privy-io/react-auth';
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { DepositModal } from "./DepositModal";
+
+const PROFILE_SVGS = Array.from({ length: 31 }, (_, i) => `/profiles/${i + 1}.svg`);
 
 export default function Navbar() {
     const { login, authenticated, user, logout, ready } = usePrivy();
     const [searchQuery, setSearchQuery] = useState("");
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
+    const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+    const [editUsername, setEditUsername] = useState("");
+    const [editProfileIndex, setEditProfileIndex] = useState(0);
+    const [editInviteCode, setEditInviteCode] = useState("");
     const pathname = usePathname();
 
     const handleAuth = () => {
@@ -41,6 +49,20 @@ export default function Navbar() {
 
     const username = getUsername();
 
+    // Randomize profile function
+    const randomizeProfile = () => {
+        const randomIndex = Math.floor(Math.random() * 31);
+        setEditProfileIndex(randomIndex);
+    };
+
+    // Initialize edit values when modal opens
+    useEffect(() => {
+        if (isProfileModalOpen) {
+            setEditUsername(username || "");
+            setEditInviteCode("");
+        }
+    }, [isProfileModalOpen, username]);
+
     // Helper function to check if link is active
     const isActive = (href: string) => {
         if (href === "/") {
@@ -56,7 +78,7 @@ export default function Navbar() {
         { href: "/leaderboard", label: "Leaderboard" },
         { href: "/referral", label: "Referral" },
         { href: "/activity", label: "Activity" },
-        { href: "/roadmap", label: "Roadmap" },
+        { href: "https://rektofun.gitbook.io/rektofun/", label: "Roadmap" },
     ];
 
     return (
@@ -118,7 +140,8 @@ export default function Navbar() {
                                 </svg>
                             </div>
                             <Link
-                                href="/how-it-works"
+                                href="https://rektofun.gitbook.io/rektofun/"
+                                target="_blank"
                                 className="text-sm font-medium text-gray-700 hover:text-black transition-colors whitespace-nowrap"
                             >
                                 How it works?
@@ -131,11 +154,10 @@ export default function Navbar() {
                                 <div className="flex items-center gap-3">
                                     {/* Deposit Button */}
                                     <button
-                                        className="hidden sm:flex items-center gap-2 px-4 py-2 bg-black text-white text-sm font-medium rounded-full hover:bg-gray-800 transition-colors cursor-pointer"
+                                        onClick={() => setIsDepositModalOpen(true)}
+                                        className="flex items-center gap-2 px-4 py-2 bg-white/50 border border-gray-400 hover:bg-white/80 text-black text-sm font-medium rounded-full transition-colors cursor-pointer"
                                     >
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                        </svg>
+                                        $
                                         Deposit
                                     </button>
 
@@ -171,14 +193,39 @@ export default function Navbar() {
                                                                 {username?.charAt(0).toUpperCase() || 'U'}
                                                             </div>
                                                             <div className="min-w-0">
-                                                                <p className="font-semibold text-gray-900 truncate">{username}Username</p>
-                                                                <p className="text-xs text-gray-500 font-mono truncate">{displayAddress}0x4454333344</p>
+                                                                <p className="font-semibold text-gray-900 truncate">{username}</p>
+                                                                <p className="text-xs text-gray-500 font-mono truncate">{displayAddress}</p>
                                                             </div>
                                                         </Link>
                                                     </div>
 
                                                     {/* Menu Items */}
                                                     <div className="py-2">
+                                                        {/* View Profile */}
+                                                        <Link
+                                                            href={`/profile/${walletAddress}`}
+                                                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:text-black transition-colors cursor-pointer"
+                                                        >
+                                                            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                            </svg>
+                                                            View Profile
+                                                        </Link>
+
+                                                        {/* Deposit Funds */}
+                                                        <button
+                                                            onClick={() => {
+                                                                setIsDropdownOpen(false);
+                                                                setIsDepositModalOpen(true);
+                                                            }}
+                                                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:text-black transition-colors cursor-pointer"
+                                                        >
+                                                            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                            </svg>
+                                                            Deposit Funds
+                                                        </button>
+
                                                         {/* Refer and Earn */}
                                                         <Link
                                                             href="/referral"
@@ -189,6 +236,20 @@ export default function Navbar() {
                                                             </svg>
                                                             Refer & Earn
                                                         </Link>
+
+                                                        {/* Edit Profile */}
+                                                        {/* <button
+                                                            onClick={() => {
+                                                                setIsDropdownOpen(false);
+                                                                setIsProfileModalOpen(true);
+                                                            }}
+                                                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:text-black transition-colors cursor-pointer"
+                                                        >
+                                                            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                                            </svg>
+                                                            Edit Profile
+                                                        </button> */}
 
                                                         {/* Settings */}
                                                         <Link
@@ -229,7 +290,7 @@ export default function Navbar() {
 
                                                         {/* Docs */}
                                                         <a
-                                                            href="#"
+                                                            href="https://rektofun.gitbook.io/rektofun/"
                                                             target="_blank"
                                                             className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:text-black transition-colors cursor-pointer"
                                                         >
@@ -369,6 +430,110 @@ export default function Navbar() {
                     display: none;
                 }
             `}</style>
+
+            <DepositModal
+                isOpen={isDepositModalOpen}
+                onClose={() => setIsDepositModalOpen(false)}
+            />
+
+            {/* Profile Edit Modal */}
+            {isProfileModalOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    {/* Backdrop */}
+                    <div
+                        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+                        onClick={() => setIsProfileModalOpen(false)}
+                    />
+
+                    {/* Modal Content */}
+                    <div className="relative w-full max-w-md bg-[#f3e1d7] rounded-2xl shadow-2xl border border-gray-300 overflow-hidden">
+                        {/* Header */}
+                        <div className="flex items-center justify-between p-4 border-b border-gray-300">
+                            <h2 className="text-lg font-semibold text-gray-900">Edit Profile</h2>
+                            <button
+                                onClick={() => setIsProfileModalOpen(false)}
+                                className="p-2 rounded-full hover:bg-gray-200 transition-colors"
+                            >
+                                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        {/* Body */}
+                        <div className="p-6 space-y-6">
+                            {/* Profile Photo Section */}
+                            <div className="flex flex-col items-center">
+                                <div className="relative w-32 h-32 rounded-full overflow-hidden bg-gray-100 border-4 border-white shadow-lg">
+                                    <img
+                                        src={PROFILE_SVGS[editProfileIndex]}
+                                        alt="Profile"
+                                        className="w-full h-full object-cover"
+                                    />
+                                </div>
+                                <button
+                                    onClick={randomizeProfile}
+                                    className="mt-3 flex items-center gap-2 px-4 py-2 bg-black text-white text-sm font-medium rounded-full hover:bg-gray-800 transition-colors"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                    </svg>
+                                    Randomize
+                                </button>
+                            </div>
+
+                            {/* Username Field */}
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-700">Username</label>
+                                <input
+                                    type="text"
+                                    value={editUsername}
+                                    onChange={(e) => setEditUsername(e.target.value)}
+                                    placeholder="Enter your username"
+                                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-transparent transition-all"
+                                />
+                            </div>
+
+                            {/* Invite Code Field */}
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-700">Invite Code (Optional)</label>
+                                <input
+                                    type="text"
+                                    value={editInviteCode}
+                                    onChange={(e) => setEditInviteCode(e.target.value)}
+                                    placeholder="Enter invite code"
+                                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-transparent transition-all"
+                                />
+                                <p className="text-xs text-gray-500">Enter an invite code to get bonus rewards</p>
+                            </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="flex gap-3 p-4 border-t border-gray-300 bg-white/50">
+                            <button
+                                onClick={() => setIsProfileModalOpen(false)}
+                                className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 border border-gray-300 rounded-full hover:bg-gray-100 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => {
+                                    // Handle save - TODO: integrate with backend
+                                    console.log("Saving profile:", {
+                                        username: editUsername,
+                                        profileIndex: editProfileIndex,
+                                        inviteCode: editInviteCode
+                                    });
+                                    setIsProfileModalOpen(false);
+                                }}
+                                className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-gray-800 transition-colors"
+                            >
+                                Save Changes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Mobile Bottom Navigation - Fixed at bottom */}
             <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#f3e1d7]/95 backdrop-blur-md border-t border-gray-200/50" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>

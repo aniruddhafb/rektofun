@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { Search, ChevronDown } from "lucide-react";
+import ChallengeDetailModal from "@/app/components/ChallengeDetailModal";
 
 // Types
 interface Challenge {
@@ -244,31 +246,66 @@ const activityData: ActivityItem[] = [
 ];
 
 // Filter options
-const filterOptions = ["All", "Created", "Ongoing", "Expired", "Accepted", "Won", "Rekt", "Latest"];
+const filterOptions = ["All Challenges", "Created", "Ongoing", "Expired", "Accepted", "Won", "Rekt", "Latest"];
 
 // Tab types
 type TabType = "challenges" | "activity";
 
-export default function ProfilePage({ params }: { params: { slug: string } }) {
+// Static params since profile page uses demo data
+export default function ProfilePage() {
     const [activeTab, setActiveTab] = useState<TabType>("challenges");
-    const [activeFilter, setActiveFilter] = useState("All");
+    const [activeFilter, setActiveFilter] = useState("All Challenges");
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [selectedChallenge, setSelectedChallenge] = useState<Challenge | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    // Handle challenge card click
+    const handleChallengeClick = (challenge: Challenge) => {
+        setSelectedChallenge(challenge);
+        setIsModalOpen(true);
+    };
+
+    // Close modal handler
+    const closeModal = () => {
+        setIsModalOpen(false);
+        setTimeout(() => setSelectedChallenge(null), 300);
+    };
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsDropdownOpen(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
 
     const tabs: { id: TabType; label: string }[] = [
         { id: "challenges", label: "Challenges" },
         { id: "activity", label: "Activity" },
     ];
 
-    // Filter challenges based on selected filter
+    // Filter challenges based on selected filter and search query
     const filteredChallenges = userChallenges.filter((challenge) => {
-        if (activeFilter === "All") return true;
-        if (activeFilter === "Created") return challenge.status === "created";
-        if (activeFilter === "Ongoing") return challenge.status === "active";
-        if (activeFilter === "Expired") return challenge.status === "expired";
-        if (activeFilter === "Accepted") return challenge.status === "accepted";
-        if (activeFilter === "Won") return challenge.status === "won";
-        if (activeFilter === "Rekt") return challenge.status === "lost";
-        if (activeFilter === "Latest") return true;
-        return true;
+        // Search filter
+        const matchesSearch = searchQuery === "" ||
+            challenge.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            challenge.asset.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            challenge.prediction.toLowerCase().includes(searchQuery.toLowerCase());
+
+        if (activeFilter === "All Challenges") return matchesSearch;
+        if (activeFilter === "Created") return matchesSearch && challenge.status === "created";
+        if (activeFilter === "Ongoing") return matchesSearch && challenge.status === "active";
+        if (activeFilter === "Expired") return matchesSearch && challenge.status === "expired";
+        if (activeFilter === "Accepted") return matchesSearch && challenge.status === "accepted";
+        if (activeFilter === "Won") return matchesSearch && challenge.status === "won";
+        if (activeFilter === "Rekt") return matchesSearch && challenge.status === "lost";
+        if (activeFilter === "Latest") return matchesSearch;
+        return matchesSearch;
     });
 
     // Sort by latest if that filter is selected
@@ -423,22 +460,50 @@ export default function ProfilePage({ params }: { params: { slug: string } }) {
                 {/* Challenges Tab Content */}
                 {activeTab === "challenges" && (
                     <>
-                        {/* Filters Section */}
-                        <div className="mt-6">
-                            <div className="flex flex-wrap gap-2">
-                                {filterOptions.map((filter) => (
-                                    <button
-                                        key={filter}
-                                        onClick={() => setActiveFilter(filter)}
-                                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${activeFilter === filter
-                                            ? "bg-black text-white"
-                                            : "bg-white/60 text-gray-700 hover:bg-white/80"
-                                            }`}
-                                    >
-                                        {filter}
-                                    </button>
-                                ))}
-                            </div>
+                        {/* Search and Filter Section */}
+                        <div className="mt-6 flex flex-wrap items-center gap-3">
+                            {/* Search Bar */}
+                            {/* <div className="relative flex-1 min-w-[200px] max-w-md">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                <input
+                                    type="text"
+                                    placeholder="Search challenges..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-2.5 bg-white/50 rounded-full text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                                />
+                            </div> */}
+
+                            {/* Filter Dropdown */}
+                            {/* <div className="relative" ref={dropdownRef}>
+                                <button
+                                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                    className="cursor-pointer flex items-center gap-2 px-4 py-2.5 bg-white/50 rounded-full text-sm text-gray-700 hover:bg-white/70 transition-colors"
+                                >
+                                    <span>{activeFilter}</span>
+                                    <ChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`} />
+                                </button>
+
+                                {isDropdownOpen && (
+                                    <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-10">
+                                        {filterOptions.map((filter) => (
+                                            <button
+                                                key={filter}
+                                                onClick={() => {
+                                                    setActiveFilter(filter);
+                                                    setIsDropdownOpen(false);
+                                                }}
+                                                className={`w-full cursor-pointer flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors ${activeFilter === filter
+                                                    ? "text-black font-semibold"
+                                                    : "text-gray-700 hover:bg-gray-50"
+                                                    }`}
+                                            >
+                                                {filter}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div> */}
                         </div>
 
                         {/* Challenges Grid */}
@@ -456,29 +521,11 @@ export default function ProfilePage({ params }: { params: { slug: string } }) {
                                 }
                                 const clampedProgress = Math.min(Math.max(priceProgress, 0), 100);
 
-                                // Status badge colors
-                                const getStatusBadge = () => {
-                                    switch (challenge.status) {
-                                        case "won":
-                                            return <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-medium rounded-full">Won</span>;
-                                        case "lost":
-                                            return <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-medium rounded-full">Rekt</span>;
-                                        case "expired":
-                                            return <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-medium rounded-full">Expired</span>;
-                                        case "created":
-                                            return <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">Created</span>;
-                                        case "accepted":
-                                            return <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-medium rounded-full">Accepted</span>;
-                                        default:
-                                            return <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-medium rounded-full">Active</span>;
-                                    }
-                                };
-
                                 return (
-                                    <Link
+                                    <div
                                         key={challenge.id}
-                                        href={`/challenges/${challenge.id}`}
-                                        className="bg-[#f8ede7] rounded-2xl p-4 shadow-sm border border-white/50 hover:shadow-lg transition-shadow block"
+                                        onClick={() => handleChallengeClick(challenge)}
+                                        className="bg-[#f8ede7] rounded-2xl p-4 shadow-sm border border-white/50 hover:shadow-lg transition-shadow block cursor-pointer"
                                     >
                                         {/* Header */}
                                         <div className="flex items-start justify-between mb-3">
@@ -510,8 +557,6 @@ export default function ProfilePage({ params }: { params: { slug: string } }) {
                                                     </div>
                                                 </div>
                                             </div>
-                                            {/* Status Badge */}
-                                            {getStatusBadge()}
                                         </div>
 
                                         {/* Divider */}
@@ -574,10 +619,22 @@ export default function ProfilePage({ params }: { params: { slug: string } }) {
                                         </div>
 
                                         {/* CTA Button */}
-                                        <button className="w-full py-2.5 px-4 bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-300 rounded-xl text-gray-900 font-bold text-base shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all border-2 border-amber-400/50 flex items-center justify-center gap-2">
-                                            REKT HIM
-                                            <span className="text-xl">😈</span>
+                                        <button className="w-full py-2.5 px-4 bg-[#246044] rounded-xl text-white font-bold text-base shadow-lg hover:bg-[#2b7351] hover:shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2">
+                                            ACCEPT
+                                            <span className="text-xl">⚔️</span>
                                         </button>
+                                        {/* <button disabled className="w-full py-2.5 px-4 bg-[#246044] rounded-xl text-white font-bold text-base shadow-lg hover:bg-[#2b7351] hover:shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2">
+                                            Ongoing
+                                            <span className="text-xl">⚔️</span>
+                                        </button>
+                                        <button className="w-full py-2.5 px-4 bg-[#C65A5A] rounded-xl text-white font-bold text-base shadow-lg hover:bg-[#c85656] hover:shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2">
+                                            Expired
+                                            <span className="text-xl">😓</span>
+                                        </button>
+                                        <button className="w-full py-2.5 px-4 bg-[#E6C15A] rounded-xl text-black font-bold text-base shadow-lg hover:bg-[#e7c25a] hover:shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2">
+                                            Completed
+                                            <span className="text-xl">🎊</span>
+                                        </button> */}
 
                                         {/* Challenge Expiry */}
                                         <div className="flex items-center justify-center gap-1.5 text-xs text-gray-600 mt-1.5">
@@ -630,7 +687,7 @@ export default function ProfilePage({ params }: { params: { slug: string } }) {
                                                 </div>
                                             </div>
                                         </div>
-                                    </Link>
+                                    </div>
                                 );
                             })}
                         </div>
@@ -755,6 +812,13 @@ export default function ProfilePage({ params }: { params: { slug: string } }) {
                     </div>
                 )}
             </div>
+
+            {/* Challenge Detail Modal */}
+            <ChallengeDetailModal
+                challenge={selectedChallenge}
+                isOpen={isModalOpen}
+                onClose={closeModal}
+            />
         </div>
     );
 }

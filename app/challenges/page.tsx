@@ -16,8 +16,9 @@ import { RektLoadingOverlay } from "../components/RektLoadingOverlay";
 import { CreateChallengeModal } from "./sections/CreateChallengeModal";
 
 export default function ChallengesPage() {
-  const [activeFilter, setActiveFilter] = useState("All");
-  const [activeAsset, setActiveAsset] = useState("All Assets");
+  const [activeFilter, setActiveFilter] = useState("Expiring Soon");
+  const [activeAsset, setActiveAsset] = useState("All Markets");
+  const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [challenges, setChallenges] = useState<OnChainChallenge[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -68,27 +69,47 @@ export default function ChallengesPage() {
   }
 
   const filtered = challenges.filter((c) => {
-    if (activeAsset !== "All Assets" && c.asset !== activeAsset) return false;
-    if (activeFilter === "Active") return c.status === "Active";
-    if (activeFilter === "My Bets" && publicKey)
-      return c.creator.equals(publicKey) || c.challenger.equals(publicKey);
-    if (activeFilter === "High Stakes") return lamportsToSol(c.betAmount) >= 1;
-    if (activeFilter === "Ending Soon") {
+    // Market filter
+    if (activeAsset === "Bitcoin Markets" && c.asset !== "BTC") return false;
+    if (activeAsset === "Ethereum Markets" && c.asset !== "ETH") return false;
+    if (activeAsset === "Altcoin Markets" && !["SOL", "DOGE", "PEPE", "SHIB"].includes(c.asset)) return false;
+
+    // Challenge type filters
+    if (activeFilter === "Expiring Soon") {
       const diff = c.expiresAt - Math.floor(Date.now() / 1000);
       return diff > 0 && diff < 3600;
     }
+    if (activeFilter === "Ending Soon") {
+      const diff = c.expiresAt - Math.floor(Date.now() / 1000);
+      return diff > 0 && diff < 86400;
+    }
+    if (activeFilter === "My Bets" && publicKey)
+      return c.creator.equals(publicKey) || c.challenger.equals(publicKey);
+    if (activeFilter === "High Stakes") return lamportsToSol(c.betAmount) >= 1;
+    if (activeFilter === "My Watchlists" && publicKey)
+      return c.creator.equals(publicKey) || c.challenger.equals(publicKey);
     return true;
   });
 
+  const handleOpenCreateModal = () => {
+    if (!authenticated) {
+      login();
+      return;
+    }
+    setIsModalOpen(true);
+  };
+
   return (
     <div className="min-h-full">
-      <ChallengeHeader onOpenModal={() => setIsModalOpen(true)} />
+      <ChallengeHeader onOpenModal={handleOpenCreateModal} />
 
       <ChallengeFiltersSection
         activeFilter={activeFilter}
         setActiveFilter={setActiveFilter}
         activeAsset={activeAsset}
         setActiveAsset={setActiveAsset}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
       />
 
       <FeedbackBanner

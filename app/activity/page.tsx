@@ -318,7 +318,7 @@ export default function ActivityPage() {
 
                 {/* Load More Button */}
                 <div className="mt-8 text-center">
-                    <button className="px-8 py-3.5 bg-[#2d1f1a] hover:bg-[#3d2f2a] text-[#f3e1d7] rounded-full text-sm font-semibold transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95">
+                    <button className="px-8 py-3.5 bg-white/50 border border-gray-300 hover:bg-white/80 text-black rounded-full text-sm font-semibold transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95">
                         Load More Activity
                     </button>
                 </div>

@@ -29,7 +29,7 @@ export function ChallengeGrid({
           <p className="text-gray-500 text-lg mb-4">No challenges found on-chain yet.</p>
           <button
             onClick={onOpenModal}
-            className="px-6 py-3 bg-black text-white rounded-full font-medium hover:bg-gray-800 transition-colors"
+            className="cursor-pointer inline-flex items-center justify-center px-6 py-3 bg-white/50 border border-gray-400 hover:bg-white/80 text-black text-sm font-medium rounded-full hover:bg-gray-800 transition-colors"
           >
             Be the first to create one!
           </button>
