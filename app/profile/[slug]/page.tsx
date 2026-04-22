@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Search, ChevronDown } from "lucide-react";
+import ChallengeDetailModal from "@/app/components/ChallengeDetailModal";
 
 // Types
 interface Challenge {
@@ -256,7 +257,21 @@ export default function ProfilePage() {
     const [activeFilter, setActiveFilter] = useState("All Challenges");
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
+    const [selectedChallenge, setSelectedChallenge] = useState<Challenge | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
+
+    // Handle challenge card click
+    const handleChallengeClick = (challenge: Challenge) => {
+        setSelectedChallenge(challenge);
+        setIsModalOpen(true);
+    };
+
+    // Close modal handler
+    const closeModal = () => {
+        setIsModalOpen(false);
+        setTimeout(() => setSelectedChallenge(null), 300);
+    };
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -507,10 +522,10 @@ export default function ProfilePage() {
                                 const clampedProgress = Math.min(Math.max(priceProgress, 0), 100);
 
                                 return (
-                                    <Link
+                                    <div
                                         key={challenge.id}
-                                        href={`/challenges/${challenge.id}`}
-                                        className="bg-[#f8ede7] rounded-2xl p-4 shadow-sm border border-white/50 hover:shadow-lg transition-shadow block"
+                                        onClick={() => handleChallengeClick(challenge)}
+                                        className="bg-[#f8ede7] rounded-2xl p-4 shadow-sm border border-white/50 hover:shadow-lg transition-shadow block cursor-pointer"
                                     >
                                         {/* Header */}
                                         <div className="flex items-start justify-between mb-3">
@@ -672,7 +687,7 @@ export default function ProfilePage() {
                                                 </div>
                                             </div>
                                         </div>
-                                    </Link>
+                                    </div>
                                 );
                             })}
                         </div>
@@ -797,6 +812,13 @@ export default function ProfilePage() {
                     </div>
                 )}
             </div>
+
+            {/* Challenge Detail Modal */}
+            <ChallengeDetailModal
+                challenge={selectedChallenge}
+                isOpen={isModalOpen}
+                onClose={closeModal}
+            />
         </div>
     );
 }

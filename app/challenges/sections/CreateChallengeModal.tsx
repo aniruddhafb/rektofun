@@ -30,6 +30,12 @@ const coins: Coin[] = [
   { symbol: "BONK", name: "Bonk", logo: "/scribbles/doge.png" },
 ];
 
+const markets = [
+  { symbol: "SOL-PERP", name: "Solana Perpetual" },
+  { symbol: "BTC-PERP", name: "Bitcoin Perpetual" },
+  { symbol: "ETH-PERP", name: "Ethereum Perpetual" },
+];
+
 export function CreateChallengeModal({
   isOpen,
   onClose,
@@ -37,6 +43,8 @@ export function CreateChallengeModal({
 }: CreateChallengeModalProps) {
   const { authenticated, login, program, sendTransaction, publicKey } = useSolanaWallet();
 
+  const [selectedMarket, setSelectedMarket] = useState(markets[0]);
+  const [isMarketDropdownOpen, setIsMarketDropdownOpen] = useState(false);
   const [selectedCoin, setSelectedCoin] = useState<Coin>(coins[0]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [betAmount, setBetAmount] = useState(0.1);
@@ -113,25 +121,45 @@ export function CreateChallengeModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-[#f3e1d7] rounded-3xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl">
-        <div className="sticky top-0 bg-[#f3e1d7] rounded-t-3xl px-6 pt-6 pb-4 border-b border-[#e8d5c8]">
+      <div className="relative bg-[#f3e1d7] rounded-3xl w-full max-w-md md:max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col">
+        <div className="bg-[#f3e1d7] rounded-t-3xl px-6 pt-6 pb-4 border-b border-[#e8d5c8]">
           <div className="flex items-center justify-between">
-            <div className="flex-1" />
-            <h2 className="cursor-pointer text-2xl font-bold text-gray-900 flex-1 text-center">Create Challenge</h2>
-            <div className="flex-1 flex justify-end">
-              <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-[#e8d5c8] hover:bg-[#dcc9bc] transition-colors">
-                <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
+            <div className="w-8" />
+            <h2 className="text-xl md:text-2xl font-bold text-gray-900 text-center">Create Challenge</h2>
+            <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-[#e8d5c8] hover:bg-[#dcc9bc] transition-colors">
+              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
-          <p className="text-center text-gray-600 text-sm mt-1">Set your terms and invite degenerates to challenge you.</p>
+          <p className="text-center text-gray-600 text-sm mt-2">Set your terms and invite degenerates to challenge you.</p>
         </div>
 
-        <div className="px-6 py-4 space-y-4">
+        <div className="px-6 py-4 space-y-4 overflow-y-auto">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">Market</label>
+            <div className="relative">
+              <button onClick={() => setIsMarketDropdownOpen(!isMarketDropdownOpen)} className="w-full flex items-center justify-between px-4 py-3 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl hover:border-[#d4b8a8] transition-colors">
+                <span className="font-semibold text-gray-900">{selectedMarket.symbol}</span>
+                <svg className={`w-5 h-5 text-gray-500 transition-transform ${isMarketDropdownOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {isMarketDropdownOpen && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl shadow-lg z-10 overflow-hidden">
+                  {markets.map((m) => (
+                    <button key={m.symbol} onClick={() => { setSelectedMarket(m); setIsMarketDropdownOpen(false); }} className="w-full px-4 py-3 text-left hover:bg-[#f3e1d7] transition-colors">
+                      <span className="font-medium text-gray-900">{m.symbol}</span>
+                      <span className="text-gray-500 text-sm ml-2">{m.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Select Coin</label>
             <div className="relative">
@@ -162,9 +190,9 @@ export function CreateChallengeModal({
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Bet Amount (SOL)</label>
+            <label className="text-sm font-medium text-gray-700">Bet Amount (USDC)</label>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-bold">◎</span>
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-bold">$</span>
               <input type="number" value={betAmount} onChange={(e) => setBetAmount(Number(e.target.value))} step="0.01" min="0.01" className="w-full pl-8 pr-4 py-3 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl text-lg font-semibold text-gray-900 focus:outline-none focus:border-[#d4b8a8]" />
             </div>
           </div>
@@ -218,9 +246,9 @@ export function CreateChallengeModal({
 
           <div className="text-center py-2">
             <p className="text-gray-700">
-              You win <span className="font-bold text-gray-900">◎{(betAmount * 2 * 0.98).toFixed(3)}</span> if {selectedCoin.symbol} closes {predictionDirection.toLowerCase()} ${Number(predictionPrice).toLocaleString()} in {formatDuration(duration)}
+              You win <span className="font-bold text-gray-900">${(betAmount * 2 * 0.90).toFixed(2)}</span> if {selectedCoin.symbol} closes {predictionDirection.toLowerCase()} ${Number(predictionPrice).toLocaleString()} in {formatDuration(duration)}
             </p>
-            <p className="text-xs text-gray-500 mt-1">2% platform fee applies</p>
+            <p className="text-xs text-gray-500 mt-1">10% platform fee applies</p>
           </div>
 
           {txError && (
@@ -253,9 +281,9 @@ export function CreateChallengeModal({
           <button
             onClick={handleCreate}
             disabled={isSubmitting}
-            className="w-full py-4 bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-300 rounded-full text-gray-900 font-bold text-lg shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all border-2 border-amber-400/50 disabled:opacity-60 disabled:cursor-not-allowed disabled:scale-100"
+            className="cursor-pointer w-full py-4  bg-gray-800 hover:bg-gray-700 text-white rounded-full text-gray-900 font-bold text-lg shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:scale-100"
           >
-            {isSubmitting ? "Creating on-chain…" : !authenticated ? "Connect Wallet to Create" : "CREATE CHALLENGE"}
+            {isSubmitting ? "Creating on-chain…" : !authenticated ? "Connect Wallet to Create" : "CREATE CHALLENGE ⚔️"}
           </button>
 
           <p className="text-center text-sm text-gray-600">
