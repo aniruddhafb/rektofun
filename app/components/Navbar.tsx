@@ -78,7 +78,7 @@ export default function Navbar() {
         { href: "/leaderboard", label: "Leaderboard" },
         { href: "/referral", label: "Referral" },
         { href: "/activity", label: "Activity" },
-        { href: "https://rektofun.gitbook.io/rektofun/", label: "Roadmap" },
+        { href: "https://rektofun.gitbook.io/rektofun/roadmap/whats-next", label: "Roadmap" },
     ];
 
     return (
@@ -140,7 +140,7 @@ export default function Navbar() {
                                 </svg>
                             </div>
                             <Link
-                                href="https://rektofun.gitbook.io/rektofun/"
+                                href="https://rektofun.gitbook.io/rektofun/introduction/how-it-works"
                                 target="_blank"
                                 className="text-sm font-medium text-gray-700 hover:text-black transition-colors whitespace-nowrap"
                             >
@@ -277,15 +277,15 @@ export default function Navbar() {
                                                             Terms
                                                         </Link>
 
-                                                        {/* About Us */}
+                                                        {/* Privacy */}
                                                         <Link
-                                                            href="/about"
+                                                            href="/privacy"
                                                             className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:text-black transition-colors cursor-pointer"
                                                         >
                                                             <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                             </svg>
-                                                            About Us
+                                                            Privacy
                                                         </Link>
 
                                                         {/* Docs */}
@@ -331,7 +331,7 @@ export default function Navbar() {
                                                                 </a>
                                                                 {/* Discord */}
                                                                 <a
-                                                                    href="#"
+                                                                    href="https://discord.gg/Uk22qDtzcQ"
                                                                     target="_blank"
                                                                     className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-[#5865F2] hover:text-white transition-colors cursor-pointer"
                                                                     aria-label="Discord"
