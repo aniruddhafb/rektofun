@@ -393,32 +393,13 @@ export default function Home() {
             {/* Sparkle decorations */}
             <div className="flex flex-col items-center gap-3 mb-3">
               <h2 className="text-4xl sm:text-5xl font-bold text-black leading-tight text-center">
-                OPPORTUNITIES{" "}
-                <span className="text-[#e85a2d]">ON REKTOFUN</span>
+                MULTIPLE WAYS TO{" "}
+                <span className="text-[#e85a2d]">WIN 🏆</span>
               </h2>
-              <div className="flex items-center gap-6">
-                {/* Star sparkles left */}
-                <svg className="w-6 h-6 opacity-70" viewBox="0 0 40 40" fill="none">
-                  <path d="M20 4L21.5 16L20 17.5L18.5 16L20 4Z" fill="black" />
-                  <path d="M20 36L21.5 24L20 22.5L18.5 24L20 36Z" fill="black" />
-                  <path d="M4 20L16 21.5L17.5 20L16 18.5L4 20Z" fill="black" />
-                  <path d="M36 20L24 21.5L22.5 20L24 18.5L36 20Z" fill="black" />
-                </svg>
-                {/* Squiggly lines right */}
-                <svg width="48" height="8" viewBox="0 0 48 8" fill="none">
-                  <path d="M2 6C8 2 14 2 20 6C26 10 32 10 38 6C42 3 45 2 47 2" stroke="#e85a2d" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-                </svg>
-              </div>
             </div>
             <p className="text-gray-500 text-base sm:text-lg text-center mt-4">
-              PREDICT & COMPETE | CLIMB & EARN 💰
+              PREDICT & COMPETE | CLIMB & WIN 💰
             </p>
-            {/* Underline squiggle */}
-            <div className="flex justify-center mt-2">
-              <svg width="80" height="10" viewBox="0 0 80 10" fill="none">
-                <path d="M2 8C10 2 18 2 26 8C34 14 42 14 50 8C58 2 66 2 74 8C76 9 78 9 79 8" stroke="#e85a2d" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-              </svg>
-            </div>
           </div>
 
           {/* Cards Grid - 2 columns */}
@@ -470,10 +451,10 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-              {/* How you earn */}
+              {/* How you win */}
               <div className="px-6 pb-6">
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#fdf0eb] border border-[#f5c9b8] rounded-full mb-4">
-                  <span className="text-[#e85a2d] text-xs font-semibold">How you earn:</span>
+                  <span className="text-[#e85a2d] text-xs font-semibold">How you win:</span>
                 </div>
                 <ul className="space-y-2.5">
                   <li className="flex items-center gap-3 text-sm text-gray-600">
@@ -486,7 +467,7 @@ export default function Home() {
                   </li>
                   <li className="flex items-center gap-3 text-sm text-gray-600">
                     <span className="text-base">📈</span>
-                    Early creators in trending markets earn more
+                    Early creators in trending markets win more
                   </li>
                 </ul>
               </div>
@@ -528,7 +509,7 @@ export default function Home() {
               </div>
               <div className="px-6 pb-6">
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#fdf0eb] border border-[#f5c9b8] rounded-full mb-4">
-                  <span className="text-[#e85a2d] text-xs font-semibold">How you earn:</span>
+                  <span className="text-[#e85a2d] text-xs font-semibold">How you win:</span>
                 </div>
                 <ul className="space-y-2.5">
                   <li className="flex items-center gap-3 text-sm text-gray-600">
@@ -537,11 +518,11 @@ export default function Home() {
                   </li>
                   <li className="flex items-center gap-3 text-sm text-gray-600">
                     <span className="text-base">💰</span>
-                    Earn rewards based on your performance
+                    Win rewards based on your performance
                   </li>
                   <li className="flex items-center gap-3 text-sm text-gray-600">
                     <span className="text-base">⭐</span>
-                    Participate and earn REKT points
+                    Participate and win REKT points
                   </li>
                 </ul>
               </div>
@@ -591,7 +572,7 @@ export default function Home() {
               </div>
               <div className="px-6 pb-6">
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#fdf0eb] border border-[#f5c9b8] rounded-full mb-4">
-                  <span className="text-[#e85a2d] text-xs font-semibold">How you earn:</span>
+                  <span className="text-[#e85a2d] text-xs font-semibold">How you win:</span>
                 </div>
                 <ul className="space-y-2.5">
                   <li className="flex items-center gap-3 text-sm text-gray-600">
@@ -604,7 +585,7 @@ export default function Home() {
                   </li>
                   <li className="flex items-center gap-3 text-sm text-gray-600">
                     <span className="text-base">👑</span>
-                    Consistency leads to recurring earnings
+                    Consistency leads to recurring winnings
                   </li>
                 </ul>
               </div>
@@ -621,7 +602,7 @@ export default function Home() {
                     <div>
                       <h3 className="text-xl font-bold text-black mb-2">Referring People</h3>
                       <p className="text-gray-500 text-sm leading-relaxed">
-                        Invite friends and grow the community while you earn.
+                        Invite friends and grow the community while you win.
                       </p>
                     </div>
                   </div>
@@ -646,12 +627,12 @@ export default function Home() {
               </div>
               <div className="px-6 pb-6">
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#fdf0eb] border border-[#f5c9b8] rounded-full mb-4">
-                  <span className="text-[#e85a2d] text-xs font-semibold">How you earn:</span>
+                  <span className="text-[#e85a2d] text-xs font-semibold">How you win:</span>
                 </div>
                 <ul className="space-y-2.5">
                   <li className="flex items-center gap-3 text-sm text-gray-600">
                     <span className="text-base">🎁</span>
-                    Earn REKT points for every successful referral
+                    Win REKT points for every successful referral
                   </li>
                   <li className="flex items-center gap-3 text-sm text-gray-600">
                     <span className="text-base">%</span>
@@ -683,9 +664,9 @@ export default function Home() {
                   </div>
                 </div>
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#fdf0eb] border border-[#f5c9b8] rounded-full mb-4">
-                  <span className="text-[#e85a2d] text-xs font-semibold">How you earn:</span>
+                  <span className="text-[#e85a2d] text-xs font-semibold">How you win:</span>
                 </div>
-                {/* Three earn items in a row for wide card */}
+                {/* Three win items in a row for wide card */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="flex items-start gap-3 bg-[#fdf8f5] rounded-xl p-3">
                     <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-[#fdf0eb] border border-[#f5c9b8] flex items-center justify-center">
@@ -693,7 +674,7 @@ export default function Home() {
                         <path d="M12 2L14 8H20L15 12L17 18L12 14L7 18L9 12L4 8H10L12 2Z" fill="#e85a2d" opacity="0.7" />
                       </svg>
                     </div>
-                    <p className="text-xs text-gray-600 leading-relaxed">Earn from the validation reward pool</p>
+                    <p className="text-xs text-gray-600 leading-relaxed">Win from the validation reward pool</p>
                   </div>
                   <div className="flex items-start gap-3 bg-[#fdf8f5] rounded-xl p-3">
                     <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-[#fdf0eb] border border-[#f5c9b8] flex items-center justify-center">
@@ -703,7 +684,7 @@ export default function Home() {
                         <path d="M2 20C2 16 6 14 10 14C14 14 18 16 18 20" stroke="#e85a2d" strokeWidth="1.5" strokeLinecap="round" />
                       </svg>
                     </div>
-                    <p className="text-xs text-gray-600 leading-relaxed">The more validations you perform, the more you earn</p>
+                    <p className="text-xs text-gray-600 leading-relaxed">The more validations you perform, the more you win</p>
                   </div>
                   <div className="flex items-start gap-3 bg-[#fdf8f5] rounded-xl p-3">
                     <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-[#fdf0eb] border border-[#f5c9b8] flex items-center justify-center">
@@ -770,7 +751,7 @@ export default function Home() {
                 </svg>
               </div>
               <div>
-                <p className="text-white font-bold text-lg sm:text-xl">Predict. Compete. Earn.</p>
+                <p className="text-white font-bold text-lg sm:text-xl">Predict. Compete. Win.</p>
                 <p className="text-gray-400 text-sm">Your skill. Your edge. Your rewards.</p>
               </div>
             </div>
