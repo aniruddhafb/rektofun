@@ -6,7 +6,7 @@
  *
  * Security notes:
  *  - All transactions are built client-side and signed via the user's wallet.
- *  - Never stores private keys; relies on Privy embedded wallet or external wallet.
+ *  - Never stores private keys; expects an external wallet adapter supplied by the app.
  *  - Defaults to devnet; switch RPC_ENDPOINT for mainnet.
  */
 
