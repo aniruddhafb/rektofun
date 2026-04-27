@@ -1,16 +1,15 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Navbar, Footer } from "./components";
-import { Analytics } from "@vercel/analytics/next"
-
-import Providers from "./providers/PrivyProvider";
+import { Analytics } from "@vercel/analytics/next";
+import ConnectionProvider from "./providers/PhantomProvider";
 
 export const metadata: Metadata = {
   title: {
     default: "RektoFun - Win Or Get Rekt!!",
     template: "%s | RektoFun",
   },
-  description: "The first PvP battleground for price predictions. Compete other traders, and win rewards. Prediction Markets 2.0 🪄",
+  description: "The first PvP battleground for price predictions. Compete other traders, and win rewards. Prediction Markets 2.0 ðŸª„",
   keywords: ["prediction markets", " PvP trading", " crypto predictions", " price prediction", " solana meme projects", " pump fun alternative", " prediction markets on solana", " Solana", " Bitcoin", " Ethereum"],
   authors: [{ name: "RektoFun" }],
   creator: "RektoFun",
@@ -86,11 +85,11 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
       </head>
       <body className="min-h-full flex flex-col">
-        <Providers>
+        <ConnectionProvider>
           <Navbar />
           <main className="flex-1">{children}</main>
           <Footer />
-        </Providers>
+        </ConnectionProvider>
       </body>
     </html>
   );

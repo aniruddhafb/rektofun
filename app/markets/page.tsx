@@ -2,8 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
-import { usePrivy } from "@privy-io/react-auth";
-import { Search, SlidersHorizontal, ChevronDown, ArrowRight, Flame, Zap, TrendingUp, Clock, DollarSign, Eye, Bookmark } from "lucide-react";
+import { Search, ChevronDown, ArrowRight, TrendingUp, Clock, DollarSign, Eye, Bookmark } from "lucide-react";
 import { CreateMarketModal } from "./sections/CreateMarketModal";
 
 // Challenge data type
@@ -176,21 +175,14 @@ const sortOptions: { label: SortOption; icon: React.ReactNode }[] = [
 ];
 
 export default function MarketsPage() {
-    const { authenticated, login } = usePrivy();
-    const [activeTab, setActiveTab] = useState("All");
+    const [activeTab] = useState("All");
     const [currentPage, setCurrentPage] = useState(1);
     const [sortBy, setSortBy] = useState<SortOption>("Recently Added");
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [bookmarkedMarkets, setBookmarkedMarkets] = useState<Set<string>>(new Set());
     const [isModalOpen, setIsModalOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
-    const totalPages = 3;
-
     const handleOpenCreateModal = () => {
-        if (!authenticated) {
-            login();
-            return;
-        }
         setIsModalOpen(true);
     };
 

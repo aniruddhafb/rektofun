@@ -2,11 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { useSolanaWallet } from "../../lib/useSolanaWallet";
-import {
-  buildCreateChallengeTx,
-  type CreateChallengeArgs,
-} from "../../lib/rektofun-program";
 import { DatePickerModal } from "./DatePickerModal";
 import { DurationPickerModal } from "./DurationPickerModal";
 
@@ -39,10 +34,7 @@ const markets = [
 export function CreateChallengeModal({
   isOpen,
   onClose,
-  onCreated,
 }: CreateChallengeModalProps) {
-  const { authenticated, login, program, sendTransaction, publicKey } = useSolanaWallet();
-
   const [selectedMarket, setSelectedMarket] = useState(markets[0]);
   const [isMarketDropdownOpen, setIsMarketDropdownOpen] = useState(false);
   const [selectedCoin, setSelectedCoin] = useState<Coin>(coins[0]);
@@ -55,14 +47,13 @@ export function CreateChallengeModal({
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [duration, setDuration] = useState({ hours: 4, minutes: 0 });
   const [isDurationPickerOpen, setIsDurationPickerOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [txError, setTxError] = useState<string | null>(null);
-  const [txSig, setTxSig] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) document.body.style.overflow = "hidden";
     else document.body.style.overflow = "unset";
-    return () => { document.body.style.overflow = "unset"; };
+    return () => {
+      document.body.style.overflow = "unset";
+    };
   }, [isOpen]);
 
   if (!isOpen) return null;
@@ -84,42 +75,6 @@ export function CreateChallengeModal({
     return result.trim();
   };
 
-  async function handleCreate() {
-    if (!authenticated) { login(); return; }
-    if (!program || !publicKey) { setTxError("Solana wallet not ready. Please wait or reconnect."); return; }
-
-    setIsSubmitting(true);
-    setTxError(null);
-    setTxSig(null);
-
-    try {
-      const now = Math.floor(Date.now() / 1000);
-      const expiryDurationSecs = duration.hours * 3600 + duration.minutes * 60;
-      const expiresAt = now + expiryDurationSecs;
-      const resolvesAt = expiresAt + 3600;
-
-      const args: CreateChallengeArgs = {
-        asset: selectedCoin.symbol,
-        betAmountSol: betAmount,
-        targetPriceUsdCents: Math.round(Number(predictionPrice) * 100),
-        directionAbove: predictionDirection === "Above",
-        expiresAt,
-        resolvesAt,
-      };
-
-      const tx = await buildCreateChallengeTx(program, publicKey, args);
-      const sig = await sendTransaction(tx);
-      setTxSig(sig);
-      onCreated();
-      setTimeout(onClose, 2000);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setTxError(msg);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
@@ -138,6 +93,10 @@ export function CreateChallengeModal({
         </div>
 
         <div className="px-6 py-4 space-y-4 overflow-y-auto">
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            Wallet-backed challenge creation is currently disabled while a replacement for Privy is being integrated.
+          </div>
+
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Market</label>
             <div className="relative">
@@ -251,43 +210,15 @@ export function CreateChallengeModal({
             <p className="text-xs text-gray-500 mt-1">10% platform fee applies</p>
           </div>
 
-          {txError && (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700">
-              ⚠️{" "}
-              {txError.includes("https://faucet.solana.com") ? (
-                <>
-                  {txError.split("https://faucet.solana.com")[0]}
-                  <a
-                    href="https://faucet.solana.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline font-semibold"
-                  >
-                    https://faucet.solana.com
-                  </a>
-                </>
-              ) : (
-                txError
-              )}
-            </div>
-          )}
-          {txSig && (
-            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-sm text-emerald-700">
-              ✅ Challenge created!{" "}
-              <a href={`https://explorer.solana.com/tx/${txSig}?cluster=devnet`} target="_blank" rel="noopener noreferrer" className="underline">View on Explorer</a>
-            </div>
-          )}
-
           <button
-            onClick={handleCreate}
-            disabled={isSubmitting}
-            className="cursor-pointer w-full py-4  bg-gray-800 hover:bg-gray-700 text-white rounded-full text-gray-900 font-bold text-lg shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:scale-100"
+            disabled
+            className="w-full py-4 bg-gray-400 text-white rounded-full font-bold text-lg cursor-not-allowed"
           >
-            {isSubmitting ? "Creating on-chain…" : !authenticated ? "Connect Wallet to Create" : "CREATE CHALLENGE ⚔️"}
+            Wallet Integration Required
           </button>
 
           <p className="text-center text-sm text-gray-600">
-            You can&apos;t cancel your challenge once it&apos;s accepted, so bet wisely!
+            Add a replacement wallet provider before enabling on-chain challenge creation again.
           </p>
         </div>
       </div>
