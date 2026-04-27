@@ -5,11 +5,26 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { DepositModal } from "./DepositModal";
+import { useModal, useAccounts, useDisconnect } from "@phantom/react-sdk";
 
 export default function Navbar() {
     const [searchQuery, setSearchQuery] = useState("");
     const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
     const pathname = usePathname();
+
+    // Phantom SDK hooks
+    const { open: openPhantomModal } = useModal();
+    const accounts = useAccounts();
+    const { disconnect } = useDisconnect();
+
+    // Get the connected Solana account (if any)
+    const connectedAccount = accounts?.[0];
+    const walletAddress = connectedAccount?.address;
+
+    // Shorten wallet address for display
+    const shortAddress = walletAddress
+        ? `${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}`
+        : null;
 
     const isActive = (href: string) => {
         if (href === "/") {
@@ -104,19 +119,41 @@ export default function Navbar() {
                             </Link>
                         </div>
 
-                        <div className="flex items-center gap-2 sm:gap-4">
-                            <button
-                                onClick={() => setIsDepositModalOpen(true)}
-                                className="px-4 sm:px-6 py-2 text-sm font-medium text-gray-700 hover:text-black transition-colors cursor-pointer border border-gray-700 rounded-full"
-                            >
-                                Wallet Status
-                            </button>
-                            <Link
-                                href="/settings"
-                                className="px-4 sm:px-6 py-2 bg-black text-white text-sm font-medium rounded-full hover:bg-gray-800 transition-colors cursor-pointer"
-                            >
-                                Settings
-                            </Link>
+                        <div className="flex items-center gap-2 sm:gap-3">
+                            {walletAddress ? (
+                                // Connected state: show wallet address + disconnect
+                                <>
+                                    <button
+                                        onClick={() => setIsDepositModalOpen(true)}
+                                        className="hidden sm:flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-black transition-colors border border-gray-700 rounded-full"
+                                    >
+                                        <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />
+                                        {shortAddress}
+                                    </button>
+                                    <button
+                                        onClick={() => disconnect()}
+                                        className="px-4 sm:px-5 py-2 bg-black text-white text-sm font-medium rounded-full hover:bg-gray-800 transition-colors cursor-pointer"
+                                    >
+                                        Disconnect
+                                    </button>
+                                </>
+                            ) : (
+                                // Disconnected state: show Login + Sign Up
+                                <>
+                                    <button
+                                        onClick={() => openPhantomModal()}
+                                        className="px-4 sm:px-6 py-2 text-sm font-medium text-gray-700 hover:text-black transition-colors cursor-pointer border border-gray-700 rounded-full"
+                                    >
+                                        Login
+                                    </button>
+                                    <button
+                                        onClick={() => openPhantomModal()}
+                                        className="px-4 sm:px-6 py-2 bg-black text-white text-sm font-medium rounded-full hover:bg-gray-800 transition-colors cursor-pointer"
+                                    >
+                                        Sign Up
+                                    </button>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -228,19 +265,28 @@ export default function Navbar() {
                         <span className="text-[10px] font-medium truncate">Leaderboard</span>
                     </Link>
 
-                    <Link
-                        href="/settings"
-                        className={`flex flex-col items-center justify-center gap-0.5 min-w-0 flex-1 ${isActive("/settings")
-                            ? "text-black"
-                            : "text-gray-500"
-                            }`}
-                    >
-                        <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.5a1.5 1.5 0 011.5 1.5v.32a1.5 1.5 0 001.04 1.43l.3.1a1.5 1.5 0 001.67-.49l.22-.27a1.5 1.5 0 012.12 0l.79.8a1.5 1.5 0 010 2.12l-.27.22a1.5 1.5 0 00-.49 1.67l.1.3a1.5 1.5 0 001.43 1.04H21a1.5 1.5 0 011.5 1.5v1.14A1.5 1.5 0 0121 16.5h-.32a1.5 1.5 0 00-1.43 1.04l-.1.3a1.5 1.5 0 00.49 1.67l.27.22a1.5 1.5 0 010 2.12l-.8.79a1.5 1.5 0 01-2.12 0l-.22-.27a1.5 1.5 0 00-1.67-.49l-.3.1A1.5 1.5 0 0013.5 23v.32A1.5 1.5 0 0112 24.82h-1.14a1.5 1.5 0 01-1.5-1.5V23a1.5 1.5 0 00-1.04-1.43l-.3-.1a1.5 1.5 0 00-1.67.49l-.22.27a1.5 1.5 0 01-2.12 0l-.79-.8a1.5 1.5 0 010-2.12l.27-.22a1.5 1.5 0 00.49-1.67l-.1-.3A1.5 1.5 0 003 16.5h-.32a1.5 1.5 0 01-1.5-1.5v-1.14A1.5 1.5 0 013 12.36h.32a1.5 1.5 0 001.43-1.04l.1-.3a1.5 1.5 0 00-.49-1.67l-.27-.22a1.5 1.5 0 010-2.12l.8-.79a1.5 1.5 0 012.12 0l.22.27a1.5 1.5 0 001.67.49l.3-.1A1.5 1.5 0 0010.5 6V5.68A1.5 1.5 0 0112 4.18z" />
-                            <circle cx="12" cy="14" r="3" />
-                        </svg>
-                        <span className="text-[10px] font-medium truncate">Settings</span>
-                    </Link>
+                    {/* Mobile: Login / wallet button */}
+                    {walletAddress ? (
+                        <button
+                            onClick={() => disconnect()}
+                            className={`flex flex-col items-center justify-center gap-0.5 min-w-0 flex-1 text-gray-500`}
+                        >
+                            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
+                            <span className="text-[10px] font-medium truncate">{shortAddress}</span>
+                        </button>
+                    ) : (
+                        <button
+                            onClick={() => openPhantomModal()}
+                            className="flex flex-col items-center justify-center gap-0.5 min-w-0 flex-1 text-gray-500"
+                        >
+                            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                            <span className="text-[10px] font-medium truncate">Login</span>
+                        </button>
+                    )}
                 </div>
             </div>
         </>
