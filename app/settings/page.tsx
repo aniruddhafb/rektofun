@@ -210,6 +210,19 @@ export default function SettingsPage() {
                                 </div>
                             )}
                         </div>
+
+                        {/* Embedded Wallet Info */}
+                        <div className="bg-orange-50/70 border border-orange-200 rounded-xl p-4">
+                            <div className="flex items-start gap-3">
+                                <svg className="w-5 h-5 text-orange-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <p className="text-sm text-orange-700">
+                                    This is your embedded wallet address on rekto.fun!
+                                    To access it, simply log in to the <strong>Phantom app</strong> or <strong>browser extension</strong> using the same login method you used on our website.
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </section>
             </div>
