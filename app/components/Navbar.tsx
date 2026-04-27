@@ -83,23 +83,8 @@ export default function Navbar() {
 
     return (
         <>
-            {/* Development Mode Banner */}
-            <div className="fixed top-0 left-0 right-0 z-[60] bg-amber-100 border-b border-amber-300">
-                <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-center gap-2">
-                    <svg className="w-4 h-4 text-amber-700 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                    <p className="text-sm text-amber-900 font-medium text-center hidden md:block">
-                        Development Mode — Dummy data is displayed on this website
-                    </p>
-                    <p className="text-sm text-amber-900 font-medium text-center md:hidden">
-                        Development Mode
-                    </p>
-                </div>
-            </div>
-
             {/* Main Navbar - Sticky at top */}
-            <nav className="fixed top-0 left-0 right-0 z-50 bg-[#f3e1d7]/80 backdrop-blur-md border-b border-white-100 pt-8">
+            <nav className="fixed top-0 left-0 right-0 z-50 bg-[#f3e1d7]/80 backdrop-blur-md border-b border-white-100">
                 <div className="max-w-7xl mx-auto px-6 lg:px-8">
                     <div className="flex items-center justify-between h-20">
                         {/* Logo - Smaller on mobile */}
