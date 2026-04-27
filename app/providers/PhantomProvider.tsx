@@ -1,6 +1,6 @@
 'use client'
 
-import { PhantomProvider, darkTheme, AddressType } from '@phantom/react-sdk'
+import { PhantomProvider, darkTheme, lightTheme, AddressType } from '@phantom/react-sdk'
 import { ReactNode } from 'react'
 
 /**
@@ -46,11 +46,11 @@ export default function ConnectionProvider({ children }: ConnectionProviderProps
         },
       }}
       // Theme for built-in modal UI (darkTheme or lightTheme available)
-      theme={darkTheme}
+      theme={lightTheme}
       // App branding for the connection modal
-      appName="Phantom Starter"
+      appName="RektoFun"
       // App icon displayed in the modal (optional)
-      appIcon="/phantom-logo.png"
+      appIcon="/fav_old.png"
     >
       {children}
     </PhantomProvider>

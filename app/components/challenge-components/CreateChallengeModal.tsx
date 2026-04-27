@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { DatePickerModal } from "./DatePickerModal";
 import { DurationPickerModal } from "./DurationPickerModal";
@@ -38,7 +38,7 @@ export function CreateChallengeModal({
     const [selectedMarket, setSelectedMarket] = useState(markets[0]);
     const [isMarketDropdownOpen, setIsMarketDropdownOpen] = useState(false);
     const [selectedCoin, setSelectedCoin] = useState<Coin>(coins[0]);
-    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [isCoinDropdownOpen, setIsCoinDropdownOpen] = useState(false);
     const [betAmount, setBetAmount] = useState(0.1);
     const [predictionDirection, setPredictionDirection] = useState("Above");
     const [isDirectionDropdownOpen, setIsDirectionDropdownOpen] = useState(false);
@@ -48,6 +48,10 @@ export function CreateChallengeModal({
     const [duration, setDuration] = useState({ hours: 4, minutes: 0 });
     const [isDurationPickerOpen, setIsDurationPickerOpen] = useState(false);
 
+    const marketDropdownRef = useRef<HTMLDivElement>(null);
+    const coinDropdownRef = useRef<HTMLDivElement>(null);
+    const directionDropdownRef = useRef<HTMLDivElement>(null);
+
     useEffect(() => {
         if (isOpen) document.body.style.overflow = "hidden";
         else document.body.style.overflow = "unset";
@@ -55,6 +59,29 @@ export function CreateChallengeModal({
             document.body.style.overflow = "unset";
         };
     }, [isOpen]);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (marketDropdownRef.current && !marketDropdownRef.current.contains(event.target as Node)) {
+                setIsMarketDropdownOpen(false);
+            }
+            if (coinDropdownRef.current && !coinDropdownRef.current.contains(event.target as Node)) {
+                setIsCoinDropdownOpen(false);
+            }
+            if (directionDropdownRef.current && !directionDropdownRef.current.contains(event.target as Node)) {
+                setIsDirectionDropdownOpen(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    const closeAllDropdowns = () => {
+        setIsMarketDropdownOpen(false);
+        setIsCoinDropdownOpen(false);
+        setIsDirectionDropdownOpen(false);
+    };
 
     if (!isOpen) return null;
 
@@ -95,9 +122,9 @@ export function CreateChallengeModal({
                 <div className="px-6 py-4 space-y-4 overflow-y-auto">
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700">Market</label>
-                        <div className="relative">
-                            <button onClick={() => setIsMarketDropdownOpen(!isMarketDropdownOpen)} className="w-full flex items-center justify-between px-4 py-3 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl hover:border-[#d4b8a8] transition-colors">
+                        <label className="text-sm font-medium text-gray-700">Select Challenge Market</label>
+                        <div className="relative" ref={marketDropdownRef}>
+                            <button onClick={() => { closeAllDropdowns(); setIsMarketDropdownOpen(!isMarketDropdownOpen); }} className="w-full flex items-center justify-between px-4 py-3 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl hover:border-[#d4b8a8] transition-colors">
                                 <span className="font-semibold text-gray-900">{selectedMarket.symbol}</span>
                                 <svg className={`w-5 h-5 text-gray-500 transition-transform ${isMarketDropdownOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -117,23 +144,23 @@ export function CreateChallengeModal({
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700">Select Coin</label>
-                        <div className="relative">
-                            <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="w-full flex items-center justify-between px-4 py-3 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl hover:border-[#d4b8a8] transition-colors">
+                        <label className="text-sm font-medium text-gray-700">Select Token</label>
+                        <div className="relative" ref={coinDropdownRef}>
+                            <button onClick={() => { closeAllDropdowns(); setIsCoinDropdownOpen(!isCoinDropdownOpen); }} className="w-full flex items-center justify-between px-4 py-3 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl hover:border-[#d4b8a8] transition-colors">
                                 <div className="flex items-center gap-3">
                                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center overflow-hidden">
                                         <Image src={selectedCoin.logo} alt={selectedCoin.symbol} width={24} height={24} className="w-6 h-6 object-contain" />
                                     </div>
                                     <span className="font-semibold text-gray-900">{selectedCoin.symbol}</span>
                                 </div>
-                                <svg className={`w-5 h-5 text-gray-500 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className={`w-5 h-5 text-gray-500 transition-transform ${isCoinDropdownOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                                 </svg>
                             </button>
-                            {isDropdownOpen && (
+                            {isCoinDropdownOpen && (
                                 <div className="absolute top-full left-0 right-0 mt-1 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl shadow-lg z-10 overflow-hidden">
                                     {coins.map((coin) => (
-                                        <button key={coin.symbol} onClick={() => { setSelectedCoin(coin); setIsDropdownOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#f3e1d7] transition-colors">
+                                        <button key={coin.symbol} onClick={() => { setSelectedCoin(coin); setIsCoinDropdownOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#f3e1d7] transition-colors">
                                             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center overflow-hidden">
                                                 <Image src={coin.logo} alt={coin.symbol} width={24} height={24} className="w-6 h-6 object-contain" />
                                             </div>
@@ -156,8 +183,8 @@ export function CreateChallengeModal({
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">Predict Price</label>
                         <div className="flex gap-2">
-                            <div className="relative flex-1">
-                                <button onClick={() => setIsDirectionDropdownOpen(!isDirectionDropdownOpen)} className="w-full flex items-center justify-between px-4 py-3 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl hover:border-[#d4b8a8] transition-colors">
+                            <div className="relative flex-1" ref={directionDropdownRef}>
+                                <button onClick={() => { closeAllDropdowns(); setIsDirectionDropdownOpen(!isDirectionDropdownOpen); }} className="w-full flex items-center justify-between px-4 py-3 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl hover:border-[#d4b8a8] transition-colors">
                                     <span className="font-semibold text-gray-900">{selectedCoin.name} {predictionDirection}</span>
                                     <svg className={`w-5 h-5 text-gray-500 transition-transform ${isDirectionDropdownOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -181,17 +208,40 @@ export function CreateChallengeModal({
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700">End Date</label>
+                        <div className="flex items-center gap-2">
+                            <label className="text-sm font-medium text-gray-700">Challenge End Date</label>
+                            <span className="relative group/info">
+                                <svg className="w-4 h-4 text-gray-400 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span className="absolute left-0 bottom-full mb-2 px-3 py-2 text-xs text-white bg-gray-800 rounded-lg opacity-0 group-hover/info:opacity-100 transition-opacity pointer-events-none z-20 w-max max-w-[200px]">
+                                    On this exact selected date and time, the challenge will get resolved
+                                </span>
+                            </span>
+                        </div>
                         <button onClick={() => setIsDatePickerOpen(true)} className="w-full flex items-center justify-between px-4 py-3 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl hover:border-[#d4b8a8] transition-colors">
                             <span className="font-medium text-gray-900">{formatDate(selectedDate)}</span>
                             <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                             </svg>
                         </button>
+                        <p className="text-xs text-gray-500">
+                            Ends in <span className="font-medium text-gray-700">{Math.floor((selectedDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))}</span> days <span className="font-medium text-gray-700">{Math.floor(((selectedDate.getTime() - Date.now()) % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))}</span> hours
+                        </p>
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700">Challenge Expiry</label>
+                        <div className="flex items-center gap-2">
+                            <label className="text-sm font-medium text-gray-700">Challenge Expires In</label>
+                            <span className="relative group/info">
+                                <svg className="w-4 h-4 text-gray-400 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span className="absolute left-0 bottom-full mb-2 px-3 py-2 text-xs text-white bg-gray-800 rounded-lg opacity-0 group-hover/info:opacity-100 transition-opacity pointer-events-none z-20 w-max max-w-[200px]">
+                                    Your challenge will expire in the selected time. If not accepted, your bet amount will be refunded and the challenge will be expired.
+                                </span>
+                            </span>
+                        </div>
                         <button onClick={() => setIsDurationPickerOpen(true)} className="w-full flex items-center justify-between px-4 py-3 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl hover:border-[#d4b8a8] transition-colors">
                             <span className="font-medium text-gray-900">{formatDuration(duration)}</span>
                             <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -202,9 +252,9 @@ export function CreateChallengeModal({
 
                     <div className="text-center py-2">
                         <p className="text-gray-700">
-                            You win <span className="font-bold text-gray-900">${(betAmount * 2 * 0.90).toFixed(2)}</span> if {selectedCoin.symbol} closes {predictionDirection.toLowerCase()} ${Number(predictionPrice).toLocaleString()} in {formatDuration(duration)}
+                            You win <span className="font-bold text-gray-900">${(betAmount * 2 * 0.975).toFixed(2)}</span> if {selectedCoin.symbol} closes {predictionDirection.toLowerCase()} ${Number(predictionPrice).toLocaleString()} in {formatDuration(duration)}
                         </p>
-                        <p className="text-xs text-gray-500 mt-1">10% platform fee applies</p>
+                        <p className="text-xs text-gray-500 mt-1">2.5% platform fee applies</p>
                     </div>
 
                     <button

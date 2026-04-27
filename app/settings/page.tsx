@@ -12,6 +12,14 @@ export default function SettingsPage() {
     const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
     const [editProfileIndex, setEditProfileIndex] = useState(0);
     const [copiedAddress, setCopiedAddress] = useState(false);
+    const [email, setEmail] = useState("");
+    const [twitter, setTwitter] = useState("");
+    const [telegram, setTelegram] = useState("");
+    const [verificationCode, setVerificationCode] = useState("");
+    const [isEmailVerified, setIsEmailVerified] = useState(false);
+    const [verificationSent, setVerificationSent] = useState(false);
+    const [generatedCode, setGeneratedCode] = useState("");
+    const [codeExpiry, setCodeExpiry] = useState<number | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const { open: openPhantomModal } = useModal();
@@ -50,6 +58,27 @@ export default function SettingsPage() {
     const randomizeProfile = () => {
         const randomIndex = Math.floor(Math.random() * 31);
         setEditProfileIndex(randomIndex);
+    };
+
+    const sendVerificationCode = () => {
+        if (!email) return;
+        const code = Math.floor(100000 + Math.random() * 900000).toString();
+        setGeneratedCode(code);
+        setCodeExpiry(Date.now() + 10 * 60 * 1000); // 10 minutes expiry
+        setVerificationSent(true);
+        console.log(`Verification code sent to ${email}: ${code}`);
+        alert(`Verification code sent to ${email}: ${code}`);
+    };
+
+    const verifyEmail = () => {
+        if (verificationCode === generatedCode && codeExpiry && Date.now() < codeExpiry) {
+            setIsEmailVerified(true);
+            alert("Email verified successfully!");
+        } else if (codeExpiry && Date.now() >= codeExpiry) {
+            alert("Verification code expired. Please request a new one.");
+        } else {
+            alert("Invalid verification code. Please try again.");
+        }
     };
 
     return (
@@ -121,7 +150,9 @@ export default function SettingsPage() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Username <span className="text-red-500">*</span>
+                                </label>
                                 <input
                                     type="text"
                                     value={username}
@@ -132,7 +163,9 @@ export default function SettingsPage() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Bio <span className="text-red-500">*</span>
+                                </label>
                                 <textarea
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
@@ -141,6 +174,117 @@ export default function SettingsPage() {
                                     placeholder="Tell us about yourself..."
                                 />
                             </div>
+
+                            {/* Twitter & Telegram in one row */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {/* Twitter */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Twitter (optional)</label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z" />
+                                            </svg>
+                                        </div>
+                                        <input
+                                            type="text"
+                                            value={twitter}
+                                            onChange={(e) => setTwitter(e.target.value)}
+                                            className="w-full pl-12 pr-4 py-2 bg-white/80 border border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-transparent"
+                                            placeholder="@username"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Telegram */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Telegram (optional)</label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-8-9 8 9 2zm0 0v-8" />
+                                            </svg>
+                                        </div>
+                                        <input
+                                            type="text"
+                                            value={telegram}
+                                            onChange={(e) => setTelegram(e.target.value)}
+                                            className="w-full pl-12 pr-4 py-2 bg-white/80 border border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-transparent"
+                                            placeholder="@username"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Email Verification */}
+                            {/* <div className="bg-blue-50/50 border border-blue-200 rounded-xl p-4 space-y-3">
+                                <div className="flex items-start gap-2 mb-2">
+                                    <svg className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <p className="text-sm text-blue-700">
+                                        Verify your email to get updates on your challenges, challenge invites, clan invites, etc.
+                                    </p>
+                                </div>
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                    <div className="relative flex-1">
+                                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                            </svg>
+                                        </div>
+                                        <input
+                                            type="email"
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            disabled={isEmailVerified}
+                                            className="w-full pl-12 pr-4 py-2 bg-white/80 border border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                            placeholder="you@example.com"
+                                        />
+                                    </div>
+                                    {!isEmailVerified && (
+                                        <button
+                                            onClick={sendVerificationCode}
+                                            disabled={!email || verificationSent}
+                                            className="px-4 py-2 bg-black text-white rounded-xl hover:bg-gray-800 transition-colors cursor-pointer font-medium text-sm disabled:bg-gray-300 disabled:cursor-not-allowed whitespace-nowrap"
+                                        >
+                                            {verificationSent ? "Resend" : "Verify"}
+                                        </button>
+                                    )}
+                                    {isEmailVerified && (
+                                        <span className="flex items-center gap-1 text-green-600 font-medium text-sm">
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            Verified
+                                        </span>
+                                    )}
+                                </div>
+
+                                {!isEmailVerified && verificationSent && (
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                        <input
+                                            type="text"
+                                            value={verificationCode}
+                                            onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                            className="flex-1 px-4 py-2 bg-white/80 border border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-transparent font-mono tracking-widest text-center"
+                                            placeholder="Enter 6-digit code"
+                                            maxLength={6}
+                                        />
+                                        <button
+                                            onClick={verifyEmail}
+                                            disabled={verificationCode.length !== 6}
+                                            className="px-4 py-2 bg-black text-white rounded-xl hover:bg-gray-800 transition-colors cursor-pointer font-medium text-sm disabled:bg-gray-300 disabled:cursor-not-allowed"
+                                        >
+                                            Confirm
+                                        </button>
+                                    </div>
+                                )}
+
+                                {verificationSent && !isEmailVerified && (
+                                    <p className="text-xs text-gray-500">A 6-digit verification code has been sent to your email address.</p>
+                                )}
+                            </div> */}
 
                             <button
                                 onClick={saveProfile}
@@ -168,9 +312,9 @@ export default function SettingsPage() {
                         <div className="bg-white/70 border border-gray-300 rounded-xl p-4">
                             <label className="block text-sm font-medium text-gray-700 mb-2">Connected Wallet Address</label>
                             {walletAddress ? (
-                                <div className="flex items-center gap-3">
-                                    <div className="flex-1 px-4 py-3 bg-white/80 rounded-xl border border-gray-300/50">
-                                        <code className="text-sm font-mono text-gray-800">{walletAddress}</code>
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                                    <div className="flex-1 px-4 py-3 bg-white/80 rounded-xl border border-gray-300/50 overflow-hidden">
+                                        <code className="text-sm font-mono text-gray-800 break-all">{walletAddress}</code>
                                     </div>
                                     <button
                                         onClick={copyAddress}
@@ -195,8 +339,8 @@ export default function SettingsPage() {
                                 </div>
                             ) : (
                                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                                    <div className="flex-1 px-4 py-3 bg-white/80 rounded-xl border border-gray-300/50">
-                                        <code className="text-sm font-mono text-gray-500">{displayAddress}</code>
+                                    <div className="flex-1 px-4 py-3 bg-white/80 rounded-xl border border-gray-300/50 overflow-hidden">
+                                        <code className="text-sm font-mono text-gray-500 break-all">{displayAddress}</code>
                                     </div>
                                     <button
                                         onClick={openPhantomModal}
@@ -209,6 +353,19 @@ export default function SettingsPage() {
                                     </button>
                                 </div>
                             )}
+                        </div>
+
+                        {/* Embedded Wallet Info */}
+                        <div className="bg-orange-50/70 border border-orange-200 rounded-xl p-4">
+                            <div className="flex items-start gap-3">
+                                <svg className="w-5 h-5 text-orange-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <p className="text-sm text-orange-700">
+                                    This is your embedded wallet address on rekto.fun!
+                                    To access it, simply log in to the <strong>Phantom app</strong> or <strong>browser extension</strong> using the same login method you used on our website.
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </section>
