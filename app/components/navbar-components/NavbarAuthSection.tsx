@@ -33,19 +33,16 @@ export function NavbarAuthSection({
         <div className="flex items-center gap-2 sm:gap-4">
             {authenticated ? (
                 <div className="flex items-center gap-3">
-                    {/* Portfolio Balance */}
-                    <div className="hidden sm:flex items-center gap-2 px-3 py-2 bg-white/30 border border-gray-300 hover:bg-white/50 rounded-full transition-colors cursor-pointer">
-                        {/* <span className="text-xs text-gray-600">Portfolio</span> */}
-                        <span className="text-sm font-semibold text-gray-900">$0.00</span>
-                    </div>
-
+                    {/* deposit section  */}
                     <button
                         type="button"
                         onClick={onOpenDeposit}
                         className="flex items-center gap-2 px-4 py-2 bg-white/50 border border-gray-400 hover:bg-white/80 text-black text-sm font-medium rounded-full transition-colors cursor-pointer"
                     >
-                        $
-                        Deposit
+                        <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                        <span className="text-sm font-semibold text-gray-900">$0.00</span>
                     </button>
 
                     <NavbarProfileDropdown
