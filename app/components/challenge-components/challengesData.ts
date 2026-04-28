@@ -4,7 +4,6 @@ export interface Challenge {
     asset: string;
     assetLogo: string;
     title: string;
-    mode: "pvp" | "multi";
     creator: {
         name: string;
         avatar: string;
@@ -18,12 +17,14 @@ export interface Challenge {
     timeRemaining: string;
     likes: number;
     status: "active" | "expired" | "won" | "lost" | "created" | "accepted";
+    mode: "pvp" | "multi";
+    challengerCount: number;
+    defenderCount: number;
+    totalPool: number;
     accepter?: {
         name: string;
         avatar: string;
     };
-    challengerCount?: number;
-    defenderCount?: number;
 }
 
 // Coin mappings
@@ -43,7 +44,6 @@ export const DUMMY_CHALLENGES: Challenge[] = [
         asset: "SOL",
         assetLogo: coins.SOL.logo,
         title: "SOL Above $160 in 1 Hour?",
-        mode: "pvp",
         creator: {
             name: "DegenLord",
             avatar: "/scribbles/pepe.png",
@@ -57,6 +57,10 @@ export const DUMMY_CHALLENGES: Challenge[] = [
         timeRemaining: "59m 12s",
         likes: 5,
         status: "active",
+        mode: "pvp",
+        challengerCount: 3,
+        defenderCount: 2,
+        totalPool: 500,
         accepter: { name: "CryptoKing", avatar: "/scribbles/pepe.png" },
     },
     {
@@ -64,7 +68,6 @@ export const DUMMY_CHALLENGES: Challenge[] = [
         asset: "BTC",
         assetLogo: coins.BTC.logo,
         title: "BTC Above $95K in 2 Hours?",
-        mode: "multi",
         creator: {
             name: "CryptoKing",
             avatar: "/scribbles/doge.png",
@@ -78,13 +81,16 @@ export const DUMMY_CHALLENGES: Challenge[] = [
         timeRemaining: "1h 45m",
         likes: 12,
         status: "active",
+        mode: "multi",
+        challengerCount: 5,
+        defenderCount: 4,
+        totalPool: 2250,
     },
     {
         id: "3",
         asset: "ETH",
         assetLogo: coins.ETH.logo,
         title: "ETH Below $3,200 in 30 mins?",
-        mode: "pvp",
         creator: {
             name: "BearWhale",
             avatar: "/scribbles/shiba.png",
@@ -98,13 +104,16 @@ export const DUMMY_CHALLENGES: Challenge[] = [
         timeRemaining: "28m 45s",
         likes: 8,
         status: "active",
+        mode: "pvp",
+        challengerCount: 2,
+        defenderCount: 3,
+        totalPool: 2500,
     },
     {
         id: "4",
         asset: "DOGE",
         assetLogo: coins.DOGE.logo,
         title: "DOGE Above $0.18 in 1 Hour?",
-        mode: "multi",
         creator: {
             name: "DegenLord",
             avatar: "/scribbles/pepe.png",
@@ -118,13 +127,16 @@ export const DUMMY_CHALLENGES: Challenge[] = [
         timeRemaining: "52m 30s",
         likes: 3,
         status: "created",
+        mode: "multi",
+        challengerCount: 1,
+        defenderCount: 0,
+        totalPool: 50,
     },
     {
         id: "5",
         asset: "PEPE",
         assetLogo: coins.PEPE.logo,
         title: "PEPE Above $0.000015 in 3 Hours?",
-        mode: "pvp",
         creator: {
             name: "MoonBoy",
             avatar: "/scribbles/pepe.png",
@@ -138,6 +150,10 @@ export const DUMMY_CHALLENGES: Challenge[] = [
         timeRemaining: "2h 15m",
         likes: 7,
         status: "accepted",
+        mode: "pvp",
+        challengerCount: 4,
+        defenderCount: 2,
+        totalPool: 900,
         accepter: { name: "DegenLord", avatar: "/scribbles/pepe.png" },
     },
     {
@@ -145,7 +161,6 @@ export const DUMMY_CHALLENGES: Challenge[] = [
         asset: "SHIB",
         assetLogo: coins.SHIB.logo,
         title: "SHIB Above $0.000025 in 1 Hour?",
-        mode: "pvp",
         creator: {
             name: "ShibArmy",
             avatar: "/scribbles/pepe.png",
@@ -159,6 +174,10 @@ export const DUMMY_CHALLENGES: Challenge[] = [
         timeRemaining: "48m 20s",
         likes: 4,
         status: "expired",
+        mode: "multi",
+        challengerCount: 2,
+        defenderCount: 1,
+        totalPool: 225,
         accepter: { name: "DegenLord", avatar: "/scribbles/pepe.png" },
     },
 ];
