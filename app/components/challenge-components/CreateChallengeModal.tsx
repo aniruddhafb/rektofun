@@ -60,6 +60,7 @@ export function CreateChallengeModal({
     const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
     const [duration, setDuration] = useState({ hours: 4, minutes: 0 });
     const [isDurationPickerOpen, setIsDurationPickerOpen] = useState(false);
+    const [challengeMode, setChallengeMode] = useState<"pvp" | "multi">("pvp");
 
     // Transaction state
     const [txStatus, setTxStatus] = useState<TxStatus>("idle");
@@ -342,7 +343,7 @@ export function CreateChallengeModal({
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700">Bet Amount (SOL)</label>
+                        <label className="text-sm font-medium text-gray-700">Bet Amount (USDC)</label>
                         <div className="relative">
                             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-bold">◎</span>
                             <input type="number" value={betAmount} onChange={(e) => setBetAmount(Number(e.target.value))} step="0.01" min="0.01" className="w-full pl-8 pr-4 py-3 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl text-lg font-semibold text-gray-900 focus:outline-none focus:border-[#d4b8a8]" />
@@ -419,9 +420,38 @@ export function CreateChallengeModal({
                         </button>
                     </div>
 
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700">Challenge Mode</label>
+                        <div className="flex items-center gap-2 p-1 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl">
+                            <button
+                                onClick={() => setChallengeMode("pvp")}
+                                className={`flex-1 py-2 px-4 rounded-lg text-sm font-semibold transition-colors ${challengeMode === "pvp"
+                                        ? "bg-gray-900 text-white"
+                                        : "bg-transparent text-gray-600 hover:bg-[#f3e1d7]"
+                                    }`}
+                            >
+                                PVP
+                            </button>
+                            <button
+                                onClick={() => setChallengeMode("multi")}
+                                className={`flex-1 py-2 px-4 rounded-lg text-sm font-semibold transition-colors ${challengeMode === "multi"
+                                        ? "bg-gray-900 text-white"
+                                        : "bg-transparent text-gray-600 hover:bg-[#f3e1d7]"
+                                    }`}
+                            >
+                                Multi
+                            </button>
+                        </div>
+                        <p className="text-xs text-gray-500">
+                            {challengeMode === "pvp"
+                                ? "One opponent competes against your prediction"
+                                : "Multiple opponents can compete against your prediction"}
+                        </p>
+                    </div>
+
                     <div className="text-center py-2">
                         <p className="text-gray-700">
-                            You win <span className="font-bold text-gray-900">{(betAmount * 2 * 0.975).toFixed(4)} SOL</span> if {selectedCoin.symbol} closes {predictionDirection.toLowerCase()} ${Number(predictionPrice).toLocaleString()} in {formatDuration(duration)}
+                            You win <span className="font-bold text-gray-900">{(betAmount * 2 * 0.975).toFixed(4)} USDC</span> if {selectedCoin.symbol} closes {predictionDirection.toLowerCase()} ${Number(predictionPrice).toLocaleString()} in {formatDuration(duration)}
                         </p>
                         <p className="text-xs text-gray-500 mt-1">2.5% platform fee applies</p>
                     </div>

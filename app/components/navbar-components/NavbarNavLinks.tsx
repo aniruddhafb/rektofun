@@ -54,7 +54,7 @@ export function NavbarNavLinks({ isActive }: NavbarNavLinksProps) {
                             <div className="absolute right-0 top-full pt-2 w-48 z-40">
                                 <div className="bg-white rounded-xl shadow-lg border border-gray-200 py-2">
                                     {MORE_LINKS.map((link) => (
-                                        <a
+                                        <Link
                                             key={link.href}
                                             href={link.href}
                                             target={link.href.startsWith("http") ? "_blank" : undefined}
@@ -70,7 +70,7 @@ export function NavbarNavLinks({ isActive }: NavbarNavLinksProps) {
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                                                 </svg>
                                             )}
-                                        </a>
+                                        </Link>
                                     ))}
                                 </div>
                             </div>
@@ -84,7 +84,7 @@ export function NavbarNavLinks({ isActive }: NavbarNavLinksProps) {
                     style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
                 >
                     {[...NAV_LINKS, ...MORE_LINKS].map((link) => (
-                        <a
+                        <Link
                             key={link.href}
                             href={link.href}
                             target={link.href.startsWith("http") ? "_blank" : undefined}
@@ -100,7 +100,7 @@ export function NavbarNavLinks({ isActive }: NavbarNavLinksProps) {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                                 </svg>
                             )}
-                        </a>
+                        </Link>
                     ))}
                 </div>
             </div>
