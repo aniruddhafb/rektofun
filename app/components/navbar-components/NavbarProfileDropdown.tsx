@@ -102,7 +102,7 @@ export function NavbarProfileDropdown({
             </button>
 
             {isOpen && (
-                <div className="absolute right-0 top-full pt-2 w-72">
+                <div className="absolute right-0 top-full pt-2 w-72 z-50">
                     <div className="bg-white rounded-2xl shadow-xl border border-gray-300 overflow-hidden">
                         <div className="p-4 bg-white from-gray-50 to-gray-100 border-b border-gray-300">
                             <Link
