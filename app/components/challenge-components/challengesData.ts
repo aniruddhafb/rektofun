@@ -4,6 +4,7 @@ export interface Challenge {
     asset: string;
     assetLogo: string;
     title: string;
+    mode: "pvp" | "multi";
     creator: {
         name: string;
         avatar: string;
@@ -21,6 +22,8 @@ export interface Challenge {
         name: string;
         avatar: string;
     };
+    challengerCount?: number;
+    defenderCount?: number;
 }
 
 // Coin mappings
@@ -40,6 +43,7 @@ export const DUMMY_CHALLENGES: Challenge[] = [
         asset: "SOL",
         assetLogo: coins.SOL.logo,
         title: "SOL Above $160 in 1 Hour?",
+        mode: "pvp",
         creator: {
             name: "DegenLord",
             avatar: "/scribbles/pepe.png",
@@ -60,6 +64,7 @@ export const DUMMY_CHALLENGES: Challenge[] = [
         asset: "BTC",
         assetLogo: coins.BTC.logo,
         title: "BTC Above $95K in 2 Hours?",
+        mode: "multi",
         creator: {
             name: "CryptoKing",
             avatar: "/scribbles/doge.png",
@@ -79,6 +84,7 @@ export const DUMMY_CHALLENGES: Challenge[] = [
         asset: "ETH",
         assetLogo: coins.ETH.logo,
         title: "ETH Below $3,200 in 30 mins?",
+        mode: "pvp",
         creator: {
             name: "BearWhale",
             avatar: "/scribbles/shiba.png",
@@ -98,6 +104,7 @@ export const DUMMY_CHALLENGES: Challenge[] = [
         asset: "DOGE",
         assetLogo: coins.DOGE.logo,
         title: "DOGE Above $0.18 in 1 Hour?",
+        mode: "multi",
         creator: {
             name: "DegenLord",
             avatar: "/scribbles/pepe.png",
@@ -117,6 +124,7 @@ export const DUMMY_CHALLENGES: Challenge[] = [
         asset: "PEPE",
         assetLogo: coins.PEPE.logo,
         title: "PEPE Above $0.000015 in 3 Hours?",
+        mode: "pvp",
         creator: {
             name: "MoonBoy",
             avatar: "/scribbles/pepe.png",
@@ -137,6 +145,7 @@ export const DUMMY_CHALLENGES: Challenge[] = [
         asset: "SHIB",
         assetLogo: coins.SHIB.logo,
         title: "SHIB Above $0.000025 in 1 Hour?",
+        mode: "pvp",
         creator: {
             name: "ShibArmy",
             avatar: "/scribbles/pepe.png",
