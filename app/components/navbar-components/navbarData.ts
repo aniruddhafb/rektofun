@@ -5,14 +5,18 @@ export const PROFILE_SVGS = Array.from(
 
 export const NAV_LINKS = [
     { href: "/challenges", label: "Challenges" },
-    { href: "/markets", label: "Markets" },
+    { href: "/markets", label: "Challenge Markets" },
+    { href: "/clans", label: "Explore Clans" },
     { href: "/leaderboard", label: "Leaderboard" },
     { href: "/referral", label: "Referral" },
     { href: "/activity", label: "Activity" },
-    { href: "/clans", label: "Explore Clans" },
-    { href: "/clan", label: "Resolve Challenges" },
+];
+
+export const MORE_LINKS = [
+    { href: "/resolve", label: "Resolve Challenges" },
+    { href: "/mint-nft", label: "Rekto Masters NFT" },
     {
         href: "https://rektofun.gitbook.io/rektofun/roadmap/whats-next",
-        label: "Roadmap",
+        label: "Our Roadmap",
     },
 ];

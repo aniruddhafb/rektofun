@@ -4,14 +4,7 @@ import { useState, useEffect } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { usePathname } from "next/navigation";
 import { DepositModal } from "./DepositModal";
-import {
-    NavbarAuthSection,
-    NavbarBrand,
-    NavbarDesktopSearch,
-    NavbarMobileBottomNav,
-    NavbarNavLinks,
-    NAV_LINKS,
-} from "./navbar-components";
+import * as components from "./navbar-components";
 
 export default function Navbar() {
     const { login, authenticated, user, logout, ready } = usePrivy();
@@ -100,11 +93,10 @@ export default function Navbar() {
                         />
                     </svg>
                     <p className="text-sm text-amber-900 font-medium text-center hidden md:block">
-                        Development Mode — Dummy data is displayed on this
-                        website
+                        Devnet Mode — We Are Currently Operating On Solana Devnet
                     </p>
                     <p className="text-sm text-amber-900 font-medium text-center md:hidden">
-                        Development Mode
+                        Currently In Devnet Mode
                     </p>
                 </div>
             </div>
@@ -114,16 +106,16 @@ export default function Navbar() {
                 <div className="max-w-7xl mx-auto px-6 lg:px-8">
                     <div className="flex items-center justify-between h-20">
                         {/* Brand / Logo */}
-                        <NavbarBrand />
+                        <components.NavbarBrand />
 
                         {/* Desktop Search */}
-                        <NavbarDesktopSearch
+                        <components.NavbarDesktopSearch
                             searchQuery={searchQuery}
                             onSearchQueryChange={setSearchQuery}
                         />
 
                         {/* Auth Section / Profile Dropdown */}
-                        <NavbarAuthSection
+                        <components.NavbarAuthSection
                             authenticated={authenticated}
                             displayAddress={displayAddress || ""}
                             displayUsername={username || ""}
@@ -140,7 +132,7 @@ export default function Navbar() {
                 </div>
 
                 {/* Navigation Links - Second Row */}
-                <NavbarNavLinks isActive={isActive} />
+                <components.NavbarNavLinks isActive={isActive} />
             </nav>
 
             {/* Spacer for fixed navbar */}
@@ -156,7 +148,7 @@ export default function Navbar() {
 
             {/* Profile Edit Modal */}
             {isProfileModalOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
                     <div
                         className="absolute inset-0 bg-black/30 backdrop-blur-sm"
                         onClick={() => setIsProfileModalOpen(false)}
@@ -228,9 +220,8 @@ export default function Navbar() {
                                     <div className="flex items-center gap-4">
                                         <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-white shadow-lg">
                                             <img
-                                                src={`/profiles/${
-                                                    editProfileIndex + 1
-                                                }.svg`}
+                                                src={`/profiles/${editProfileIndex + 1
+                                                    }.svg`}
                                                 alt="Profile"
                                                 className="w-full h-full object-cover"
                                             />
@@ -265,7 +256,7 @@ export default function Navbar() {
             />
 
             {/* Mobile Bottom Navigation - Fixed at bottom */}
-            <NavbarMobileBottomNav
+            <components.NavbarMobileBottomNav
                 isActive={isActive}
                 profileHref={profileHref}
             />
