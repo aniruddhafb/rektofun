@@ -52,9 +52,13 @@ pub struct CreateChallenge<'info> {
     )]
     pub challenge: Account<'info, ChallengeAccount>,
 
-    /// SOL vault that holds both bets — a plain system-owned PDA
+    /// SOL vault that holds both bets — a plain system-owned PDA.
+    /// Must be `init` (not just `mut`) so Anchor creates the account and
+    /// makes it rent-exempt before the system_program::transfer CPI runs.
     #[account(
-        mut,
+        init,
+        payer = creator,
+        space = 0,
         seeds = [VAULT_SEED, challenge.key().as_ref()],
         bump,
     )]
