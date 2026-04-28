@@ -74,12 +74,12 @@ export function ChallengeCard({
 
             {/* Challenge Mode Info */}
             <div className="group relative flex items-center justify-center gap-2 mb-4">
-                <svg className="w-4 h-4 text-black cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <h2 className="text-sm font-medium text-black">
+                    {challenge.mode === "pvp" ? "PVP Mode" : "Multi Mode"}
+                </h2>
+                <svg className="w-4 h-4 text-black cursor-help ml-[-4px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span className="text-xs font-medium text-black">
-                    {challenge.mode === "pvp" ? "PVP Mode" : "Multi Mode"}
-                </span>
                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 text-center">
                     {challenge.mode === "pvp"
                         ? "The creator has set this challenge to PVP mode, meaning it's a 1v1 challenge only."
@@ -93,7 +93,7 @@ export function ChallengeCard({
                 <div className="flex flex-row items-center justify-center gap-2 sm:gap-4">
                     {/* Challenger Profile */}
                     <div className="relative group flex flex-col items-center">
-                        <div className={`relative p-3 rounded-xl transition-all duration-300 ${hasWon
+                        <div className={`w-[120px] h-[140px] flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-300 ${hasWon
                             ? "bg-gradient-to-br from-amber-100 to-yellow-50 border-2 border-amber-400"
                             : hasLost
                                 ? "bg-gradient-to-br from-red-100 to-rose-50 border-2 border-red-300"
@@ -101,37 +101,35 @@ export function ChallengeCard({
                             }`}>
                             {/* Winner Crown */}
                             {hasWon && (
-                                <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-2xl animate-bounce">
+                                <div className="text-2xl animate-bounce">
                                     👑
                                 </div>
                             )}
 
                             {/* Avatar */}
-                            <div className="relative">
-                                <div className={`w-14 h-14 rounded-full overflow-hidden border-2 ${hasWon ? "border-amber-400" : "border-[#d4a574]"
-                                    } shadow-md`}>
-                                    <Image
-                                        src={challenge.creator.avatar}
-                                        alt={challenge.creator.name}
-                                        width={56}
-                                        height={56}
-                                        className="w-full h-full object-cover"
-                                    />
+                            <div className={`w-14 h-14 rounded-full overflow-hidden border-2 ${hasWon ? "border-amber-400" : "border-[#d4a574]"
+                                } shadow-md`}>
+                                <Image
+                                    src={challenge.creator.avatar}
+                                    alt={challenge.creator.name}
+                                    width={56}
+                                    height={56}
+                                    className="w-full h-full object-cover"
+                                />
+                            </div>
+                            {/* Count Badge */}
+                            {challenge.mode === "multi" && challenge.challengerCount > 1 && (
+                                <div className="absolute top-1 right-1 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center border-2 border-white">
+                                    <span className="text-[9px] font-bold text-white">+{challenge.challengerCount - 1}</span>
                                 </div>
-                                {/* Count Badge */}
-                                {challenge.mode === "multi" && challenge.challengerCount > 1 && (
-                                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center border-2 border-white">
-                                        <span className="text-[9px] font-bold text-white">+{challenge.challengerCount - 1}</span>
-                                    </div>
-                                )}
-                                {/* Label */}
-                                <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 px-1.5 py-0.5 bg-[#2d1f1a] text-white text-[9px] font-bold rounded-full">
-                                    {challenge.mode === "multi" ? "CHALLENGERS" : "CHALLENGER"}
-                                </div>
+                            )}
+                            {/* Label */}
+                            <div className="mt-1 px-1.5 py-0.5 bg-[#2d1f1a] text-white text-[9px] font-bold rounded-full">
+                                {challenge.mode === "multi" ? "CHALLENGERS" : "CHALLENGER"}
                             </div>
 
                             {/* Info */}
-                            <div className="mt-4 text-center">
+                            <div className="mt-2 text-center">
                                 <p className="font-bold text-[#2d1f1a] text-xs">{challenge.creator.name}</p>
                                 <p className="text-[10px] text-[#8b7355] mt-0.5">
                                     {hasWon ? "Won!" : hasLost ? "Lost" : "Created"}
@@ -175,7 +173,7 @@ export function ChallengeCard({
                     {/* Defender Profile */}
                     {isAccepted && challenge.accepter ? (
                         <div className="relative group flex flex-col items-center">
-                            <div className={`relative p-3 rounded-xl transition-all duration-300 ${hasLost
+                            <div className={`w-[120px] h-[140px] flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-300 ${hasLost
                                 ? "bg-gradient-to-br from-amber-100 to-yellow-50 border-2 border-amber-400"
                                 : hasWon
                                     ? "bg-gradient-to-br from-red-100 to-rose-50 border-2 border-red-300"
@@ -183,37 +181,35 @@ export function ChallengeCard({
                                 }`}>
                                 {/* Winner Crown */}
                                 {hasLost && (
-                                    <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-2xl animate-bounce">
+                                    <div className="text-2xl animate-bounce">
                                         👑
                                     </div>
                                 )}
 
                                 {/* Avatar */}
-                                <div className="relative">
-                                    <div className={`w-14 h-14 rounded-full overflow-hidden border-2 ${hasLost ? "border-amber-400" : "border-[#d4a574]"
-                                        } shadow-md`}>
-                                        <Image
-                                            src={challenge.accepter.avatar}
-                                            alt={challenge.accepter.name}
-                                            width={56}
-                                            height={56}
-                                            className="w-full h-full object-cover"
-                                        />
+                                <div className={`w-14 h-14 rounded-full overflow-hidden border-2 ${hasLost ? "border-amber-400" : "border-[#d4a574]"
+                                    } shadow-md`}>
+                                    <Image
+                                        src={challenge.accepter.avatar}
+                                        alt={challenge.accepter.name}
+                                        width={56}
+                                        height={56}
+                                        className="w-full h-full object-cover"
+                                    />
+                                </div>
+                                {/* Count Badge */}
+                                {challenge.mode === "multi" && challenge.defenderCount > 1 && (
+                                    <div className="absolute top-1 right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center border-2 border-white">
+                                        <span className="text-[9px] font-bold text-white">+{challenge.defenderCount - 1}</span>
                                     </div>
-                                    {/* Count Badge */}
-                                    {challenge.mode === "multi" && challenge.defenderCount > 1 && (
-                                        <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center border-2 border-white">
-                                            <span className="text-[9px] font-bold text-white">+{challenge.defenderCount - 1}</span>
-                                        </div>
-                                    )}
-                                    {/* Label */}
-                                    <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 px-1.5 py-0.5 bg-[#2d1f1a] text-white text-[9px] font-bold rounded-full">
-                                        {challenge.mode === "multi" ? "DEFENDERS" : "DEFENDER"}
-                                    </div>
+                                )}
+                                {/* Label */}
+                                <div className="mt-1 px-1.5 py-0.5 bg-[#2d1f1a] text-white text-[9px] font-bold rounded-full">
+                                    {challenge.mode === "multi" ? "DEFENDERS" : "DEFENDER"}
                                 </div>
 
                                 {/* Info */}
-                                <div className="mt-4 text-center">
+                                <div className="mt-2 text-center">
                                     <p className="font-bold text-[#2d1f1a] text-xs">{challenge.accepter.name}</p>
                                     <p className="text-[10px] text-[#8b7355] mt-0.5">
                                         {hasLost ? "Won!" : hasWon ? "Lost" : "Defending"}
@@ -223,14 +219,15 @@ export function ChallengeCard({
                         </div>
                     ) : (
                         /* Placeholder for pending state */
-                        <div className="relative flex flex-col items-center">
-                            <div className="p-3 rounded-xl bg-white/40 border-2 border-dashed border-[#d4a574]/30">
-                                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center border-2 border-[#d4a574]/50">
-                                    <span className="text-xl">❓</span>
-                                </div>
-                                <div className="mt-3 text-center">
-                                    <p className="font-semibold text-[#8b7355] text-xs">No one yet</p>
-                                </div>
+                        <div className="w-[120px] h-[140px] flex flex-col items-center justify-center p-3 rounded-xl bg-white/40 border-2 border-dashed border-[#d4a574]/30">
+                            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center border-2 border-[#d4a574]/50">
+                                <span className="text-xl">❓</span>
+                            </div>
+                            <div className="mt-1 px-1.5 py-0.5 bg-[#2d1f1a] text-white text-[9px] font-bold rounded-full">
+                                {challenge.mode === "multi" ? "DEFENDERS" : "DEFENDER"}
+                            </div>
+                            <div className="mt-2 text-center">
+                                <p className="font-semibold text-[#8b7355] text-xs">No one yet!</p>
                             </div>
                         </div>
                     )}
