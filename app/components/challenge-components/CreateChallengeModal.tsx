@@ -4,6 +4,16 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { DatePickerModal } from "./DatePickerModal";
 import { DurationPickerModal } from "./DurationPickerModal";
+import { useSolana, useModal, useAccounts } from "@phantom/react-sdk";
+import { Connection, PublicKey } from "@solana/web3.js";
+import {
+    getRektoProgram,
+    buildCreateChallengeTx,
+    deriveChallengePDA,
+    deriveCreatorCounter,
+    RPC_ENDPOINT,
+} from "@/app/lib/rektofun-program";
+import { createChallenge } from "@/app/lib/challenges-service/challenges";
 
 interface Coin {
     symbol: string;
@@ -31,9 +41,12 @@ const markets = [
     { symbol: "ETH-PERP", name: "Ethereum Perpetual" },
 ];
 
+type TxStatus = "idle" | "building" | "signing" | "confirming" | "success" | "error";
+
 export function CreateChallengeModal({
     isOpen,
     onClose,
+    onCreated,
 }: CreateChallengeModalProps) {
     const [selectedMarket, setSelectedMarket] = useState(markets[0]);
     const [isMarketDropdownOpen, setIsMarketDropdownOpen] = useState(false);
@@ -48,9 +61,21 @@ export function CreateChallengeModal({
     const [duration, setDuration] = useState({ hours: 4, minutes: 0 });
     const [isDurationPickerOpen, setIsDurationPickerOpen] = useState(false);
 
+    // Transaction state
+    const [txStatus, setTxStatus] = useState<TxStatus>("idle");
+    const [txError, setTxError] = useState<string | null>(null);
+    const [txSignature, setTxSignature] = useState<string | null>(null);
+
     const marketDropdownRef = useRef<HTMLDivElement>(null);
     const coinDropdownRef = useRef<HTMLDivElement>(null);
     const directionDropdownRef = useRef<HTMLDivElement>(null);
+
+    // Phantom SDK hooks
+    const { solana, isAvailable } = useSolana();
+    const { open: openPhantomModal } = useModal();
+    const accounts = useAccounts();
+    const walletAddress = accounts?.[0]?.address ?? null;
+    const isWalletConnected = Boolean(walletAddress);
 
     useEffect(() => {
         if (isOpen) document.body.style.overflow = "hidden";
@@ -58,6 +83,15 @@ export function CreateChallengeModal({
         return () => {
             document.body.style.overflow = "unset";
         };
+    }, [isOpen]);
+
+    // Reset tx state when modal opens
+    useEffect(() => {
+        if (isOpen) {
+            setTxStatus("idle");
+            setTxError(null);
+            setTxSignature(null);
+        }
     }, [isOpen]);
 
     useEffect(() => {
@@ -100,6 +134,162 @@ export function CreateChallengeModal({
         if (remainingHours > 0) result += `${remainingHours}h `;
         if (dur.minutes > 0) result += `${dur.minutes}m`;
         return result.trim();
+    };
+
+    const handleCreateChallenge = async () => {
+        // If wallet not connected, open Phantom modal
+        if (!isWalletConnected || !walletAddress) {
+            openPhantomModal();
+            return;
+        }
+
+        if (!isAvailable || !solana) {
+            setTxError("Solana wallet not available. Please connect your wallet.");
+            return;
+        }
+
+        // Validate inputs
+        if (betAmount <= 0) {
+            setTxError("Bet amount must be greater than 0.");
+            return;
+        }
+        if (!predictionPrice || Number(predictionPrice) <= 0) {
+            setTxError("Please enter a valid prediction price.");
+            return;
+        }
+        if (duration.hours === 0 && duration.minutes === 0) {
+            setTxError("Please select a challenge expiry duration.");
+            return;
+        }
+        if (selectedDate.getTime() <= Date.now()) {
+            setTxError("Challenge end date must be in the future.");
+            return;
+        }
+
+        setTxStatus("building");
+        setTxError(null);
+        setTxSignature(null);
+
+        try {
+            const creatorPubkey = new PublicKey(walletAddress);
+            const connection = new Connection(RPC_ENDPOINT, "confirmed");
+
+            // Build a wallet adapter compatible with getRektoProgram
+            const walletAdapter = {
+                publicKey: creatorPubkey,
+                signTransaction: async (tx: any) => {
+                    const signed = await solana.signTransaction(tx);
+                    return signed as any;
+                },
+                signAllTransactions: async (txs: any[]) => {
+                    const signed = await solana.signAllTransactions(txs);
+                    return signed as any[];
+                },
+            };
+
+            const program = getRektoProgram(walletAdapter);
+
+            // Calculate timestamps
+            const nowSec = Math.floor(Date.now() / 1000);
+            const expiresAt = nowSec + duration.hours * 3600 + duration.minutes * 60;
+            const resolvesAt = Math.floor(selectedDate.getTime() / 1000);
+
+            // target price in USD cents (e.g. $66,500 → 6_650_000)
+            const targetPriceUsdCents = Math.round(Number(predictionPrice) * 100);
+
+            // Build the transaction
+            const tx = await buildCreateChallengeTx(program, creatorPubkey, {
+                asset: selectedCoin.symbol,
+                betAmountSol: betAmount,
+                targetPriceUsdCents,
+                directionAbove: predictionDirection === "Above",
+                expiresAt,
+                resolvesAt,
+            });
+
+            // Set recent blockhash and fee payer
+            const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
+            tx.recentBlockhash = blockhash;
+            tx.feePayer = creatorPubkey;
+
+            setTxStatus("signing");
+
+            // Sign and send via Phantom
+            const { signature } = await solana.signAndSendTransaction(tx as any);
+            setTxSignature(signature);
+            setTxStatus("confirming");
+
+            // Wait for confirmation
+            await connection.confirmTransaction(
+                { signature, blockhash, lastValidBlockHeight },
+                "confirmed"
+            );
+
+            // Derive challenge PDA to get challenge_id for backend
+            const [counterPDA] = deriveCreatorCounter(creatorPubkey);
+            let challengeId = 0;
+            try {
+                const counter = await (program.account as any).creatorCounter.fetch(counterPDA);
+                // After creation, count is incremented — so current challenge_id = count - 1
+                challengeId = Number(counter.count) - 1;
+            } catch {
+                challengeId = 0;
+            }
+
+            const [challengePDA] = deriveChallengePDA(creatorPubkey, challengeId);
+
+            // Post to backend API
+            try {
+                await createChallenge({
+                    tx_signature: signature,
+                    challenge_pda: challengePDA.toBase58(),
+                    challenge_id: challengeId,
+                    creator_wallet: walletAddress,
+                    market: selectedMarket.symbol,
+                    asset: selectedCoin.symbol,
+                    bet_amount_sol: betAmount,
+                    target_price_usd_cents: targetPriceUsdCents,
+                    direction_above: predictionDirection === "Above",
+                    expires_at: expiresAt,
+                    resolves_at: resolvesAt,
+                });
+            } catch (apiErr) {
+                // Backend error is non-fatal — the on-chain tx succeeded
+                console.warn("Backend API error (non-fatal):", apiErr);
+            }
+
+            setTxStatus("success");
+            onCreated();
+        } catch (err: any) {
+            console.error("Create challenge error:", err);
+            const msg =
+                err?.message?.includes("User rejected")
+                    ? "Transaction cancelled by user."
+                    : err?.message || "Transaction failed. Please try again.";
+            setTxError(msg);
+            setTxStatus("error");
+        }
+    };
+
+    const isLoading = txStatus === "building" || txStatus === "signing" || txStatus === "confirming";
+
+    const getButtonLabel = () => {
+        if (!isWalletConnected) return "Connect Wallet to Create";
+        switch (txStatus) {
+            case "building": return "Building Transaction...";
+            case "signing": return "Waiting for Signature...";
+            case "confirming": return "Confirming on-chain...";
+            case "success": return "Challenge Created! 🎉";
+            default: return "Create Challenge";
+        }
+    };
+
+    const getButtonStyle = () => {
+        if (!isWalletConnected) return "w-full py-4 bg-orange-500 hover:bg-orange-600 text-white rounded-full font-bold text-lg transition-colors";
+        if (isLoading) return "w-full py-4 bg-gray-400 text-white rounded-full font-bold text-lg cursor-not-allowed";
+        if (txStatus === "success") return "w-full py-4 bg-green-500 text-white rounded-full font-bold text-lg cursor-not-allowed";
+        if (txStatus === "error") return "w-full py-4 bg-red-500 hover:bg-red-600 text-white rounded-full font-bold text-lg transition-colors";
+        return "w-full py-4 bg-gray-900 hover:bg-gray-700 text-white rounded-full font-bold text-lg transition-colors";
     };
 
     return (
@@ -173,9 +363,9 @@ export function CreateChallengeModal({
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700">Bet Amount (USDC)</label>
+                        <label className="text-sm font-medium text-gray-700">Bet Amount (SOL)</label>
                         <div className="relative">
-                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-bold">$</span>
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-bold">◎</span>
                             <input type="number" value={betAmount} onChange={(e) => setBetAmount(Number(e.target.value))} step="0.01" min="0.01" className="w-full pl-8 pr-4 py-3 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl text-lg font-semibold text-gray-900 focus:outline-none focus:border-[#d4b8a8]" />
                         </div>
                     </div>
@@ -252,15 +442,54 @@ export function CreateChallengeModal({
 
                     <div className="text-center py-2">
                         <p className="text-gray-700">
-                            You win <span className="font-bold text-gray-900">${(betAmount * 2 * 0.975).toFixed(2)}</span> if {selectedCoin.symbol} closes {predictionDirection.toLowerCase()} ${Number(predictionPrice).toLocaleString()} in {formatDuration(duration)}
+                            You win <span className="font-bold text-gray-900">{(betAmount * 2 * 0.975).toFixed(4)} SOL</span> if {selectedCoin.symbol} closes {predictionDirection.toLowerCase()} ${Number(predictionPrice).toLocaleString()} in {formatDuration(duration)}
                         </p>
                         <p className="text-xs text-gray-500 mt-1">2.5% platform fee applies</p>
                     </div>
 
+                    {/* Error message */}
+                    {txStatus === "error" && txError && (
+                        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
+                            ⚠️ {txError}
+                        </div>
+                    )}
+
+                    {/* Success message */}
+                    {txStatus === "success" && txSignature && (
+                        <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-green-700">
+                            <p className="font-semibold">✅ Challenge created on-chain!</p>
+                            <a
+                                href={`https://explorer.solana.com/tx/${txSignature}?cluster=devnet`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-green-600 underline break-all text-xs mt-1 block"
+                            >
+                                View on Solana Explorer ↗
+                            </a>
+                        </div>
+                    )}
+
+                    {/* Loading status indicator */}
+                    {isLoading && (
+                        <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-sm text-blue-700 flex items-center gap-2">
+                            <svg className="animate-spin w-4 h-4 text-blue-500 flex-shrink-0" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                            </svg>
+                            <span>
+                                {txStatus === "building" && "Building transaction..."}
+                                {txStatus === "signing" && "Please approve in your wallet..."}
+                                {txStatus === "confirming" && "Confirming on Solana devnet..."}
+                            </span>
+                        </div>
+                    )}
+
                     <button
-                        className="w-full py-4 bg-gray-400 text-white rounded-full font-bold text-lg cursor-not-allowed"
+                        onClick={handleCreateChallenge}
+                        disabled={isLoading || txStatus === "success"}
+                        className={getButtonStyle()}
                     >
-                        Create Challenge
+                        {getButtonLabel()}
                     </button>
                 </div>
             </div>
