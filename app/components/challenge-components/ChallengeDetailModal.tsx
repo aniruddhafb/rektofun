@@ -9,6 +9,7 @@ interface Challenge {
     asset: string;
     assetLogo: string;
     title: string;
+    mode: "pvp" | "multi";
     creator: {
         name: string;
         avatar: string;
@@ -26,6 +27,10 @@ interface Challenge {
         name: string;
         avatar: string;
     };
+    challengerCount?: number;
+    defenderCount?: number;
+    challengerPlayers?: { name: string; avatar: string }[];
+    defenderPlayers?: { name: string; avatar: string }[];
     createdAt?: string;
     expiresAt?: string;
     endsAt?: string;
@@ -137,31 +142,16 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
 
                         {/* Challenge Info */}
                         <div className="flex-1 text-center sm:text-left">
-                            {/* Market Tag */}
-                            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#2d1f1a]/10 rounded-full mb-3">
-                                <div className="w-4 h-4 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
-                                    <span className="text-[10px]">₿</span>
-                                </div>
-                                <span className="text-xs font-semibold text-[#2d1f1a] uppercase tracking-wide">{challenge.asset} Market</span>
-                            </div>
-
                             {/* Title */}
                             <h2 className="text-2xl sm:text-3xl font-bold text-[#2d1f1a] mb-3 leading-tight">
                                 {challenge.title}
                             </h2>
 
-                            {/* Created By */}
+                            {/* Created By + Market in one line */}
                             <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/60 backdrop-blur-sm rounded-xl border border-[#d4a574]/30">
-                                <div className="w-6 h-6 rounded-full overflow-hidden border border-[#d4a574]">
-                                    <Image
-                                        src={challenge.creator.avatar}
-                                        alt={challenge.creator.name}
-                                        width={24}
-                                        height={24}
-                                        className="w-full h-full object-cover"
-                                    />
-                                </div>
                                 <span className="font-semibold text-[#5c4a42]">Created by {challenge.creator.name}</span>
+                                <span className="text-[#8b7355]">in</span>
+                                <span className="font-semibold text-[#5c4a42]">{challenge.asset} Market</span>
                             </div>
                         </div>
                     </div>
@@ -254,10 +244,26 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
                             {isAccepted ? "Battle Matchup" : "Waiting for Challenger"}
                         </h3>
 
-                        <div className={`flex flex-row items-center justify-center gap-4`}>
+                        {/* Challenge Mode Info */}
+                        <div className="group relative flex items-center justify-center gap-2 mb-4">
+                            <h2 className="text-sm font-medium text-[#2d1f1a]">
+                                {challenge.mode === "pvp" ? "PVP Mode" : "Multi Mode"}
+                            </h2>
+                            <svg className="w-4 h-4 text-[#2d1f1a] cursor-help ml-[-4px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 text-center">
+                                {challenge.mode === "pvp"
+                                    ? "The creator has set this challenge to PVP mode, meaning it's a 1v1 challenge only."
+                                    : "The creator has set this challenge to multi mode, meaning multiple people can join."}
+                                <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-row items-center justify-center gap-4">
                             {/* Challenger Profile */}
-                            <div className="relative group">
-                                <div className={`relative p-4 rounded-2xl transition-all duration-300 ${hasWon
+                            <div className="relative group flex flex-col items-center">
+                                <div className={`w-[140px] h-[160px] flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-300 ${hasWon
                                     ? "bg-gradient-to-br from-amber-100 to-yellow-50 border-2 border-amber-400 shadow-lg shadow-amber-200"
                                     : hasLost
                                         ? "bg-gradient-to-br from-red-100 to-rose-50 border-2 border-red-300"
@@ -265,49 +271,69 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
                                     }`}>
                                     {/* Winner Crown */}
                                     {hasWon && (
-                                        <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-3xl animate-bounce">
+                                        <div className="text-2xl animate-bounce">
                                             👑
                                         </div>
                                     )}
 
                                     {/* Avatar */}
-                                    <div className="relative">
-                                        <div className={`w-20 h-20 rounded-full overflow-hidden border-3 ${hasWon ? "border-amber-400" : "border-[#d4a574]"
-                                            } shadow-lg`}>
-                                            <Image
-                                                src={challenge.creator.avatar}
-                                                alt={challenge.creator.name}
-                                                width={80}
-                                                height={80}
-                                                className="w-full h-full object-cover"
-                                            />
+                                    <div className={`w-16 h-16 rounded-full overflow-hidden border-2 ${hasWon ? "border-amber-400" : "border-[#d4a574]"
+                                        } shadow-md`}>
+                                        <Image
+                                            src={challenge.creator.avatar}
+                                            alt={challenge.creator.name}
+                                            width={64}
+                                            height={64}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    </div>
+                                    {/* Count Badge */}
+                                    {challenge.mode === "multi" && (challenge.challengerCount ?? 1) > 1 && (
+                                        <div className="absolute top-2 right-2 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center border-2 border-white">
+                                            <span className="text-[9px] font-bold text-white">+{challenge.challengerCount! - 1}</span>
                                         </div>
-                                        {/* Label */}
-                                        <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-[#2d1f1a] text-white text-[10px] font-bold rounded-full">
-                                            CHALLENGER
-                                        </div>
+                                    )}
+                                    {/* Label */}
+                                    <div className="mt-2 px-2 py-0.5 bg-[#2d1f1a] text-white text-[10px] font-bold rounded-full">
+                                        {challenge.mode === "multi" ? "CHALLENGERS" : "CHALLENGER"}
                                     </div>
 
                                     {/* Info */}
-                                    <div className="mt-6 text-center">
+                                    <div className="mt-3 text-center">
                                         <p className="font-bold text-[#2d1f1a] text-sm">{challenge.creator.name}</p>
-                                        <p className="text-xs text-[#8b7355] mt-1">
-                                            {hasWon ? "Won the bet!" : hasLost ? "Lost the bet" : "Created challenge"}
+                                        <p className="text-[10px] text-[#8b7355] mt-0.5">
+                                            {hasWon ? "Won!" : hasLost ? "Lost" : "Created"}
                                         </p>
                                     </div>
                                 </div>
                             </div>
 
                             {/* VS Badge or Pending Badge */}
-                            <div className="flex flex-col items-center justify-center">
+                            <div className="flex flex-col items-center justify-center px-2">
                                 {isAccepted ? (
                                     <>
                                         <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#2d1f1a] to-[#4a3830] flex items-center justify-center shadow-xl">
                                             <span className="text-2xl font-black text-[#f3e1d7]">VS</span>
                                         </div>
+                                        {/* Pool Display */}
+                                        <div className="mt-3 px-3 py-1.5 bg-emerald-50 rounded-lg text-center border border-emerald-200">
+                                            <div className="flex items-center justify-center gap-1">
+                                                <span className="text-[10px] text-emerald-600 font-medium">Pool</span>
+                                                <div className="group relative">
+                                                    <svg className="w-3 h-3 text-emerald-500 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 text-center">
+                                                        The total money locked in the escrow contract
+                                                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <p className="text-sm font-bold text-emerald-600">${(challenge as any).totalPool ?? challenge.betAmount * 2}</p>
+                                        </div>
                                         {hasWon || hasLost ? (
                                             <div className="mt-2 text-center">
-                                                <p className={`text-2xl font-black ${hasWon ? "text-amber-500" : "text-red-500"}`}>
+                                                <p className={`text-xl font-black ${hasWon ? "text-amber-500" : "text-red-500"}`}>
                                                     {hasWon ? "+" : "-"}${challenge.betAmount}
                                                 </p>
                                                 <p className="text-[10px] text-[#8b7355]">SOL</p>
@@ -327,9 +353,9 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
                             </div>
 
                             {/* Accepter Profile - Only show if accepted */}
-                            {isAccepted && challenge.accepter && (
-                                <div className="relative group">
-                                    <div className={`relative p-4 rounded-2xl transition-all duration-300 ${hasLost
+                            {isAccepted && challenge.accepter ? (
+                                <div className="relative group flex flex-col items-center">
+                                    <div className={`w-[140px] h-[160px] flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-300 ${hasLost
                                         ? "bg-gradient-to-br from-amber-100 to-yellow-50 border-2 border-amber-400 shadow-lg shadow-amber-200"
                                         : hasWon
                                             ? "bg-gradient-to-br from-red-100 to-rose-50 border-2 border-red-300"
@@ -337,51 +363,53 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
                                         }`}>
                                         {/* Winner Crown */}
                                         {hasLost && (
-                                            <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-3xl animate-bounce">
+                                            <div className="text-2xl animate-bounce">
                                                 👑
                                             </div>
                                         )}
 
                                         {/* Avatar */}
-                                        <div className="relative">
-                                            <div className={`w-20 h-20 rounded-full overflow-hidden border-3 ${hasLost ? "border-amber-400" : "border-[#d4a574]"
-                                                } shadow-lg`}>
-                                                <Image
-                                                    src={challenge.accepter.avatar}
-                                                    alt={challenge.accepter.name}
-                                                    width={80}
-                                                    height={80}
-                                                    className="w-full h-full object-cover"
-                                                />
+                                        <div className={`w-16 h-16 rounded-full overflow-hidden border-2 ${hasLost ? "border-amber-400" : "border-[#d4a574]"
+                                            } shadow-md`}>
+                                            <Image
+                                                src={challenge.accepter.avatar}
+                                                alt={challenge.accepter.name}
+                                                width={64}
+                                                height={64}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        </div>
+                                        {/* Count Badge */}
+                                        {challenge.mode === "multi" && (challenge.defenderCount ?? 1) > 1 && (
+                                            <div className="absolute top-2 right-2 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center border-2 border-white">
+                                                <span className="text-[9px] font-bold text-white">+{challenge.defenderCount! - 1}</span>
                                             </div>
-                                            {/* Label */}
-                                            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-[#2d1f1a] text-white text-[10px] font-bold rounded-full">
-                                                ACCEPTER
-                                            </div>
+                                        )}
+                                        {/* Label */}
+                                        <div className="mt-2 px-2 py-0.5 bg-[#2d1f1a] text-white text-[10px] font-bold rounded-full">
+                                            {challenge.mode === "multi" ? "DEFENDERS" : "DEFENDER"}
                                         </div>
 
                                         {/* Info */}
-                                        <div className="mt-6 text-center">
+                                        <div className="mt-3 text-center">
                                             <p className="font-bold text-[#2d1f1a] text-sm">{challenge.accepter.name}</p>
-                                            <p className="text-xs text-[#8b7355] mt-1">
-                                                {hasLost ? "Won the bet!" : hasWon ? "Lost the bet" : "Accepted challenge"}
+                                            <p className="text-[10px] text-[#8b7355] mt-0.5">
+                                                {hasLost ? "Won!" : hasWon ? "Lost" : "Defending"}
                                             </p>
                                         </div>
                                     </div>
                                 </div>
-                            )}
-
-                            {/* Placeholder for pending state */}
-                            {!isAccepted && (
-                                <div className="relative">
-                                    <div className="p-4 rounded-2xl bg-white/40 border-2 border-dashed border-[#d4a574]/30">
-                                        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center border-3 border-[#d4a574]/50">
-                                            <span className="text-3xl">❓</span>
-                                        </div>
-                                        <div className="mt-6 text-center">
-                                            <p className="font-semibold text-[#8b7355] text-sm">No one yet</p>
-                                            <p className="text-xs text-[#a08070] mt-1">Be the first to accept!</p>
-                                        </div>
+                            ) : (
+                                /* Placeholder for pending state */
+                                <div className="w-[140px] h-[160px] flex flex-col items-center justify-center p-3 rounded-xl bg-white/40 border-2 border-dashed border-[#d4a574]/30">
+                                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center border-2 border-[#d4a574]/50">
+                                        <span className="text-2xl">❓</span>
+                                    </div>
+                                    <div className="mt-2 px-2 py-0.5 bg-[#2d1f1a] text-white text-[10px] font-bold rounded-full">
+                                        {challenge.mode === "multi" ? "DEFENDERS" : "DEFENDER"}
+                                    </div>
+                                    <div className="mt-3 text-center">
+                                        <p className="font-semibold text-[#8b7355] text-xs">No one yet!</p>
                                     </div>
                                 </div>
                             )}
@@ -394,14 +422,26 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
                             Challenge Timeline
                         </h3>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                            {/* Mode */}
+                            <div className="relative p-4 bg-white/60 backdrop-blur-sm rounded-xl border border-[#d4a574]/20 hover:border-[#d4a574]/40 hover:shadow-lg transition-all duration-200 cursor-pointer">
+                                <div className="flex items-center gap-3 mb-2">
+                                    <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
+                                        <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                                        </svg>
+                                    </div>
+                                    <span className="text-xs font-semibold text-[#8b7355] uppercase">Mode Type</span>
+                                </div>
+                                <p className="font-bold text-[#2d1f1a]">{challenge.mode === "multi" ? "Multi Mode" : "PVP Mode"}</p>
+                            </div>
                             {/* Created */}
                             <div className="relative p-4 bg-white/60 backdrop-blur-sm rounded-xl border border-[#d4a574]/20 hover:border-[#d4a574]/40 hover:shadow-lg transition-all duration-200 cursor-pointer">
                                 <div className="flex items-center gap-3 mb-2">
                                     <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
                                         <Calendar className="w-4 h-4 text-emerald-600" />
                                     </div>
-                                    <span className="text-xs font-semibold text-[#8b7355] uppercase">Created</span>
+                                    <span className="text-xs font-semibold text-[#8b7355] uppercase">Was Created</span>
                                 </div>
                                 <p className="font-bold text-[#2d1f1a]">{challenge.createdAt || "2 hours ago"}</p>
                             </div>
@@ -412,7 +452,7 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
                                     <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center">
                                         <Clock className="w-4 h-4 text-amber-600" />
                                     </div>
-                                    <span className="text-xs font-semibold text-[#8b7355] uppercase">Expires</span>
+                                    <span className="text-xs font-semibold text-[#8b7355] uppercase">Expires In</span>
                                 </div>
                                 <p className="font-bold text-[#2d1f1a]">{challenge.expiresAt || challenge.timeRemaining}</p>
                             </div>
@@ -423,7 +463,7 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
                                     <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
                                         <AlertCircle className="w-4 h-4 text-blue-600" />
                                     </div>
-                                    <span className="text-xs font-semibold text-[#8b7355] uppercase">Ends</span>
+                                    <span className="text-xs font-semibold text-[#8b7355] uppercase">Ends In</span>
                                 </div>
                                 <p className="font-bold text-[#2d1f1a]">{challenge.endsAt || challenge.timeRemaining}</p>
                             </div>
