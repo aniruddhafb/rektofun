@@ -33,7 +33,7 @@ export function NavbarAuthSection({
 }: NavbarAuthSectionProps) {
     const balanceDisplay = usdcBalance !== null
         ? `$${usdcBalance.toFixed(2)}`
-        : '...';
+        : '$0.00';
 
     return (
         <div className="flex items-center gap-2 sm:gap-4">
