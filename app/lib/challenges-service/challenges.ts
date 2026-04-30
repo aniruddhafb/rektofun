@@ -77,20 +77,42 @@ export async function getChallenges(params: GetChallengesParams = {}): Promise<C
 }
 
 export interface CreateChallengeParams {
-  tx_signature: string;
-  challenge_pda: string;
-  challenge_id: number;
-  creator_wallet: string;
-  market: string;
-  asset: string;
-  bet_amount_sol: number;
-  target_price_usd_cents: number;
-  direction_above: boolean;
-  expires_at: number;
-  resolves_at: number;
+  title: string;
+  description: string;
+  category: string;
+  subcategory: string;
+  event_type: string;
+  ticker: string;
+  created_by: string;
+  resolution_source: string;
+  resolution_details?: Record<string, unknown>;
+  expire_time: string;
+  resolve_time: string;
+  result?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
 }
 
-export async function createChallenge(params: CreateChallengeParams): Promise<{ success: boolean }> {
+export interface CreateChallengeResponse {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  subcategory: string;
+  event_type: string;
+  ticker: string;
+  created_by: string;
+  status: 'open' | 'accepted' | 'closed';
+  resolution_source: string;
+  resolution_details: Record<string, unknown>;
+  expire_time: string;
+  resolve_time: string;
+  result: Record<string, unknown>;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function createChallenge(params: CreateChallengeParams): Promise<CreateChallengeResponse> {
   const response = await fetch(`${API_BASE_URL}/challenges`, {
     method: 'POST',
     headers: {

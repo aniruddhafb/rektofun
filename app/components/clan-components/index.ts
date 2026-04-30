@@ -1,4 +1,4 @@
-export { Clan } from "./ClanTypes";
+export type { Clan } from "./ClanTypes";
 export { clansData } from "./clansData";
 export * from "./Icons";
 export { RankBadge } from "./RankBadge";
