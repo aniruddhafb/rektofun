@@ -27,6 +27,7 @@ export function useSolanaWallet() {
 
     // Pick the first available Solana wallet
     const solanaWallet = wallets[0] ?? null;
+    
 
     console.log({ solanaWallet });
 
