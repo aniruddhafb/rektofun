@@ -6,9 +6,11 @@ import { usePathname } from "next/navigation";
 import { DepositModal } from "./DepositModal";
 import * as components from "./navbar-components";
 import { createUser } from "@/app/lib/users-service/users";
+import { useSolanaWallet } from "../lib/useSolanaWallet";
 
 export default function Navbar() {
-    const { login, authenticated, user, logout, ready } = usePrivy();
+    const { login, authenticated, logout, ready } = usePrivy();
+    const {publicKey} = useSolanaWallet();
     const [searchQuery, setSearchQuery] = useState("");
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
@@ -32,11 +34,11 @@ export default function Navbar() {
 
     // Get wallet address from user object (handles both embedded and external wallets)
     const getWalletAddress = () => {
-        if (!user) {
+        if (!publicKey) {
             console.log('[Navbar] getWalletAddress - user is null, returning null');
             return null;
         }
-        const address = user.wallet?.address || null;
+        const address = publicKey?.toBase58();
         console.log('[Navbar] getWalletAddress - address:', address ? `${address.slice(0, 6)}...` : 'null');
         return address;
     };
@@ -48,7 +50,7 @@ export default function Navbar() {
 
     // Get username from user object
     const getUsername = () => {
-        if (!user) return null;
+        if (!publicKey) return null;
         return (
             displayAddress ||
             "User"
@@ -74,16 +76,16 @@ export default function Navbar() {
     // Call createUser when user authenticates (only once per session)
     useEffect(() => {
         const handleCreateUser = async () => {
-            if (!authenticated || !user || hasCalledCreateUser) {
+            if (!authenticated || !publicKey || hasCalledCreateUser) {
                 console.log('[Navbar] createUser skipped:', {
                     authenticated,
-                    hasUser: !!user,
+                    hasUser: !!publicKey,
                     hasCalledCreateUser
                 });
                 return;
             }
 
-            const walletAddress = user.wallet?.address;
+            const walletAddress = publicKey.toBase58();
             if (!walletAddress) {
                 console.log('[Navbar] createUser skipped - no wallet address');
                 return;
@@ -95,7 +97,7 @@ export default function Navbar() {
                 const userData = await createUser({
                     wallet_address: walletAddress,
                     username: `user-${walletAddress}`,
-                    login_type: user.email ? 'email' : 'wallet',
+                    login_type: 'wallet',
                 });
                 console.log('[Navbar] createUser success:', userData);
             } catch (error) {
@@ -111,7 +113,7 @@ export default function Navbar() {
         };
 
         handleCreateUser();
-    }, [authenticated, user, hasCalledCreateUser, username]);
+    }, [authenticated, publicKey, hasCalledCreateUser, username]);
 
     // Helper function to check if link is active
     const isActive = (href: string) => {

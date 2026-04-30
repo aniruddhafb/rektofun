@@ -221,17 +221,16 @@ export function CreateChallengeModal({
             // Post to backend API
             try {
                 await createChallenge({
-                    tx_signature: signature,
-                    challenge_pda: challengePDA.toBase58(),
-                    challenge_id: challengeId,
-                    creator_wallet: walletAddress || "",
-                    market: selectedMarket.symbol,
-                    asset: selectedCoin.symbol,
-                    bet_amount_sol: betAmount,
-                    target_price_usd_cents: targetPriceUsdCents,
-                    direction_above: predictionDirection === "Above",
-                    expires_at: expiresAt,
-                    resolves_at: resolvesAt,
+                    title: `${selectedCoin.symbol} ${predictionDirection} $${predictionPrice}`,
+                    description: `Bet ${betAmount} SOL that ${selectedCoin.symbol} will be ${predictionDirection.toLowerCase()} $${predictionPrice} by ${selectedDate.toISOString()}`,
+                    category: selectedMarket.symbol,
+                    subcategory: selectedCoin.symbol,
+                    event_type: "binary",
+                    ticker: selectedCoin.symbol,
+                    created_by: walletAddress || "",
+                    resolution_source: "price_feed",
+                    expire_time: new Date(expiresAt * 1000).toISOString(),
+                    resolve_time: new Date(resolvesAt * 1000).toISOString(),
                 });
             } catch (apiErr) {
                 // Backend error is non-fatal — the on-chain tx succeeded
