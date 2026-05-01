@@ -4,6 +4,7 @@
  */
 
 import { Clan as FrontendClan } from "@/app/components/clan-components/ClanTypes";
+import { ClanData } from "@/app/components/clan-slug-components/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
@@ -139,4 +140,58 @@ export async function getUserIdByWallet(walletAddress: string): Promise<string> 
 
     const user = await response.json();
     return user.id;
+}
+
+/**
+ * Transform backend clan response to ClanData format for clan detail page
+ */
+export async function transformClanToClanData(clan: Clan, index: number = 0): Promise<ClanData> {
+    // Fetch leader profile data
+    let leaderName = clan.clan_leader;
+    let leaderAvatar = "/scribbles/btc.png"; // Default avatar
+    
+    try {
+        const leaderResponse = await fetch(`${API_BASE_URL}/users/${encodeURIComponent(clan.clan_leader)}`, {
+            method: "GET",
+            headers: {
+                "accept": "application/json",
+            },
+        });
+        
+        if (leaderResponse.ok) {
+            const leaderData = await leaderResponse.json();
+            leaderName = leaderData.username || clan.clan_leader;
+            leaderAvatar = leaderData.profile_image || "/scribbles/btc.png";
+        }
+    } catch (error) {
+        console.error("Failed to fetch leader profile:", error);
+        // Use default values if fetch fails
+    }
+    
+    return {
+        name: clan.clan_name,
+        slug: clan.id,
+        tagline: clan.clan_description || "Elite trading clan",
+        description: clan.clan_description || "Join us to trade and win together!",
+        leader: leaderName,
+        leaderAvatar: leaderAvatar,
+        logo: clan.clan_image || "/scribbles/coins.png", // Default logo
+        type: clan.clan_status === "public" ? "Public" : "Private",
+        members: clan.clan_members?.length || 0,
+        maxMembers: clan.max_members,
+        totalWins: 0, // These would need to be calculated from challenge data
+        totalRekts: 0,
+        winRate: 0,
+        rektPoints: "0",
+        verified: false,
+        isOpenToJoin: clan.clan_status === "public",
+    };
+}
+
+/**
+ * Get clan by slug/ID and return in ClanData format
+ */
+export async function getClanDataBySlug(slug: string): Promise<ClanData> {
+    const clan = await getClanById(slug);
+    return transformClanToClanData(clan);
 }
