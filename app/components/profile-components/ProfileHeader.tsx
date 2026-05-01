@@ -63,6 +63,10 @@ export function ProfileHeader({
         ? `${walletAddress.slice(0, 8)}...${walletAddress.slice(-8)}`
         : walletAddress;
 
+    const truncatedUsername = username.length > 18
+        ? `${username.slice(0, 8)}...`
+        : username;
+
     return (
         <div className="flex flex-col lg:flex-row lg:items-stretch gap-6 p-6 bg-white/40 backdrop-blur-xl rounded-3xl border border-orange-100/50 shadow-lg">
             {/* Left: Avatar and Info */}
@@ -86,7 +90,7 @@ export function ProfileHeader({
                     {/* Username with gradient */}
                     <div className="flex items-center gap-2">
                         <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-                            {username}
+                            {truncatedUsername}
                         </h1>
                     </div>
 

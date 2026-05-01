@@ -10,11 +10,11 @@ export function ClanCard({ clan }: { clan: Clan }) {
     const isInviteOnly = clan.type === "Invite Only";
 
     const handleClick = () => {
-        router.push(`/clan/${clan.name.toLowerCase().replace(/\s+/g, '-')}`);
+        router.push(`/clan/${clan.id}`);
     };
 
-    // Generate slug from clan name
-    const slug = clan.name.toLowerCase().replace(/\s+/g, '-');
+    // Use clan id as slug
+    const slug = clan.id;
 
     return (
         <div

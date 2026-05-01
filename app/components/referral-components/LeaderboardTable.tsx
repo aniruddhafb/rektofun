@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { Sparkles, Search, ChevronLeft, ChevronRight, Crown, Gem, Loader2 } from "lucide-react";
 import { getLeaderboard, LeaderboardUser } from "@/app/lib/users-service/users";
+import Link from "next/link";
 
 const ITEMS_PER_PAGE = 10;
 const POINTS_PER_REFERRAL = 100;
@@ -32,8 +33,25 @@ interface LeaderboardRowProps {
 
 function LeaderboardRow({ entry }: LeaderboardRowProps) {
     const { rank, user, referralCount, points } = entry;
-    const profileImage = user.profile_image || "/scribbles/pepe.png";
     const username = user.username || "Anonymous";
+    const profileHref = user.wallet_address ? `/profile/${user.wallet_address}` : "#";
+
+    // Validate profile_image URL - use fallback if invalid or from unknown domain
+    let profileImage = "/scribbles/pepe.png";
+    if (user.profile_image) {
+        try {
+            // Check if it's a valid URL and from allowed domain
+            const url = new URL(user.profile_image);
+            if (url.hostname === 'earningrecords.com' || url.protocol === 'data:') {
+                profileImage = user.profile_image;
+            }
+        } catch {
+            // If URL parsing fails, check if it's a relative path
+            if (user.profile_image.startsWith('/')) {
+                profileImage = user.profile_image;
+            }
+        }
+    }
 
     return (
         <div className="grid grid-cols-12 gap-4 px-4 lg:px-6 py-4 items-center hover:bg-white/30 transition-colors">
@@ -43,7 +61,7 @@ function LeaderboardRow({ entry }: LeaderboardRowProps) {
             </div>
 
             {/* Player */}
-            <div className="col-span-3 flex items-center gap-3">
+            <Link href={profileHref} className="col-span-3 flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-gray-100 overflow-hidden border-2 border-white shadow-sm flex-shrink-0">
                     <Image
                         src={profileImage}
@@ -56,7 +74,7 @@ function LeaderboardRow({ entry }: LeaderboardRowProps) {
                 <div className="flex items-center gap-2 min-w-0">
                     <span className="font-medium text-gray-900 truncate">{username}</span>
                 </div>
-            </div>
+            </Link>
 
             {/* Joined */}
             <div className="col-span-2 text-gray-600 text-sm">{formatDate(user.created_at)}</div>
@@ -71,7 +89,7 @@ function LeaderboardRow({ entry }: LeaderboardRowProps) {
             <div className="col-span-2 text-gray-900 font-medium text-sm">
                 {user.earnings !== null ? `$${user.earnings.toFixed(1)}` : "$0.0"}
             </div>
-        </div>
+        </div >
     );
 }
 

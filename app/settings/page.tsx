@@ -21,6 +21,7 @@ export default function SettingsPage() {
     const [showExportModal, setShowExportModal] = useState(false);
     const [copiedAddress, setCopiedAddress] = useState(false);
     const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+    const [saveError, setSaveError] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isLoadingProfile, setIsLoadingProfile] = useState(true);
     const [isSavingProfile, setIsSavingProfile] = useState(false);
@@ -102,6 +103,7 @@ export default function SettingsPage() {
     const saveProfile = async () => {
         if (!publicKey) return;
 
+        setSaveError(null);
         setIsSavingProfile(true);
         try {
             const walletAddress = publicKey.toBase58();
@@ -119,6 +121,8 @@ export default function SettingsPage() {
             setTimeout(() => setShowSuccessMessage(false), 3000);
         } catch (error) {
             console.error('[Settings] Failed to save profile:', error);
+            const errorMessage = 'Failed to save profile, username already exists!!';
+            setSaveError(errorMessage);
         } finally {
             setIsSavingProfile(false);
         }
@@ -228,20 +232,31 @@ export default function SettingsPage() {
 
                             {/* Username Field */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Username*</label>
                                 <input
                                     maxLength={18}
                                     type="text"
                                     value={username}
-                                    onChange={(e) => setUsername(e.target.value)}
-                                    className="w-full px-4 py-2 bg-white/80 border border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-transparent"
+                                    onChange={(e) => {
+                                        setUsername(e.target.value);
+                                        if (saveError) setSaveError(null);
+                                    }}
+                                    className={`w-full px-4 py-2 bg-white/80 border rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-transparent ${saveError ? 'border-red-300' : 'border-gray-300'}`}
                                     placeholder="Enter username"
                                 />
+                                {saveError && (
+                                    <div className="flex items-center gap-2 mt-2 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm font-medium">
+                                        <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        {saveError}
+                                    </div>
+                                )}
                             </div>
 
                             {/* Bio Field */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Bio*</label>
                                 <textarea
                                     maxLength={100}
                                     value={description}

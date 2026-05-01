@@ -169,58 +169,79 @@ export default function ProfilePage() {
         return address;
     };
 
-
-
     if (loading) {
         return <LoadingPage variant="simple" message="Loading profile..." />;
     }
 
-    if (error || !user) {
-        return (
-            <div className="min-h-screen bg-[#f3e1d7] flex items-center justify-center">
-                <div className="text-center">
-                    <p className="text-red-500 mb-2">Failed to load profile</p>
-                    <p className="text-[#666] text-sm">{error || "User not found"}</p>
-                </div>
-            </div>
-        );
-    }
+    const userNotFound = error || !user;
 
     return (
         <div className="min-h-screen bg-[#f3e1d7] pb-8">
             {/* Profile Header Section */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-                <ProfileHeader
-                    username={user.username}
-                    avatar={user.profile_image || "/scribbles/pepe.png"}
-                    walletAddress={formatWalletAddress(user.wallet_address)}
-                    bio={user.description || "No bio yet"}
-                    joinedDate={user.created_at}
-                    balance={{
-                        sol: solBalance ?? user.earnings ?? 0,
-                        solUsd: (solBalance ?? user.earnings ?? 0) * 165, // Approximate SOL to USD
-                        usdc: usdcBalance ?? 0,
-                        usdcUsd: usdcBalance ?? 0, // USDC is 1:1 with USD
-                    }}
-                    stats={{
-                        wins: 0, // These would come from challenges data
-                        rekts: 0,
-                        totalChallenges: 0,
-                        winRatio: 0,
-                    }}
-                />
+                {userNotFound ? (
+                    <>
+                        <ProfileHeader
+                            username={slug}
+                            avatar="/scribbles/pepe.png"
+                            walletAddress={formatWalletAddress(slug)}
+                            bio="No bio yet"
+                            joinedDate={new Date().toISOString()}
+                            balance={{
+                                sol: 0,
+                                solUsd: 0,
+                                usdc: 0,
+                                usdcUsd: 0,
+                            }}
+                            stats={{
+                                wins: 0,
+                                rekts: 0,
+                                totalChallenges: 0,
+                                winRatio: 0,
+                            }}
+                        />
+                        {/* User Not Found Message */}
+                        <div className="mt-6 p-4 bg-orange-100/50 backdrop-blur-sm rounded-2xl border border-orange-200/50 text-center">
+                            <p className="text-gray-700 text-lg font-medium">
+                                This user is not registered on RektoFun yet!
+                            </p>
+                        </div>
+                    </>
+                ) : (
+                    <>
+                        <ProfileHeader
+                            username={user.username}
+                            avatar={user.profile_image || "/scribbles/pepe.png"}
+                            walletAddress={formatWalletAddress(user.wallet_address)}
+                            bio={user.description || "No bio yet"}
+                            joinedDate={user.created_at}
+                            balance={{
+                                sol: solBalance ?? user.earnings ?? 0,
+                                solUsd: (solBalance ?? user.earnings ?? 0) * 165, // Approximate SOL to USD
+                                usdc: usdcBalance ?? 0,
+                                usdcUsd: usdcBalance ?? 0, // USDC is 1:1 with USD
+                            }}
+                            stats={{
+                                wins: 0, // These would come from challenges data
+                                rekts: 0,
+                                totalChallenges: 0,
+                                winRatio: 0,
+                            }}
+                        />
 
-                {/* Tab Navigation */}
-                <ProfileTabs activeTab={activeTab} onTabChange={setActiveTab} />
+                        {/* Tab Navigation */}
+                        <ProfileTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
-                {/* Challenges Tab Content */}
-                {activeTab === "challenges" && (
-                    <ProfileChallenges onChallengeClick={handleChallengeClick} />
-                )}
+                        {/* Challenges Tab Content */}
+                        {activeTab === "challenges" && (
+                            <ProfileChallenges onChallengeClick={handleChallengeClick} />
+                        )}
 
-                {/* Activity Tab Content */}
-                {activeTab === "activity" && (
-                    <ProfileActivity activityData={activityData} />
+                        {/* Activity Tab Content */}
+                        {activeTab === "activity" && (
+                            <ProfileActivity activityData={activityData} />
+                        )}
+                    </>
                 )}
             </div>
 
