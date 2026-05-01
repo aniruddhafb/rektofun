@@ -54,7 +54,7 @@ export interface ClanData {
     leader: string;
     leaderAvatar: string;
     logo: string;
-    type: "Public" | "Private";
+    type: "Public" | "Invite Only";
     members: number;
     maxMembers: number;
     totalWins: number;
@@ -63,6 +63,7 @@ export interface ClanData {
     rektPoints: string;
     verified: boolean;
     isOpenToJoin: boolean;
+    country?: string;
 }
 
 // ─── Mock Data ───────────────────────────────────────────────────────────────

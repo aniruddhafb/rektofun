@@ -32,6 +32,15 @@ export interface CreateClanParams {
     clan_leader: string;
 }
 
+export interface UpdateClanParams {
+    clan_name: string;
+    clan_description?: string;
+    clan_image?: string;
+    max_members: number;
+    clan_status: "public" | "invite_only";
+    clan_region?: string;
+}
+
 export async function createClan(params: CreateClanParams): Promise<Clan> {
     const response = await fetch(`${API_BASE_URL}/clans`, {
         method: "POST",
@@ -96,6 +105,62 @@ function transformClanResponse(clan: Clan, index: number): FrontendClan {
     };
 }
 
+/**
+ * Fetch leader info (name and avatar) from the users API
+ */
+async function fetchLeaderInfo(leaderId: string): Promise<{ name: string; avatar: string }> {
+    let leaderName = leaderId;
+    let leaderAvatar = "/scribbles/btc.png"; // Default avatar
+
+    try {
+        const leaderResponse = await fetch(`${API_BASE_URL}/users/${encodeURIComponent(leaderId)}`, {
+            method: "GET",
+            headers: {
+                "accept": "application/json",
+            },
+        });
+
+        if (leaderResponse.ok) {
+            const leaderData = await leaderResponse.json();
+            leaderName = leaderData.username || leaderId;
+            leaderAvatar = leaderData.profile_image || "/scribbles/btc.png";
+        }
+    } catch (error) {
+        console.error("Failed to fetch leader profile:", error);
+        // Use default values if fetch fails
+    }
+
+    return { name: leaderName, avatar: leaderAvatar };
+}
+
+/**
+ * Transform backend clan response to frontend Clan type
+ */
+async function transformClanResponseAsync(clan: Clan, index: number): Promise<FrontendClan> {
+    // Fetch leader info
+    const leaderInfo = await fetchLeaderInfo(clan.clan_leader);
+
+    // Map backend fields to frontend Clan type
+    return {
+        id: clan.id,
+        rank: index + 1,
+        name: clan.clan_name,
+        description: clan.clan_description || "",
+        leader: leaderInfo.name,
+        leaderAvatar: leaderInfo.avatar,
+        logo: clan.clan_image || "/scribbles/coins.png", // Default logo
+        type: clan.clan_status === "public" ? "Public" : "Invite Only",
+        members: clan.clan_members?.length || 0,
+        maxMembers: clan.max_members,
+        totalWins: 0, // These would need to be calculated from challenge data
+        totalRekts: 0,
+        winRate: 0,
+        rektPoints: "0",
+        verified: false,
+        chain: clan.clan_region || "Solana",
+    };
+}
+
 export async function getClans(limit: number = 10, offset: number = 0): Promise<PaginatedClansResponse> {
     const response = await fetch(`${API_BASE_URL}/clans?limit=${limit}&offset=${offset}`, {
         method: "GET",
@@ -110,9 +175,11 @@ export async function getClans(limit: number = 10, offset: number = 0): Promise<
 
     const data = await response.json();
 
-    // Transform backend clans to frontend format
-    const transformedClans = data.clans.map((clan: Clan, index: number) =>
-        transformClanResponse(clan, offset + index)
+    // Transform backend clans to frontend format with leader info
+    const transformedClans = await Promise.all(
+        data.clans.map((clan: Clan, index: number) =>
+            transformClanResponseAsync(clan, offset + index)
+        )
     );
 
     return {
@@ -149,7 +216,7 @@ export async function transformClanToClanData(clan: Clan, index: number = 0): Pr
     // Fetch leader profile data
     let leaderName = clan.clan_leader;
     let leaderAvatar = "/scribbles/btc.png"; // Default avatar
-    
+
     try {
         const leaderResponse = await fetch(`${API_BASE_URL}/users/${encodeURIComponent(clan.clan_leader)}`, {
             method: "GET",
@@ -157,7 +224,7 @@ export async function transformClanToClanData(clan: Clan, index: number = 0): Pr
                 "accept": "application/json",
             },
         });
-        
+
         if (leaderResponse.ok) {
             const leaderData = await leaderResponse.json();
             leaderName = leaderData.username || clan.clan_leader;
@@ -167,7 +234,7 @@ export async function transformClanToClanData(clan: Clan, index: number = 0): Pr
         console.error("Failed to fetch leader profile:", error);
         // Use default values if fetch fails
     }
-    
+
     return {
         name: clan.clan_name,
         slug: clan.id,
@@ -176,7 +243,7 @@ export async function transformClanToClanData(clan: Clan, index: number = 0): Pr
         leader: leaderName,
         leaderAvatar: leaderAvatar,
         logo: clan.clan_image || "/scribbles/coins.png", // Default logo
-        type: clan.clan_status === "public" ? "Public" : "Private",
+        type: clan.clan_status === "public" ? "Public" : "Invite Only",
         members: clan.clan_members?.length || 0,
         maxMembers: clan.max_members,
         totalWins: 0, // These would need to be calculated from challenge data
@@ -185,6 +252,7 @@ export async function transformClanToClanData(clan: Clan, index: number = 0): Pr
         rektPoints: "0",
         verified: false,
         isOpenToJoin: clan.clan_status === "public",
+        country: clan.clan_region || undefined,
     };
 }
 
@@ -194,4 +262,68 @@ export async function transformClanToClanData(clan: Clan, index: number = 0): Pr
 export async function getClanDataBySlug(slug: string): Promise<ClanData> {
     const clan = await getClanById(slug);
     return transformClanToClanData(clan);
+}
+
+/**
+ * Update an existing clan
+ */
+export async function updateClan(clanId: string, params: UpdateClanParams): Promise<Clan> {
+    const response = await fetch(`${API_BASE_URL}/clans/${encodeURIComponent(clanId)}`, {
+        method: "PATCH",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(params),
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`Failed to update clan: ${errorData.detail || response.statusText}`);
+    }
+
+    return response.json();
+}
+
+/**
+ * Join a clan by adding user to members array
+ */
+export interface JoinClanResponse {
+    success: boolean;
+    message: string;
+    members: string[];
+}
+
+export async function joinClan(clanId: string, userId: string): Promise<JoinClanResponse> {
+    const response = await fetch(`${API_BASE_URL}/clans/${encodeURIComponent(clanId)}/join?user_id=${encodeURIComponent(userId)}`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`Failed to join clan: ${errorData.detail || response.statusText}`);
+    }
+
+    return response.json();
+}
+
+/**
+ * Leave a clan by removing user from members array
+ */
+export async function leaveClan(clanId: string, userId: string): Promise<JoinClanResponse> {
+    const response = await fetch(`${API_BASE_URL}/clans/${encodeURIComponent(clanId)}/leave?user_id=${encodeURIComponent(userId)}`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`Failed to leave clan: ${errorData.detail || response.statusText}`);
+    }
+
+    return response.json();
 }

@@ -19,6 +19,7 @@ const ChatSection = ({ clanData }: ChatSectionProps) => {
     const [sending, setSending] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const lastMessageIdRef = useRef<string | null>(null);
 
     // Wallet data hook - provides walletAddress
     const { publicKey } = useSolanaWallet();
@@ -64,22 +65,37 @@ const ChatSection = ({ clanData }: ChatSectionProps) => {
     }, [walletAddress]);
 
     // Fetch messages from backend
-    const fetchMessages = useCallback(async () => {
+    const fetchMessages = useCallback(async (isRefresh = false) => {
         if (!clanData.slug) return;
 
-        setLoading(true);
+        if (!isRefresh) {
+            setLoading(true);
+        }
         setError(null);
         try {
             const data = await getClanMessages(clanData.slug, 50, 0);
             // Messages come newest first, reverse for display
-            setMessages([...data.messages].reverse());
+            const reversedMessages = [...data.messages].reverse();
+
+            // Check if we have new messages
+            const lastMessage = reversedMessages[reversedMessages.length - 1];
+            if (lastMessage && lastMessage.id !== lastMessageIdRef.current) {
+                lastMessageIdRef.current = lastMessage.id;
+                setMessages(reversedMessages);
+            }
         } catch (err) {
             console.error("Failed to fetch messages:", err);
-            setError("Failed to load messages. Please try again.");
+            if (!isRefresh) {
+                setError("Failed to load messages. Please try again.");
+            }
             // Fallback to empty array on error
-            setMessages([]);
+            if (!isRefresh) {
+                setMessages([]);
+            }
         } finally {
-            setLoading(false);
+            if (!isRefresh) {
+                setLoading(false);
+            }
         }
     }, [clanData.slug]);
 
@@ -87,14 +103,23 @@ const ChatSection = ({ clanData }: ChatSectionProps) => {
         fetchMessages();
     }, [fetchMessages]);
 
+    // Poll for new messages every 5 seconds
+    useEffect(() => {
+        const pollInterval = setInterval(() => {
+            fetchMessages(true);
+        }, 5000);
+
+        return () => clearInterval(pollInterval);
+    }, [fetchMessages]);
+
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newMessage.trim() || !currentUser?.id || !walletAddress || sending) return;
+        if (!newMessage.trim() || !currentUser?.id || !walletAddress || !clanData.slug || sending) return;
 
         setSending(true);
         try {
             const message = await createClanMessage(clanData.slug, {
-                clan_id: "", // Backend will verify via slug
+                clan_id: clanData.slug, // Pass the clan slug/ID
                 sender_id: currentUser.id,
                 message: newMessage.trim(),
             });

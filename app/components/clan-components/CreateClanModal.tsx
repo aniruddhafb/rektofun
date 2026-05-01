@@ -117,7 +117,7 @@ export function CreateClanModal({ isOpen, onClose, onClanCreated, userId }: Crea
                 className="absolute inset-0 bg-black/50 backdrop-blur-sm"
                 onClick={onClose}
             />
-            <div className="relative z-10 w-full max-w-md bg-[#f3e1d7] rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+            <div className="relative z-10 w-full max-w-2xl bg-[#f3e1d7] rounded-3xl shadow-2xl overflow-hidden max-h-[80vh] flex flex-col">
                 <div className="p-6 overflow-y-auto flex-1">
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="text-xl font-bold text-gray-900">Create New Clan</h2>
