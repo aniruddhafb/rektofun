@@ -34,6 +34,11 @@ export function ReferralLinkSection({
             return;
         }
 
+        if (redeemCode.trim() === referralCode) {
+            setRedeemError("You cannot redeem your own referral code");
+            return;
+        }
+
         if (!walletAddress) {
             setRedeemError("Please connect your wallet first");
             return;
