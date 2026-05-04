@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { CreateChallengeModal } from "../../components/challenge-components/CreateChallengeModal";
-import { MarketHeader } from "../../components/market-slug-components/MarketHeader";
-import { ChartSection } from "../../components/market-slug-components/ChartSection";
-import { TopTradersSection } from "../../components/market-slug-components/TopTradersSection";
-import { FilterBar } from "../../components/market-slug-components/FilterBar";
-import { MarketChallengesGrid } from "../../components/market-slug-components/MarketChallengesGrid";
-import { PLACEHOLDER_CHALLENGES } from "../../components/market-slug-components/types";
+import { CreateChallengeModal } from "../../../components/challenge-components/CreateChallengeModal";
+import { MarketHeader } from "../../../components/market-slug-components/MarketHeader";
+import { ChartSection } from "../../../components/market-slug-components/ChartSection";
+import { TopTradersSection } from "../../../components/market-slug-components/TopTradersSection";
+import { FilterBar } from "../../../components/market-slug-components/FilterBar";
+import { MarketChallengesGrid } from "../../../components/market-slug-components/MarketChallengesGrid";
+import { PLACEHOLDER_CHALLENGES } from "../../../components/market-slug-components/types";
 
 export default function MarketPage({ params }: { params: { slug: string } }) {
     const [showChart, setShowChart] = useState(true);
