@@ -25,7 +25,7 @@ export function ChallengeCard({
     const isAccepted = challenge.status === "accepted" || challenge.status === "closed";
     const hasWon = challenge.status === "closed" && (challenge as any).result?.winner === challenge.creator_wallet;
     const hasLost = challenge.status === "closed" && (challenge as any).result?.winner !== challenge.creator_wallet;
-    
+
     const assetInfo = coins[challenge.asset];
     const timeRemaining = challenge.expires_at
         ? `${Math.floor((challenge.expires_at - Date.now()) / 60000)}m`
@@ -34,7 +34,7 @@ export function ChallengeCard({
     return (
         <div
             onClick={handleClick}
-            className="bg-[#f8ede7] rounded-2xl p-4 shadow-sm border border-white/50 hover:shadow-lg transition-shadow block cursor-pointer"
+            className="bg-[#f8ede7] rounded-2xl p-4 shadow-sm border border-gray-300 hover:shadow-lg transition-shadow block cursor-pointer"
         >
             {/* Header */}
             <div className="flex items-start justify-between mb-3">
