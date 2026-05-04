@@ -14,6 +14,7 @@ import {
     RPC_ENDPOINT,
 } from "@/app/lib/rektofun-program";
 import { createChallenge } from "@/app/lib/challenges-service/challenges";
+import { useUserStore } from "@/app/store/useUserStore";
 
 interface Coin {
     symbol: string;
@@ -61,6 +62,8 @@ export function CreateChallengeModal({
     const [duration, setDuration] = useState({ hours: 4, minutes: 0 });
     const [isDurationPickerOpen, setIsDurationPickerOpen] = useState(false);
     const [challengeMode, setChallengeMode] = useState<"pvp" | "multi">("pvp");
+
+    const { user } = useUserStore();
 
     // Transaction state
     const [txStatus, setTxStatus] = useState<TxStatus>("idle");
@@ -227,7 +230,7 @@ export function CreateChallengeModal({
                     subcategory: selectedCoin.symbol,
                     event_type: "binary",
                     ticker: selectedCoin.symbol,
-                    created_by: walletAddress || "",
+                    created_by: user?.id || "",
                     mode: challengeMode,
                     initial_bet: betAmount,
                     bet_unit: 1,

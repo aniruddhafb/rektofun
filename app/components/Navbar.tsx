@@ -7,8 +7,10 @@ import { DepositModal } from "./DepositModal";
 import { useSolanaWallet } from "@/app/lib/useSolanaWallet";
 import * as components from "./navbar-components";
 import { createUser, updateUser, getUserByWallet, acceptReferral } from "@/app/lib/users-service/users";
+import { useUserStore } from "@/app/store/useUserStore";
 
 export default function Navbar() {
+    const { setUser, updateUser: updateStoreUser, clearUser } = useUserStore();
     const { login, authenticated, user, logout, ready } = usePrivy();
     const { solanaWallet, publicKey, usdcBalance } = useSolanaWallet();
     const walletAddress = publicKey?.toBase58() ?? null;
@@ -37,6 +39,7 @@ export default function Navbar() {
     const handleLogout = () => {
         console.log('[Navbar] handleLogout called - logout() invoked');
         setHasCalledCreateUser(false);
+        clearUser();
         logout();
     };
 
@@ -66,6 +69,7 @@ export default function Navbar() {
         try {
             const walletAddress = publicKey.toBase58();
             const userData = await getUserByWallet(walletAddress);
+            setUser(userData);
             setUserProfileData({
                 username: userData.username,
                 profileImage: userData.profile_image,
@@ -99,11 +103,13 @@ export default function Navbar() {
             const existingUser = await getUserByWallet(walletAddress);
 
             // Update profile data
-            await updateUser(existingUser.id, {
+            const updatedData = {
                 username: editUsername,
                 description: editBio,
                 profile_image: `https://earningrecords.com/assets/profiles/${profileIndex}.svg`,
-            });
+            };
+            await updateUser(existingUser.id, updatedData);
+            updateStoreUser(updatedData);
             console.log('[Navbar] Profile updated successfully');
 
             // Handle referral if there's an invite code
