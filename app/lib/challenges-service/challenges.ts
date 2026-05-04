@@ -3,7 +3,6 @@ export interface Challenge {
   title: string;
   description: string;
   category: string;
-  subcategory: string;
   event_type: string;
   ticker: string;
   created_by: string;
@@ -137,7 +136,6 @@ export interface CreateChallengeParams {
   title: string;
   description: string;
   category: string;
-  subcategory: string;
   event_type: string;
   ticker: string;
   created_by: string;

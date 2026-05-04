@@ -6,7 +6,6 @@ import { getChallenges } from "../../lib/challenges-service/challenges";
 import { useSolanaWallet } from '@/app/lib/useSolanaWallet';
 import { ChallengeListItem } from '../../lib/challenges-service/challenges';
 
-
 interface ChallengeGridProps {
     onRekt: (challenge: ChallengeListItem) => void;
     onClick: (challenge: ChallengeListItem) => void;
@@ -21,7 +20,6 @@ export function ChallengeGrid({
 }: ChallengeGridProps) {
     const [challenges, setChallenges] = useState<ChallengeListItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-
     const  {publicKey} = useSolanaWallet();
 
     let ownerAddress = publicKey?.toString() || '';

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { DepositModal } from "./DepositModal";
 import { useSolanaWallet } from "@/app/lib/useSolanaWallet";
 import * as components from "./navbar-components";
@@ -25,11 +25,17 @@ export default function Navbar() {
     const [editInviteCode, setEditInviteCode] = useState("");
     const [hasCalledCreateUser, setHasCalledCreateUser] = useState(false);
     const [userProfileData, setUserProfileData] = useState<{ username: string; profileImage: string } | null>(null);
+    const [inviteCodeFromUrl, setInviteCodeFromUrl] = useState("");
     const pathname = usePathname();
 
-    // Get invite code from URL
-    const searchParams = useSearchParams();
-    const inviteCodeFromUrl = searchParams?.get("ref") || "";
+    useEffect(() => {
+        if (typeof window === "undefined") {
+            return;
+        }
+
+        const params = new URLSearchParams(window.location.search);
+        setInviteCodeFromUrl(params.get("ref") || "");
+    }, []);
 
     const handleAuth = () => {
         console.log('[Navbar] handleAuth called - login() invoked');

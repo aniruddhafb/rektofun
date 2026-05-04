@@ -2,7 +2,20 @@
 
 import React from "react";
 import Image from "next/image";
-import { ChallengeListItem, joinChallenge } from "@/app/lib/challenges-service/challenges";
+import {
+    ChallengeListItem,
+    getChallengeById,
+    joinChallenge,
+} from "@/app/lib/challenges-service/challenges";
+import { useUserStore } from "@/app/store/useUserStore";
+import { useSolanaWallet } from "@/app/lib/useSolanaWallet";
+import {
+    buildAcceptChallengeTx,
+    fetchAllChallenges,
+    solToLamports,
+} from "@/app/lib/rektofun-program";
+import { PublicKey } from "@solana/web3.js";
+
 
 interface ChallengeCardProps {
     challenge: ChallengeListItem;
@@ -47,30 +60,26 @@ interface PoolMetadata {
 }
 
 // Helper types for resolution_details
-interface ResolutionDetails {
-    source?: string;
-    metric?: string;
-    condition?: {
-        operator?: string;
-        value?: number;
-    };
-    target?: {
-        type?: string;
-        identifier?: string;
-    };
-    resolution?: {
-        mode?: string;
-        resolve_at?: string;
-    };
-}
-
 export function ChallengeCard({
     challenge,
     onClick,
-    onRekt,
-    ownerAddress
+    onRekt
 }: ChallengeCardProps) {
+    const { user } = useUserStore();
+    const { authenticated, login, program, publicKey, sendTransaction } = useSolanaWallet();
     const [isLoading, setIsLoading] = React.useState(false);
+    const [isBetFormOpen, setIsBetFormOpen] = React.useState(false);
+    const [betInput, setBetInput] = React.useState(String(challenge.initial_bet ?? ""));
+    const [betError, setBetError] = React.useState("");
+    const [currentTime, setCurrentTime] = React.useState(() => Date.now());
+
+    React.useEffect(() => {
+        const interval = window.setInterval(() => {
+            setCurrentTime(Date.now());
+        }, 60000);
+
+        return () => window.clearInterval(interval);
+    }, []);
 
     const handleClick = () => {
         if (onClick) {
@@ -80,20 +89,115 @@ export function ChallengeCard({
         }
     };
 
-    const handleJoinChallenge = async (e: React.MouseEvent) => {
+    const openBetForm = (e: React.MouseEvent) => {
         e.stopPropagation();
+        setBetInput(String(challenge.initial_bet ?? ""));
+        setBetError("");
+        setIsBetFormOpen(true);
+    };
+
+    const closeBetForm = (e?: React.MouseEvent) => {
+        e?.stopPropagation();
+        if (isLoading) return;
+        setBetError("");
+        setIsBetFormOpen(false);
+    };
+
+    const handleJoinChallenge = async (e: React.MouseEvent | React.FormEvent) => {
+        e.preventDefault()
+
+        e.stopPropagation();
+
+        if (!authenticated) {
+            login();
+            return;
+        }
+
+        if (!program || !publicKey) {
+            setBetError("Connect your Solana wallet before joining this challenge.");
+            return;
+        }
+
+        if (!user?.id) {
+            setBetError("Your user profile is not ready yet. Please try again.");
+            return;
+        }
+
+        const parsedBetAmount = Number(betInput);
+        const minAcceptBet = challenge.min_accept_bet;
+        const maxAcceptBet = challenge.max_accept_bet;
+
+        if (!Number.isFinite(parsedBetAmount) || parsedBetAmount <= 0) {
+            setBetError("Please enter a valid bet amount.");
+            return;
+        }
+
+        if (typeof minAcceptBet === "number" && parsedBetAmount < minAcceptBet) {
+            setBetError(`Bet amount must be at least ${minAcceptBet} ${betCurrency}.`);
+            return;
+        }
+
+        if (typeof maxAcceptBet === "number" && parsedBetAmount > maxAcceptBet) {
+            setBetError(`Bet amount must be at most ${maxAcceptBet} ${betCurrency}.`);
+            return;
+        }
+
         try {
+            setBetError("");
             setIsLoading(true);
+
+            const challengeDetails = await getChallengeById(challenge.id);
+            const creatorPubkey = new PublicKey(challenge.creator.wallet_address);
+            const onChainChallenges = await fetchAllChallenges(program);
+            const expectedBetLamports = solToLamports(challenge.initial_bet ?? 0);
+            const expectedExpireAt = Math.floor(new Date(challengeDetails.expire_time).getTime() / 1000);
+            const expectedResolveAt = Math.floor(new Date(challengeDetails.resolve_time).getTime() / 1000);
+            const expectedAsset = challengeDetails.ticker || challenge.market.name;
+
+            const onChainChallenge = onChainChallenges.find((candidate) =>
+                candidate.creator.equals(creatorPubkey) &&
+                candidate.status === "Open" &&
+                candidate.asset === expectedAsset &&
+                candidate.betAmount === expectedBetLamports &&
+                candidate.expiresAt === expectedExpireAt &&
+                candidate.resolvesAt === expectedResolveAt
+            );
+
+            if (!onChainChallenge) {
+                throw new Error("Matching on-chain challenge was not found.");
+            }
+
+            if (parsedBetAmount !== challenge.initial_bet) {
+                throw new Error(
+                    `This on-chain challenge currently requires an exact ${challenge.initial_bet} ${betCurrency} match.`
+                );
+            }
+
+            const tx = await buildAcceptChallengeTx(
+                program,
+                publicKey,
+                onChainChallenge.publicKey,
+                creatorPubkey
+            );
+
+            await sendTransaction(tx);
+
             await joinChallenge({
                 challenge_id: challenge.id,
-                user_id: ownerAddress || "unknown",
+                user_id: user.id,
                 side: "opponent",
-                bet_amount: challenge.initial_bet,
+                bet_amount: parsedBetAmount,
             });
+            setIsBetFormOpen(false);
             if (onRekt) onRekt(challenge);
         } catch (error) {
             console.error("Failed to join challenge:", error);
-            alert("Failed to join challenge. Please try again.");
+            const message =
+                error instanceof Error
+                    ? error.message
+                    : "Failed to join challenge. Please try again.";
+            setBetError(message);
+            alert(message);
         } finally {
             setIsLoading(false);
         }
@@ -121,15 +225,12 @@ export function ChallengeCard({
         display: `$${challenge.total_pool} SOL`,
     };
 
-    // Resolution details are not present in ChallengeListItem, using empty object
-    const resolutionDetails: ResolutionDetails = {};
-
     // Determine mode: pvp or multi (mapped from pvp/pool)
     const challengeMode: "pvp" | "multi" = modeMeta.type || "pvp";
 
     // Helper values derived from metadata
     const isAccepted = challenge.status === "locked" || challenge.status === "resolved";
-    
+
     // ChallengeListItem doesn't have created_by, but we can check result if available
     // Since we don't have created_by in ChallengeListItem, we might need to adjust this logic
     // For now, let's assume we can't determine win/loss without the creator's ID
@@ -153,12 +254,10 @@ export function ChallengeCard({
 
     // Calculate time remaining from expire_time
     const timeRemaining = challenge.expire_time
-        ? `${Math.floor((new Date(challenge.expire_time).getTime() - Date.now()) / 60000)}m`
+        ? `${Math.floor((new Date(challenge.expire_time).getTime() - currentTime) / 60000)}m`
         : "N/A";
 
     // Get resolution condition value for display
-    const conditionValue = resolutionDetails.condition?.value;
-
     return (
         <div
             onClick={handleClick}
@@ -327,7 +426,7 @@ export function ChallengeCard({
                                 {/* Count Badge */}
                                 {challenge.mode === "multi" && (challenge.total_opponents ?? 0) > 1 && (
                                     <div className="absolute top-1 right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center border-2 border-white">
-                                        <span className="text-[9px] font-bold text-white">+{ (challenge.total_opponents ?? 0) - 1}</span>
+                                        <span className="text-[9px] font-bold text-white">+{(challenge.total_opponents ?? 0) - 1}</span>
                                     </div>
                                 )}
                                 {/* Label */}
@@ -367,7 +466,7 @@ export function ChallengeCard({
                     <>
                         <button
                             disabled={isLoading}
-                            onClick={handleJoinChallenge}
+                            onClick={(e) => { e.preventDefault(); handleJoinChallenge(e) }}
                             className="flex-1 py-2.5 px-4 rounded-xl bg-[#246044] hover:bg-[#2b7351] text-white font-bold text-sm shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                         >
                             {isLoading ? "JOINING..." : "JOIN CHALLENGE"}
@@ -375,9 +474,10 @@ export function ChallengeCard({
                         </button>
                     </>
                 ) : (
-                    <button
+                    user?.wallet_address !== challenge.creator.wallet_address && <button
                         disabled={isLoading}
-                        onClick={handleJoinChallenge}
+                        onClick={(e) => { e.preventDefault(); 
+                            openBetForm(e) }}
                         className="w-full py-2.5 px-4 rounded-xl bg-[#246044] hover:bg-[#2b7351] text-white font-bold text-base shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                     >
                         {isLoading ? "JOINING..." : "ACCEPT CHALLENGE"}
@@ -385,6 +485,73 @@ export function ChallengeCard({
                     </button>
                 )}
             </div>
+
+            {isBetFormOpen && (
+                <div
+                    onClick={closeBetForm}
+                    className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+                >
+                    <div
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-full max-w-sm rounded-2xl bg-[#f8ede7] border border-gray-200 shadow-2xl p-5"
+                    >
+                        <div className="flex items-start justify-between gap-4">
+                            <div>
+                                <h3 className="text-lg font-semibold text-gray-900">Place your bet</h3>
+                                <p className="text-sm text-gray-600 mt-1">
+                                    Enter the amount you want to bet on this challenge.
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={closeBetForm}
+                                disabled={isLoading}
+                                className="text-gray-500 hover:text-gray-700 transition-colors disabled:opacity-60"
+                            >
+                                x
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleJoinChallenge} className="mt-4 space-y-4">
+                            <div>
+                                <label htmlFor={`bet-amount-${challenge.id}`} className="block text-sm font-medium text-gray-700 mb-1.5">
+                                    Bet amount
+                                </label>
+                                <input
+                                    id={`bet-amount-${challenge.id}`}
+                                    type="number"
+                                    min={challenge.min_accept_bet ?? 0}
+                                    max={challenge.max_accept_bet}
+                                    step="any"
+                                    value={betInput}
+                                    onChange={(e) => {
+                                        setBetInput(e.target.value);
+                                        if (betError) {
+                                            setBetError("");
+                                        }
+                                    }}
+                                    className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-gray-900 outline-none focus:border-[#246044] focus:ring-2 focus:ring-[#246044]/20"
+                                    placeholder={`Enter amount in ${betCurrency}`}
+                                />
+                                {betError && (
+                                    <p className="mt-1 text-xs text-red-600">{betError}</p>
+                                )}
+                                <p className="mt-1 text-xs text-gray-500">
+                                    Default bet: {challenge.initial_bet} {betCurrency}
+                                </p>
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={isLoading}
+                                className="w-full py-2.5 px-4 rounded-xl bg-[#246044] hover:bg-[#2b7351] text-white font-bold text-sm shadow-lg hover:shadow-xl transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+                            >
+                                {isLoading ? "PLACING BET..." : "BET"}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
 
             {/* Challenge Expiry */}
             <div className="flex items-center justify-center gap-1.5 text-xs text-gray-600 mt-1.5">
@@ -395,7 +562,7 @@ export function ChallengeCard({
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
-                        This challenge will expire in {timeRemaining}, you won't be able to join after that.
+                        This challenge will expire in {timeRemaining}, you will not be able to join after that.
                         <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
                     </div>
                 </div>
