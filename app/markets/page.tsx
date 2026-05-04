@@ -1,405 +1,414 @@
 "use client";
 
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import Image from "next/image";
-import {
-    Search,
-    ChevronDown,
-    ArrowRight,
-    TrendingUp,
-    Clock,
-    DollarSign,
-    Eye,
-    Bookmark,
-} from "lucide-react";
-import { getMarkets, type Market as ApiMarket } from "@/app/lib/markets-service/market";
-import {
-    getChallenges,
-    type ChallengeListItem,
-} from "@/app/lib/challenges-service/challenges";
+import { useState, useRef } from "react";
+import { Search, ChevronDown } from "lucide-react";
 
-interface MarketCardData {
-    id: string;
-    name: string;
-    icon: string;
-    available: number;
-    challenges: {
-        id: string;
-        title: string;
-    }[];
-    totalTraders: number;
-    totalVolume: string;
-}
+// SVG Icons
+const TrendingUpIcon = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+        <polyline points="17 6 23 6 23 12" />
+    </svg>
+);
 
-type SortOption = "Recently Added" | "Trending" | "Price Markets" | "My Watchlists";
+const TrophyIcon = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+        <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+        <path d="M4 22h16" />
+        <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
+        <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
+        <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+    </svg>
+);
 
-const sortOptions: { label: SortOption; icon: ReactNode }[] = [
-    { label: "Recently Added", icon: <Clock className="w-4 h-4" /> },
-    { label: "Trending", icon: <TrendingUp className="w-4 h-4" /> },
-    { label: "Price Markets", icon: <DollarSign className="w-4 h-4" /> },
-    { label: "My Watchlists", icon: <Eye className="w-4 h-4" /> },
-];
+const BarChartIcon = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+        <line x1="12" y1="20" x2="12" y2="10" />
+        <line x1="18" y1="20" x2="18" y2="4" />
+        <line x1="6" y1="20" x2="6" y2="16" />
+    </svg>
+);
 
-function formatCompactNumber(value: number) {
-    return new Intl.NumberFormat("en-US", {
-        notation: "compact",
-        maximumFractionDigits: 1,
-    }).format(value);
-}
+const UsersIcon = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+);
 
-function formatCurrency(value: number) {
-    return new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-        notation: "compact",
-        maximumFractionDigits: 1,
-    }).format(value);
-}
+const CoinsIcon = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+        <circle cx="8" cy="8" r="6" />
+        <path d="M18.09 10.37A6 6 0 1 1 10.34 18" />
+        <path d="M7 6h1v4" />
+        <path d="m16.71 13.88.7.71-2.82 2.82" />
+    </svg>
+);
 
-function mapMarketToCardData(
-    market: ApiMarket,
-    challenges: ChallengeListItem[]
-): MarketCardData {
-    const totalTraders = challenges.reduce((sum, challenge) => {
-        return sum + challenge.total_challengers + challenge.total_opponents;
-    }, 0);
+const FlameIcon = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+        <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
+    </svg>
+);
 
-    return {
-        id: market.id,
-        name: market.name,
-        icon: market.icon || market.image || "/scribbles/coins.png",
-        available: challenges.length,
-        challenges: challenges.map((challenge) => ({
-            id: challenge.id,
-            title: challenge.title,
-        })),
-        totalTraders,
-        totalVolume: formatCurrency(market.total_volume ?? 0),
-    };
-}
+const ArrowRightIcon = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+        <line x1="5" y1="12" x2="19" y2="12" />
+        <polyline points="12 5 19 12 12 19" />
+    </svg>
+);
 
-export default function MarketsPage() {
-    const [currentPage, setCurrentPage] = useState(1);
-    const [sortBy, setSortBy] = useState<SortOption>("Recently Added");
+const BoltIcon = () => (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+    </svg>
+);
+
+export default function CategoryPage() {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-    const [bookmarkedMarkets, setBookmarkedMarkets] = useState<Set<string>>(new Set());
-    const [searchTerm, setSearchTerm] = useState("");
-    const [parentId, setParentId] = useState<string | null>(null);
-    const [markets, setMarkets] = useState<MarketCardData[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const dropdownRef = useRef<HTMLDivElement>(null);
+    const [sortBy, setSortBy] = useState("Trending");
+    const dropdownRef = useRef(null);
 
-    useEffect(() => {
-        if (typeof window === "undefined") {
-            return;
-        }
-
-        const params = new URLSearchParams(window.location.search);
-        setParentId(params.get("id"));
-    }, []);
-
-    const toggleBookmark = (marketId: string) => {
-        setBookmarkedMarkets((prev) => {
-            const newSet = new Set(prev);
-            if (newSet.has(marketId)) {
-                newSet.delete(marketId);
-            } else {
-                newSet.add(marketId);
-            }
-            return newSet;
-        });
-    };
-
-    useEffect(() => {
-        function handleClickOutside(event: MouseEvent) {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-                setIsDropdownOpen(false);
-            }
-        }
-
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
-
-    useEffect(() => {
-        let isMounted = true;
-
-        async function loadMarkets() {
-            if (!parentId) {
-                if (isMounted) {
-                    setMarkets([]);
-                    setError("Missing market id in the URL.");
-                    setIsLoading(false);
-                }
-                return;
-            }
-
-            try {
-                setIsLoading(true);
-                setError(null);
-
-                const marketsResponse = await getMarkets({ parent_id: parentId });
-                const marketCards = await Promise.all(
-                    marketsResponse.markets.map(async (market) => {
-                        const challengesResponse = await getChallenges({ category: market.id });
-                        console.log({challengesResponse});
-                        return mapMarketToCardData(market, challengesResponse.challenges);
-                    })
-                );
-
-                if (isMounted) {
-                    setMarkets(marketCards);
-                }
-            } catch (fetchError) {
-                if (isMounted) {
-                    setError(
-                        fetchError instanceof Error
-                            ? fetchError.message
-                            : "Something went wrong while loading markets."
-                    );
-                    setMarkets([]);
-                }
-            } finally {
-                if (isMounted) {
-                    setIsLoading(false);
-                }
-            }
-        }
-
-        loadMarkets();
-
-        return () => {
-            isMounted = false;
-        };
-    }, [parentId]);
-
-    const filteredMarkets = markets.filter((market) => {
-        const normalizedSearch = searchTerm.trim().toLowerCase();
-
-        if (!normalizedSearch) {
-            return true;
-        }
-
-        return (
-            market.name.toLowerCase().includes(normalizedSearch) ||
-            market.challenges.some((challenge) =>
-                challenge.title.toLowerCase().includes(normalizedSearch)
-            )
-        );
-    });
+    const sortOptions = [
+        { label: "Trending", icon: <TrendingUpIcon /> },
+        { label: "Top Rated", icon: <TrophyIcon /> },
+        { label: "Volume", icon: <BarChartIcon /> },
+        { label: "Newest", icon: <BoltIcon /> },
+    ];
 
     return (
         <div className="min-h-screen bg-[#f3e1d7]">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+
+                {/* Header Section */}
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 sm:mb-8">
                     <div>
-                        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
-                            Markets Challenges
-                        </h1>
-                        <p className="text-gray-600 text-base sm:text-lg">
-                            Predict trends and earn big on top challenge markets
-                        </p>
+                        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2">Explore Markets</h1>
+                        <p className="text-gray-600 text-base sm:text-lg">Predict trends and earn big on top challenge markets</p>
                     </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-                    <div className="flex items-center gap-2 sm:gap-3">
-                        <div className="relative flex-1 sm:flex-none">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                            <input
-                                type="text"
-                                value={searchTerm}
-                                onChange={(event) => setSearchTerm(event.target.value)}
-                                placeholder="Search"
-                                className="pl-10 pr-4 py-2.5 bg-white/50 rounded-full text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200 w-full sm:w-48 lg:w-88"
-                            />
-                        </div>
+                {/* Cards Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 max-w-6xl">
 
-                        <div className="relative" ref={dropdownRef}>
-                            <button
-                                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                className="cursor-pointer flex items-center gap-2 px-3 sm:px-4 py-2.5 bg-white/50 rounded-full text-sm text-gray-700 hover:bg-white/70 transition-colors whitespace-nowrap"
-                            >
-                                <span className="hidden sm:inline">{sortBy}</span>
-                                <span className="sm:hidden">
-                                    {sortOptions.find((option) => option.label === sortBy)?.icon}
-                                </span>
-                                <ChevronDown
-                                    className={`w-4 h-4 transition-transform ${
-                                        isDropdownOpen ? "rotate-180" : ""
-                                    }`}
-                                />
-                            </button>
+                    {/* ── Crypto Markets Card ── */}
+                    <div
+                        className="group relative rounded-2xl overflow-hidden flex flex-col transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
+                        style={{
+                            background: "linear-gradient(145deg, #f3e1d7 0%, #f8ede4 40%, #f5e4d0 100%)",
+                            boxShadow: "0 4px 24px -6px rgba(220,180,140,0.3), 0 1px 4px rgba(0,0,0,0.04)",
+                            border: "1.5px solid rgba(230,180,130,0.25)",
+                        }}
+                    >
+                        {/* Decorative top stripe */}
+                        <div className="h-1.5 w-full" style={{ background: "linear-gradient(90deg, #e8a050, #f0b060, #f5c880)" }} />
 
-                            {isDropdownOpen && (
-                                <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-10">
-                                    {sortOptions.map((option) => (
-                                        <button
-                                            key={option.label}
-                                            onClick={() => {
-                                                setSortBy(option.label);
-                                                setIsDropdownOpen(false);
-                                            }}
-                                            className={`w-full cursor-pointer flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors ${
-                                                sortBy === option.label
-                                                    ? "text-black font-semibold"
-                                                    : "text-gray-700 hover:bg-gray-50"
-                                            }`}
-                                        >
-                                            {option.icon}
-                                            {option.label}
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
+                        {/* Top visual area — shorter for rectangular look */}
+                        <div className="relative h-44 sm:h-48 overflow-hidden flex-shrink-0 px-6 pt-6">
 
-                {isLoading ? (
-                    <div className="rounded-2xl bg-white/40 border border-white/50 p-8 text-center text-gray-700">
-                        Loading markets...
-                    </div>
-                ) : error ? (
-                    <div className="rounded-2xl bg-white/40 border border-white/50 p-8 text-center text-red-700">
-                        {error}
-                    </div>
-                ) : filteredMarkets.length === 0 ? (
-                    <div className="rounded-2xl bg-white/40 border border-white/50 p-8 text-center text-gray-700">
-                        No markets found.
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5 mb-8">
-                        {filteredMarkets.map((market) => (
+                            {/* Subtle dot-grid background */}
                             <div
-                                key={market.id}
-                                className="bg-white/40 backdrop-blur-sm rounded-2xl p-4 sm:p-5 border border-white/50 hover:shadow-lg transition-shadow duration-300 flex flex-col"
-                            >
-                                <div className="flex items-start gap-3 mb-3 sm:mb-4">
-                                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden bg-white/50 flex-shrink-0">
-                                        <Image
-                                            src={market.icon}
-                                            alt={market.name}
-                                            width={48}
-                                            height={48}
-                                            className="w-full h-full object-cover"
-                                        />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <h3 className="font-semibold text-gray-900 text-base sm:text-lg leading-tight mb-1">
-                                            {market.name}
-                                        </h3>
-                                    </div>
-                                    <button
-                                        onClick={() => toggleBookmark(market.id)}
-                                        className="p-2 rounded-full hover:bg-white/50 transition-colors flex-shrink-0"
-                                        aria-label={
-                                            bookmarkedMarkets.has(market.id)
-                                                ? "Remove bookmark"
-                                                : "Add bookmark"
-                                        }
-                                    >
-                                        <Bookmark
-                                            className={`w-5 h-5 transition-colors ${
-                                                bookmarkedMarkets.has(market.id)
-                                                    ? "fill-[#5a7c6c] text-[#5a7c6c]"
-                                                    : "text-gray-400 hover:text-gray-600"
-                                            }`}
-                                        />
-                                    </button>
+                                className="absolute inset-0 opacity-[0.05]"
+                                style={{
+                                    backgroundImage: "radial-gradient(circle, #e8a050 1px, transparent 1px)",
+                                    backgroundSize: "20px 20px",
+                                }}
+                            />
+
+                            {/* Warm glow blob */}
+                            <div
+                                className="absolute -right-8 -top-8 w-48 h-48 rounded-full opacity-20 blur-3xl"
+                                style={{ background: "radial-gradient(circle, #f0b060, #e8a050)" }}
+                            />
+
+                            {/* Icon badge + label */}
+                            <div className="relative z-10 flex items-center gap-3 mb-3">
+                                <div
+                                    className="w-11 h-11 rounded-xl flex items-center justify-center text-[#d09040] shadow-sm transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110"
+                                    style={{ background: "rgba(255,255,255,0.85)" }}
+                                >
+                                    <TrendingUpIcon />
                                 </div>
-
-                                <div className="flex-1 mb-4">
-                                    <div className="max-h-32 overflow-y-auto scrollbar-hide mb-4">
-                                        <style jsx>{`
-                                            .scrollbar-hide::-webkit-scrollbar {
-                                                display: none;
-                                            }
-                                            .scrollbar-hide {
-                                                -ms-overflow-style: none;
-                                                scrollbar-width: none;
-                                            }
-                                        `}</style>
-                                        <div className="pace-y-2">
-                                            {market.challenges.length > 0 ? (
-                                                market.challenges.map((challenge) => (
-                                                    <div
-                                                        key={challenge.id}
-                                                        className="flex items-center justify-between p-2.5 bg-white/30 rounded-lg"
-                                                    >
-                                                        <span className="text-sm text-gray-800 font-medium truncate pr-2">
-                                                            {challenge.title}
-                                                        </span>
-                                                        <button className="px-3 py-1.5 bg-[#246044] hover:bg-[#2b7351] text-white text-xs font-medium rounded-lg transition-colors whitespace-nowrap">
-                                                            Accept
-                                                        </button>
-                                                    </div>
-                                                ))
-                                            ) : (
-                                                <div className="p-2.5 bg-white/30 rounded-lg text-sm text-gray-600">
-                                                    No challenges available.
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center justify-between text-xs text-gray-600 border-t border-white/30 pt-3">
-                                        <div className="flex flex-col">
-                                            <span className="font-semibold text-gray-900">
-                                                {market.available}
-                                            </span>
-                                            <span>Challenges</span>
-                                        </div>
-                                        <div className="flex flex-col items-center">
-                                            <span className="font-semibold text-gray-900">
-                                                {formatCompactNumber(market.totalTraders)}
-                                            </span>
-                                            <span>Traders</span>
-                                        </div>
-                                        <div className="flex flex-col items-end">
-                                            <span className="font-semibold text-gray-900">
-                                                {market.totalVolume}
-                                            </span>
-                                            <span>24H Volume</span>
-                                        </div>
-                                        <div className="flex flex-col items-end">
-                                            <span className="font-semibold text-gray-900">
-                                                {market.totalVolume}
-                                            </span>
-                                            <span>7D Volume</span>
-                                        </div>
-                                    </div>
+                                <div>
+                                    <p className="text-[10px] font-bold text-[#d4a050] uppercase tracking-widest">Category</p>
+                                    <h2 className="text-xl sm:text-2xl font-black text-[#1a1a1a] leading-tight">
+                                        Crypto <span className="text-[#d09040]">Markets</span>
+                                    </h2>
                                 </div>
-
-                                <button className="w-full py-2.5 sm:py-3 bg-[#2b7351] hover:bg-[#246044] text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-2 group text-sm sm:text-base">
-                                    View Challenges
-                                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                                </button>
                             </div>
-                        ))}
-                    </div>
-                )}
 
-                <div className="flex items-center justify-center gap-2">
-                    <div className="flex items-center gap-1">
-                        {[1, 2, 3].map((page) => (
-                            <button
-                                key={page}
-                                onClick={() => setCurrentPage(page)}
-                                className={`w-10 h-10 rounded-lg text-sm font-medium transition-colors ${
-                                    currentPage === page
-                                        ? "bg-[#d4c4b5] text-gray-800"
-                                        : "text-gray-600 hover:bg-white/30"
-                                }`}
+                            <p className="relative z-10 text-[#888] text-xs sm:text-sm font-medium leading-relaxed max-w-[200px]">
+                                Predict price movements, market trends and major crypto events.
+                            </p>
+
+                            {/* Scribble coin images — scattered layout, slightly smaller */}
+                            <div className="absolute right-0 bottom-0 w-[55%] h-full pointer-events-none select-none">
+                                {/* BTC — large, center-right */}
+                                <Image
+                                    src="/scribbles/btc.png"
+                                    alt="Bitcoin"
+                                    width={95}
+                                    height={95}
+                                    className="scribble-btc absolute"
+                                    style={{ right: "18%", bottom: "5%", zIndex: 4 }}
+                                />
+                                {/* SOL — top right */}
+                                <Image
+                                    src="/scribbles/sol.png"
+                                    alt="Solana"
+                                    width={62}
+                                    height={62}
+                                    className="scribble-sol absolute"
+                                    style={{ right: "4%", top: "8%", zIndex: 3 }}
+                                />
+                                {/* DOGE — bottom left of cluster */}
+                                <Image
+                                    src="/scribbles/doge.png"
+                                    alt="Dogecoin"
+                                    width={58}
+                                    height={58}
+                                    className="scribble-doge absolute"
+                                    style={{ right: "52%", bottom: "10%", zIndex: 3 }}
+                                />
+                                {/* SHIBA — top left of cluster */}
+                                <Image
+                                    src="/scribbles/shiba.png"
+                                    alt="Shiba Inu"
+                                    width={52}
+                                    height={52}
+                                    className="scribble-shiba absolute"
+                                    style={{ right: "38%", top: "6%", zIndex: 2 }}
+                                />
+                                {/* PEPE — small accent */}
+                                <Image
+                                    src="/scribbles/pepe.png"
+                                    alt="Pepe"
+                                    width={42}
+                                    height={42}
+                                    className="scribble-pepe absolute"
+                                    style={{ right: "2%", bottom: "12%", zIndex: 2 }}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Divider */}
+                        <div className="mx-5 h-px bg-gradient-to-r from-transparent via-[#e8c8a0]/50 to-transparent" />
+
+                        {/* Stats row — more compact */}
+                        <div className="mx-5 my-3.5 rounded-xl px-4 py-3 bg-white/70 backdrop-blur-sm border border-[#e8c8a0]/50">
+                            <div className="grid grid-cols-4 divide-x divide-[#e8c8a0]/50">
+                                <div className="flex flex-col items-center gap-0.5 px-1">
+                                    <span className="text-[#d4a050]"><BarChartIcon /></span>
+                                    <span className="text-sm sm:text-base font-black text-[#1a1a1a]">124</span>
+                                    <span className="text-[9px] text-[#999] font-semibold uppercase tracking-wide">Markets</span>
+                                </div>
+                                <div className="flex flex-col items-center gap-0.5 px-1">
+                                    <span className="text-[#d4a050]"><UsersIcon /></span>
+                                    <span className="text-sm sm:text-base font-black text-[#1a1a1a]">12.5K</span>
+                                    <span className="text-[9px] text-[#999] font-semibold uppercase tracking-wide">Traders</span>
+                                </div>
+                                <div className="flex flex-col items-center gap-0.5 px-1">
+                                    <span className="text-[#d4a050]"><CoinsIcon /></span>
+                                    <span className="text-sm sm:text-base font-black text-[#1a1a1a]">$12.4M</span>
+                                    <span className="text-[9px] text-[#999] font-semibold uppercase tracking-wide">24H Vol</span>
+                                </div>
+                                <div className="flex flex-col items-center gap-0.5 px-1">
+                                    <span className="text-[#d4a050]"><FlameIcon /></span>
+                                    <span className="text-sm sm:text-base font-black text-[#d09040]">Hot 🔥</span>
+                                    <span className="text-[9px] text-[#999] font-semibold uppercase tracking-wide">Trend</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* CTA */}
+                        <div className="px-5 pb-4">
+                            <Link
+                                href="/markets/crypto"
+                                className="group/btn flex items-center justify-between w-full px-5 py-3.5 rounded-xl text-white font-bold text-sm sm:text-base transition-all duration-300 hover:opacity-95 hover:scale-[1.02] active:scale-[0.98]"
+                                style={{
+                                    background: "linear-gradient(135deg, #e8a050 0%, #d09040 100%)",
+                                    boxShadow: "0 4px 16px rgba(220,150,60,0.3), inset 0 1px 0 rgba(255,255,255,0.15)",
+                                }}
                             >
-                                {page}
-                            </button>
-                        ))}
-                        <button className="w-10 h-10 rounded-lg text-gray-600 hover:bg-white/30 transition-colors flex items-center justify-center">
-                            <ChevronDown className="w-4 h-4 rotate-[-90deg]" />
-                        </button>
+                                <span>Explore Crypto Markets</span>
+                                <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-white/20 transition-transform duration-300 group-hover/btn:translate-x-1">
+                                    <ArrowRightIcon />
+                                </span>
+                            </Link>
+                        </div>
                     </div>
+
+                    {/* ── Sports Markets Card ── */}
+                    <div
+                        className="group relative rounded-2xl overflow-hidden flex flex-col transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
+                        style={{
+                            background: "linear-gradient(145deg, #f3e1d7 0%, #f0e8ef 40%, #ece4f5 100%)",
+                            boxShadow: "0 4px 24px -6px rgba(200,170,190,0.3), 0 1px 4px rgba(0,0,0,0.04)",
+                            border: "1.5px solid rgba(190,160,210,0.25)",
+                        }}
+                    >
+                        {/* Decorative top stripe */}
+                        <div className="h-1.5 w-full" style={{ background: "linear-gradient(90deg, #b080d0, #c8a0e0, #d8b8e8)" }} />
+
+                        {/* Top visual area — shorter for rectangular look */}
+                        <div className="relative h-44 sm:h-48 overflow-hidden flex-shrink-0 px-6 pt-6">
+
+                            {/* Subtle dot-grid background */}
+                            <div
+                                className="absolute inset-0 opacity-[0.05]"
+                                style={{
+                                    backgroundImage: "radial-gradient(circle, #b080d0 1px, transparent 1px)",
+                                    backgroundSize: "20px 20px",
+                                }}
+                            />
+
+                            {/* Purple glow blob */}
+                            <div
+                                className="absolute -right-8 -top-8 w-48 h-48 rounded-full opacity-20 blur-3xl"
+                                style={{ background: "radial-gradient(circle, #c8a0e0, #b080d0)" }}
+                            />
+
+                            {/* Icon badge + label */}
+                            <div className="relative z-10 flex items-center gap-3 mb-3">
+                                <div
+                                    className="w-11 h-11 rounded-xl flex items-center justify-center text-[#a070c0] shadow-sm transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110"
+                                    style={{ background: "rgba(255,255,255,0.85)" }}
+                                >
+                                    <TrophyIcon />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-bold text-[#b088d0] uppercase tracking-widest">Category</p>
+                                    <h2 className="text-xl sm:text-2xl font-black text-[#1a1a1a] leading-tight">
+                                        Sports <span className="text-[#a070c0]">Markets</span>
+                                    </h2>
+                                </div>
+                            </div>
+
+                            <p className="relative z-10 text-[#888] text-xs sm:text-sm font-medium leading-relaxed max-w-[200px]">
+                                Predict match outcomes, player performances and sports events.
+                            </p>
+
+                            {/* Sports visuals — scattered balls */}
+                            <div className="absolute right-0 bottom-0 w-[55%] h-full pointer-events-none select-none flex items-end justify-center pb-4">
+                                <div className="relative w-44 h-44">
+
+                                    {/* Cricket player silhouette */}
+                                    <div className="absolute top-0 right-6 w-20 h-32 flex items-center justify-center z-10">
+                                        <div className="relative" style={{ transform: "scale(0.7)" }}>
+                                            <div className="w-8 h-8 rounded-full absolute -top-8 left-1/2 -translate-x-1/2"
+                                                style={{ background: "linear-gradient(135deg, #c8a8e0, #a070c0)" }} />
+                                            <div className="w-9 h-5 rounded-t-full absolute -top-10 left-1/2 -translate-x-1/2"
+                                                style={{ background: "#8860a8" }} />
+                                            <div className="w-10 h-20 rounded-t-full mx-auto"
+                                                style={{ background: "linear-gradient(180deg, #c8a8e0 0%, #a070c0 100%)" }} />
+                                            <div className="absolute -top-4 -right-8 w-16 h-2 rounded-full"
+                                                style={{ background: "#c8a060", transform: "rotate(-45deg)", transformOrigin: "left center" }} />
+                                            <div className="flex gap-1 mt-1">
+                                                <div className="w-4 h-12 rounded-b-full" style={{ background: "#a070c0" }} />
+                                                <div className="w-4 h-12 rounded-b-full" style={{ background: "#a070c0", transform: "rotate(10deg)" }} />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Soccer ball */}
+                                    <div
+                                        className="absolute bottom-4 left-0 w-14 h-14 rounded-full animate-float-gentle"
+                                        style={{
+                                            background: "radial-gradient(circle at 35% 35%, #ede9fe, #c8a8e0 60%, #a880c8 100%)",
+                                            boxShadow: "0 6px 20px rgba(160,110,190,0.3), inset 0 -4px 8px rgba(0,0,0,0.12)",
+                                        }}
+                                    >
+                                        <div className="absolute inset-0 rounded-full overflow-hidden opacity-35">
+                                            <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-[#8860a8]" />
+                                            <div className="absolute top-0 bottom-0 left-1/2 w-0.5 bg-[#8860a8]" />
+                                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-5 h-5 bg-[#8860a8] rounded-sm rotate-45" />
+                                        </div>
+                                    </div>
+
+                                    {/* Basketball */}
+                                    <div
+                                        className="absolute bottom-0 right-2 w-14 h-14 rounded-full animate-float-updown"
+                                        style={{
+                                            background: "radial-gradient(circle at 35% 35%, #fed7aa, #e8a050 60%, #d09040 100%)",
+                                            boxShadow: "0 5px 16px rgba(220,150,60,0.25), inset 0 -4px 8px rgba(0,0,0,0.12)",
+                                            animationDelay: "0.8s",
+                                        }}
+                                    >
+                                        <div className="absolute inset-0 rounded-full overflow-hidden opacity-45">
+                                            <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-[#b08040]" />
+                                            <div className="absolute top-0 bottom-0 left-1/2 w-0.5 bg-[#b08040]" />
+                                            <div className="absolute top-1/4 left-1/4 right-1/4 h-0.5 bg-[#b08040] rounded-full" style={{ transform: "rotate(-20deg)" }} />
+                                            <div className="absolute bottom-1/4 left-1/4 right-1/4 h-0.5 bg-[#b08040] rounded-full" style={{ transform: "rotate(20deg)" }} />
+                                        </div>
+                                    </div>
+
+                                    {/* Trophy accent */}
+                                    <div
+                                        className="absolute top-2 left-2 w-9 h-9 rounded-xl flex items-center justify-center animate-float-wavy"
+                                        style={{
+                                            background: "rgba(255,255,255,0.85)",
+                                            boxShadow: "0 4px 12px rgba(190,160,210,0.25)",
+                                            animationDelay: "1.2s",
+                                        }}
+                                    >
+                                        <span className="text-lg">🏆</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Divider */}
+                        <div className="mx-5 h-px bg-gradient-to-r from-transparent via-[#d8c0e8]/50 to-transparent" />
+
+                        {/* Stats row — more compact */}
+                        <div className="mx-5 my-3.5 rounded-xl px-4 py-3 bg-white/70 backdrop-blur-sm border border-[#d8c0e8]/50">
+                            <div className="grid grid-cols-4 divide-x divide-[#d8c0e8]/50">
+                                <div className="flex flex-col items-center gap-0.5 px-1">
+                                    <span className="text-[#b088d0]"><TrophyIcon /></span>
+                                    <span className="text-sm sm:text-base font-black text-[#1a1a1a]">98</span>
+                                    <span className="text-[9px] text-[#999] font-semibold uppercase tracking-wide">Markets</span>
+                                </div>
+                                <div className="flex flex-col items-center gap-0.5 px-1">
+                                    <span className="text-[#b088d0]"><UsersIcon /></span>
+                                    <span className="text-sm sm:text-base font-black text-[#1a1a1a]">8.7K</span>
+                                    <span className="text-[9px] text-[#999] font-semibold uppercase tracking-wide">Traders</span>
+                                </div>
+                                <div className="flex flex-col items-center gap-0.5 px-1">
+                                    <span className="text-[#b088d0]"><CoinsIcon /></span>
+                                    <span className="text-sm sm:text-base font-black text-[#1a1a1a]">$8.3M</span>
+                                    <span className="text-[9px] text-[#999] font-semibold uppercase tracking-wide">24H Vol</span>
+                                </div>
+                                <div className="flex flex-col items-center gap-0.5 px-1">
+                                    <span className="text-[#b088d0]"><FlameIcon /></span>
+                                    <span className="text-sm sm:text-base font-black text-[#a070c0]">Hot 🔥</span>
+                                    <span className="text-[9px] text-[#999] font-semibold uppercase tracking-wide">Trend</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* CTA */}
+                        <div className="px-5 pb-4">
+                            <Link
+                                href="/markets/sports"
+                                className="group/btn flex items-center justify-between w-full px-5 py-3.5 rounded-xl text-white font-bold text-sm sm:text-base transition-all duration-300 hover:opacity-95 hover:scale-[1.02] active:scale-[0.98]"
+                                style={{
+                                    background: "linear-gradient(135deg, #b080d0 0%, #a070c0 100%)",
+                                    boxShadow: "0 4px 16px rgba(190,150,210,0.3), inset 0 1px 0 rgba(255,255,255,0.15)",
+                                }}
+                            >
+                                <span>Explore Sports Markets</span>
+                                <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-white/20 transition-transform duration-300 group-hover/btn:translate-x-1">
+                                    <ArrowRightIcon />
+                                </span>
+                            </Link>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>

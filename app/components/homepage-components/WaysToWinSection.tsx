@@ -57,10 +57,10 @@ export function WaysToWinSection() {
                         {/* Text */}
                         <div className="p-5 flex flex-col flex-1">
                             <h3 className="text-xl font-bold text-black mb-3 leading-snug">
-                                Create permissionless markets
+                                Create permissionless challenges
                             </h3>
                             <p className="text-gray-500 text-sm leading-relaxed">
-                                Create permissionless markets around crypto and sports at anytime, on anything.
+                                Create permissionless challenges around crypto and sports at anytime, on anything.
                             </p>
                         </div>
                     </div>

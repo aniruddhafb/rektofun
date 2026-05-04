@@ -39,15 +39,17 @@ export function CreateChallengeModal({
     const [childMarketsLoading, setChildMarketsLoading] = useState(false);
     const [selectedChildMarket, setChildMarket] = useState<Market | null>(null);
     const [isCoinDropdownOpen, setIsCoinDropdownOpen] = useState(false);
-    const [betAmount, setBetAmount] = useState(0.1);
+    const [betAmount, setBetAmount] = useState(5);
+    const [betAmountError, setBetAmountError] = useState<string | null>(null);
     const [predictionDirection, setPredictionDirection] = useState("Above");
     const [isDirectionDropdownOpen, setIsDirectionDropdownOpen] = useState(false);
     const [predictionPrice, setPredictionPrice] = useState("66500");
-    const [selectedDate, setSelectedDate] = useState(new Date());
+    const [selectedDate, setSelectedDate] = useState(new Date(Date.now() + 24 * 60 * 60 * 1000));
     const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
     const [duration, setDuration] = useState({ hours: 4, minutes: 0 });
     const [isDurationPickerOpen, setIsDurationPickerOpen] = useState(false);
     const [challengeMode, setChallengeMode] = useState<"pvp" | "multi">("pvp");
+    const [challengeStatement, setChallengeStatement] = useState("");
 
     const { user } = useUserStore();
 
@@ -88,6 +90,13 @@ export function CreateChallengeModal({
                 const fetchedMarkets = response.markets;
 
                 setMarkets(fetchedMarkets);
+                // Set default market to crypto if available
+                const cryptoMarket = fetchedMarkets.find(m => m.symbol?.toLowerCase() === 'crypto' || m.name?.toLowerCase() === 'crypto');
+                if (cryptoMarket) {
+                    setSelectedMarket(cryptoMarket);
+                } else if (fetchedMarkets.length > 0) {
+                    setSelectedMarket(fetchedMarkets[0]);
+                }
 
             } catch (error) {
                 console.error("Error fetching markets:", error);
@@ -153,6 +162,8 @@ export function CreateChallengeModal({
 
     if (!isOpen) return null;
 
+    const isSportsSelected = selectedMarket?.symbol?.toLowerCase() === 'sports' || selectedMarket?.name?.toLowerCase() === 'sports';
+
     const formatDate = (date: Date) => {
         const options: Intl.DateTimeFormatOptions = { month: "long", day: "numeric", year: "numeric" };
         const timeOptions: Intl.DateTimeFormatOptions = { hour: "numeric", minute: "2-digit", hour12: true };
@@ -183,19 +194,27 @@ export function CreateChallengeModal({
         }
 
         // Validate inputs
-        if (betAmount <= 0) {
-            setTxError("Bet amount must be greater than 0.");
+        if (betAmount < 5) {
+            setBetAmountError("Min bet should be $5");
+            setTxError("Bet amount must be at least $5.");
             return;
         }
-        if (!predictionPrice || Number(predictionPrice) <= 0) {
-            setTxError("Please enter a valid prediction price.");
-            return;
+        if (isSportsSelected) {
+            if (!challengeStatement.trim()) {
+                setTxError("Please enter a challenge statement.");
+                return;
+            }
+        } else {
+            if (!predictionPrice || Number(predictionPrice) <= 0) {
+                setTxError("Please enter a valid prediction price.");
+                return;
+            }
         }
         if (duration.hours === 0 && duration.minutes === 0) {
             setTxError("Please select a challenge expiry duration.");
             return;
         }
-        if (selectedDate.getTime() <= Date.now()) {
+        if (!isSportsSelected && selectedDate.getTime() <= Date.now()) {
             setTxError("Challenge end date must be in the future.");
             return;
         }
@@ -211,7 +230,7 @@ export function CreateChallengeModal({
             // Calculate timestamps
             const nowSec = Math.floor(Date.now() / 1000);
             const expiresAt = nowSec + duration.hours * 3600 + duration.minutes * 60;
-            const resolvesAt = Math.floor(selectedDate.getTime() / 1000);
+            const resolvesAt = isSportsSelected ? expiresAt : Math.floor(selectedDate.getTime() / 1000);
 
             // target price in USD cents (e.g. $66,500 → 6_650_000)
             const targetPriceUsdCents = Math.round(Number(predictionPrice) * 100);
@@ -256,8 +275,10 @@ export function CreateChallengeModal({
             // Post to backend API
             try {
                 await createChallenge({
-                    title: `${selectedChildMarket?.symbol} ${predictionDirection} $${predictionPrice}`,
-                    description: `Bet ${betAmount} SOL that ${selectedChildMarket?.symbol} will be ${predictionDirection.toLowerCase()} $${predictionPrice} by ${selectedDate.toISOString()}`,
+                    title: isSportsSelected ? challengeStatement : `${selectedChildMarket?.symbol} ${predictionDirection} $${predictionPrice}`,
+                    description: isSportsSelected
+                        ? challengeStatement
+                        : `Bet ${betAmount} SOL that ${selectedChildMarket?.symbol} will be ${predictionDirection.toLowerCase()} $${predictionPrice} by ${selectedDate.toISOString()}`,
                     category: selectedChildMarket?.id || "",
                     event_type: "binary",
                     ticker: selectedChildMarket?.symbol || "",
@@ -265,7 +286,7 @@ export function CreateChallengeModal({
                     mode: challengeMode,
                     initial_bet: betAmount,
                     bet_unit: 1,
-                    resolution_source: "price_feed",
+                    resolution_source: isSportsSelected ? "manual" : "price_feed",
                     expire_time: new Date(expiresAt * 1000).toISOString(),
                     resolve_time: new Date(resolvesAt * 1000).toISOString(),
                 });
@@ -327,34 +348,62 @@ export function CreateChallengeModal({
 
                 <div className="px-6 py-4 space-y-4 overflow-y-auto">
 
+                    {/* challenge mode selection (pvp vs multi) */}
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700">Select Challenge Market</label>
-                        <div className="relative" ref={marketDropdownRef}>
-                            <button onClick={() => { closeAllDropdowns(); setIsMarketDropdownOpen(!isMarketDropdownOpen); }} className="w-full flex items-center justify-between px-4 py-3 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl hover:border-[#d4b8a8] transition-colors">
-                                <span className="font-semibold text-gray-900">{selectedMarket?.name || "Select Market"}</span>
-                                <svg className={`w-5 h-5 text-gray-500 transition-transform ${isMarketDropdownOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                </svg>
+                        <label className="text-sm font-medium text-gray-700">Challenge Mode</label>
+                        <div className="flex items-center gap-2 p-1 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl">
+                            <button
+                                onClick={() => setChallengeMode("pvp")}
+                                className={`flex-1 py-2 px-4 rounded-lg text-sm font-semibold transition-colors ${challengeMode === "pvp"
+                                    ? "bg-gray-900 text-white"
+                                    : "bg-transparent text-gray-600 hover:bg-[#f3e1d7]"
+                                    }`}
+                            >
+                                PVP
                             </button>
-                            {isMarketDropdownOpen && (
-                                <div className="absolute top-full left-0 right-0 mt-1 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl shadow-lg z-10 overflow-hidden">
-                                    {marketsLoading ? (
-                                        <div className="px-4 py-3 text-sm text-gray-500">Loading markets...</div>
-                                    ) : markets.length > 0 ? (
-                                        markets.map((m) => (
-                                            <button key={m.id} onClick={() => { setSelectedMarket(m); setIsMarketDropdownOpen(false); }} className="w-full px-4 py-3 text-left hover:bg-[#f3e1d7] transition-colors">
-                                                <span className="font-medium text-gray-900">{m.symbol || m.name}</span>
-                                                <span className="text-gray-500 text-sm ml-2">{m.name}</span>
-                                            </button>
-                                        ))
-                                    ) : (
-                                        <div className="px-4 py-3 text-sm text-gray-500">No markets available</div>
-                                    )}
-                                </div>
+                            <button
+                                onClick={() => setChallengeMode("multi")}
+                                className={`flex-1 py-2 px-4 rounded-lg text-sm font-semibold transition-colors ${challengeMode === "multi"
+                                    ? "bg-gray-900 text-white"
+                                    : "bg-transparent text-gray-600 hover:bg-[#f3e1d7]"
+                                    }`}
+                            >
+                                Multi
+                            </button>
+                        </div>
+                        <p className="text-xs text-gray-500">
+                            {challengeMode === "pvp"
+                                ? "One opponent competes against your prediction"
+                                : "Multiple opponents can compete against your prediction"}
+                        </p>
+                    </div>
+
+                    {/* challenge market  */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700">Challenge Market</label>
+                        <div className="flex items-center gap-2 p-1 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl">
+                            {marketsLoading ? (
+                                <div className="flex-1 py-2 px-4 text-sm text-gray-500 text-center">Loading markets...</div>
+                            ) : markets.length > 0 ? (
+                                markets.map((m) => (
+                                    <button
+                                        key={m.id}
+                                        onClick={() => setSelectedMarket(m)}
+                                        className={`flex-1 py-2 px-4 rounded-lg text-sm font-semibold transition-colors ${selectedMarket?.id === m.id
+                                            ? "bg-gray-900 text-white"
+                                            : "bg-transparent text-gray-600 hover:bg-[#f3e1d7]"
+                                            }`}
+                                    >
+                                        {m.symbol || m.name}
+                                    </button>
+                                ))
+                            ) : (
+                                <div className="flex-1 py-2 px-4 text-sm text-gray-500 text-center">No markets available</div>
                             )}
                         </div>
                     </div>
 
+                    {/* select token  */}
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">Select Token</label>
                         <div className="relative" ref={coinDropdownRef}>
@@ -402,64 +451,103 @@ export function CreateChallengeModal({
                         </div>
                     </div>
 
+                    {/* bet amount section  */}
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700">Bet Amount (USDC)</label>
-                        <div className="relative">
-                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-bold">◎</span>
-                            <input type="number" value={betAmount} onChange={(e) => setBetAmount(Number(e.target.value))} step="0.01" min="0.01" className="w-full pl-8 pr-4 py-3 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl text-lg font-semibold text-gray-900 focus:outline-none focus:border-[#d4b8a8]" />
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700">Predict Price</label>
-                        <div className="flex gap-2">
-                            <div className="relative flex-1" ref={directionDropdownRef}>
-                                <button onClick={() => { closeAllDropdowns(); setIsDirectionDropdownOpen(!isDirectionDropdownOpen); }} className="w-full flex items-center justify-between px-4 py-3 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl hover:border-[#d4b8a8] transition-colors">
-                                    <span className="font-semibold text-gray-900">{selectedChildMarket?.name} {predictionDirection}</span>
-                                    <svg className={`w-5 h-5 text-gray-500 transition-transform ${isDirectionDropdownOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                    </svg>
-                                </button>
-                                {isDirectionDropdownOpen && (
-                                    <div className="absolute top-full left-0 right-0 mt-1 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl shadow-lg z-10 overflow-hidden">
-                                        {["Above", "Below"].map((dir) => (
-                                            <button key={dir} onClick={() => { setPredictionDirection(dir); setIsDirectionDropdownOpen(false); }} className="w-full px-4 py-3 text-left hover:bg-[#f3e1d7] transition-colors font-medium text-gray-900">
-                                                {selectedChildMarket?.name} {dir}
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                            <div className="relative w-32">
-                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg">$</span>
-                                <input type="number" value={predictionPrice} onChange={(e) => setPredictionPrice(e.target.value)} className="w-full pl-8 pr-4 py-3 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl text-lg font-semibold text-gray-900 focus:outline-none focus:border-[#d4b8a8]" placeholder="66500" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700">Bet Amount</label>
                         <div className="flex items-center gap-2">
-                            <label className="text-sm font-medium text-gray-700">Challenge End Date</label>
-                            <span className="relative group/info">
-                                <svg className="w-4 h-4 text-gray-400 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                <span className="absolute left-0 bottom-full mb-2 px-3 py-2 text-xs text-white bg-gray-800 rounded-lg opacity-0 group-hover/info:opacity-100 transition-opacity pointer-events-none z-20 w-max max-w-[200px]">
-                                    On this exact selected date and time, the challenge will get resolved
-                                </span>
-                            </span>
+                            <button
+                                onClick={() => {
+                                    const newVal = Math.max(0, betAmount - 1);
+                                    setBetAmount(newVal);
+                                    setBetAmountError(newVal < 5 ? "Min bet should be $5" : null);
+                                }}
+                                className="w-10 h-10 flex items-center justify-center bg-[#faf0eb] border border-[#e8d5c8] rounded-xl hover:bg-[#f3e1d7] transition-colors text-gray-700 font-bold text-lg"
+                            >
+                                -
+                            </button>
+                            <div className="relative flex-1">
+                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-bold">$</span>
+                                <input
+                                    type="number"
+                                    value={betAmount}
+                                    onChange={(e) => {
+                                        const val = Number(e.target.value);
+                                        setBetAmount(val);
+                                        setBetAmountError(val < 5 ? "Min bet should be $5" : null);
+                                    }}
+                                    step="1"
+                                    min="5"
+                                    className="w-full pl-8 pr-4 py-3 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl text-lg font-semibold text-gray-900 focus:outline-none focus:border-[#d4b8a8]"
+                                />
+                            </div>
+                            <button
+                                onClick={() => {
+                                    const newVal = betAmount + 1;
+                                    setBetAmount(newVal);
+                                    setBetAmountError(newVal < 5 ? "Min bet should be $5" : null);
+                                }}
+                                className="w-10 h-10 flex items-center justify-center bg-[#faf0eb] border border-[#e8d5c8] rounded-xl hover:bg-[#f3e1d7] transition-colors text-gray-700 font-bold text-lg"
+                            >
+                                +
+                            </button>
                         </div>
-                        <button onClick={() => setIsDatePickerOpen(true)} className="w-full flex items-center justify-between px-4 py-3 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl hover:border-[#d4b8a8] transition-colors">
-                            <span className="font-medium text-gray-900">{formatDate(selectedDate)}</span>
-                            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                            </svg>
-                        </button>
-                        <p className="text-xs text-gray-500">
-                            Ends in <span className="font-medium text-gray-700">{Math.floor((selectedDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))}</span> days <span className="font-medium text-gray-700">{Math.floor(((selectedDate.getTime() - Date.now()) % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))}</span> hours
-                        </p>
+                        {betAmountError && (
+                            <p className="text-red-500 text-sm mt-1">{betAmountError}</p>
+                        )}
                     </div>
 
+                    {/* challenge statement (for sports market) */}
+                    {isSportsSelected && (
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-gray-700">Challenge Statement</label>
+                            <input
+                                required
+                                type="text"
+                                value={challengeStatement}
+                                onChange={(e) => setChallengeStatement(e.target.value)}
+                                placeholder={
+                                    selectedChildMarket?.symbol?.toLowerCase() === 'cricket'
+                                        ? "e.g. rohit sharma will hit a six in todays MI vs RCB IPL match"
+                                        : selectedChildMarket?.symbol?.toLowerCase() === 'football'
+                                            ? "e.g. real madrid will win fifa 2026"
+                                            : "Enter your challenge statement..."
+                                }
+                                className="w-full px-4 py-3 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl text-lg text-gray-900 focus:outline-none focus:border-[#d4b8a8] placeholder:text-gray-400 placeholder:text-sm"
+                            />
+                        </div>
+                    )}
+
+                    {/* predict price and direction section (non-sports markets) */}
+                    {!isSportsSelected && (
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-gray-700">Predict Price</label>
+                            <div className="flex gap-2">
+                                <div className="relative flex-1" ref={directionDropdownRef}>
+                                    <button onClick={() => { closeAllDropdowns(); setIsDirectionDropdownOpen(!isDirectionDropdownOpen); }} className="w-full flex items-center justify-between px-4 py-3 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl hover:border-[#d4b8a8] transition-colors">
+                                        <span className="font-semibold text-gray-900">{selectedChildMarket?.name} {predictionDirection}</span>
+                                        <svg className={`w-5 h-5 text-gray-500 transition-transform ${isDirectionDropdownOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </button>
+                                    {isDirectionDropdownOpen && (
+                                        <div className="absolute top-full left-0 right-0 mt-1 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl shadow-lg z-10 overflow-hidden">
+                                            {["Above", "Below"].map((dir) => (
+                                                <button key={dir} onClick={() => { setPredictionDirection(dir); setIsDirectionDropdownOpen(false); }} className="w-full px-4 py-3 text-left hover:bg-[#f3e1d7] transition-colors font-medium text-gray-900">
+                                                    {selectedChildMarket?.name} {dir}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="relative w-32">
+                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg">$</span>
+                                    <input type="number" value={predictionPrice} onChange={(e) => setPredictionPrice(e.target.value)} className="w-full pl-8 pr-4 py-3 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl text-lg font-semibold text-gray-900 focus:outline-none focus:border-[#d4b8a8]" placeholder="66500" />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* challenge expires in  */}
                     <div className="space-y-2">
                         <div className="flex items-center gap-2">
                             <label className="text-sm font-medium text-gray-700">Challenge Expires In</label>
@@ -468,7 +556,7 @@ export function CreateChallengeModal({
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                                 <span className="absolute left-0 bottom-full mb-2 px-3 py-2 text-xs text-white bg-gray-800 rounded-lg opacity-0 group-hover/info:opacity-100 transition-opacity pointer-events-none z-20 w-max max-w-[200px]">
-                                    Your challenge will expire in the selected time. If not accepted, your bet amount will be refunded and the challenge will be expired.
+                                    Your challenge will expire in the selected time. If not accepted, your bet amount will be refunded.
                                 </span>
                             </span>
                         </div>
@@ -480,40 +568,44 @@ export function CreateChallengeModal({
                         </button>
                     </div>
 
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700">Challenge Mode</label>
-                        <div className="flex items-center gap-2 p-1 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl">
-                            <button
-                                onClick={() => setChallengeMode("pvp")}
-                                className={`flex-1 py-2 px-4 rounded-lg text-sm font-semibold transition-colors ${challengeMode === "pvp"
-                                    ? "bg-gray-900 text-white"
-                                    : "bg-transparent text-gray-600 hover:bg-[#f3e1d7]"
-                                    }`}
-                            >
-                                PVP
+                    {/* challenge end date (non-sports markets) */}
+                    {!isSportsSelected && (
+                        <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                                <label className="text-sm font-medium text-gray-700">Challenge End Date</label>
+                                <span className="relative group/info">
+                                    <svg className="w-4 h-4 text-gray-400 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span className="absolute left-0 bottom-full mb-2 px-3 py-2 text-xs text-white bg-gray-800 rounded-lg opacity-0 group-hover/info:opacity-100 transition-opacity pointer-events-none z-20 w-max max-w-[200px]">
+                                        The challenges will get resolved on this exact selected date and time OR when the price event is triggered whichever comes first.
+                                    </span>
+                                </span>
+                            </div>
+                            <button onClick={() => setIsDatePickerOpen(true)} className="w-full flex items-center justify-between px-4 py-3 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl hover:border-[#d4b8a8] transition-colors">
+                                <span className="font-medium text-gray-900">{formatDate(selectedDate)}</span>
+                                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
                             </button>
-                            <button
-                                onClick={() => setChallengeMode("multi")}
-                                className={`flex-1 py-2 px-4 rounded-lg text-sm font-semibold transition-colors ${challengeMode === "multi"
-                                    ? "bg-gray-900 text-white"
-                                    : "bg-transparent text-gray-600 hover:bg-[#f3e1d7]"
-                                    }`}
-                            >
-                                Multi
-                            </button>
+                            <p className="text-xs text-gray-500">
+                                Ends in <span className="font-medium text-gray-700">{Math.floor((selectedDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))}</span> days <span className="font-medium text-gray-700">{Math.floor(((selectedDate.getTime() - Date.now()) % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))}</span> hours
+                            </p>
                         </div>
-                        <p className="text-xs text-gray-500">
-                            {challengeMode === "pvp"
-                                ? "One opponent competes against your prediction"
-                                : "Multiple opponents can compete against your prediction"}
-                        </p>
-                    </div>
+                    )}
 
+                    {/* summary section - adapts to sports vs non-sports */}
                     <div className="text-center py-2">
-                        <p className="text-gray-700">
-                            You win <span className="font-bold text-gray-900">{(betAmount * 2 * 0.975).toFixed(4)} USDC</span> if {selectedChildMarket?.symbol} closes {predictionDirection.toLowerCase()} ${Number(predictionPrice).toLocaleString()} in {formatDuration(duration)}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">2.5% platform fee applies</p>
+                        {isSportsSelected ? (
+                            <p className="text-gray-700">
+                                You win <span className="font-bold text-gray-900">{(betAmount * 2 * 0.975).toFixed(4)} USDC</span> if your statement is correct
+                            </p>
+                        ) : (
+                            <p className="text-gray-700">
+                                You win <span className="font-bold text-gray-900">{(betAmount * 2 * 0.975).toFixed(4)} USDC</span> if {selectedChildMarket?.symbol} closes {predictionDirection.toLowerCase()} ${Number(predictionPrice).toLocaleString()} in {formatDuration(duration)}
+                            </p>
+                        )}
+                        <p className="text-xs text-gray-500 mt-1">3% platform fee applies</p>
                     </div>
 
                     {/* Error message */}
