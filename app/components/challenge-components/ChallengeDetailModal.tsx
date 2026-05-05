@@ -143,9 +143,6 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
     const endsByCountdown = formatEndsByCountdown(resolveTimestamp, currentTime);
     const exactCountdownDetails = formatExactCountdownDetails(resolveTimestamp, currentTime);
     const creatorWalletAddress = challenge.creator?.wallet_address || "";
-    const creatorWalletShort = creatorWalletAddress
-        ? `${creatorWalletAddress.slice(0, 6)}...${creatorWalletAddress.slice(-4)}`
-        : "Unknown wallet";
     const startPrice = betAmount;
     const targetPrice = challenge.total_pool ?? betAmount;
     const currentPrice = challenge.total_pool ?? 0;
@@ -215,7 +212,7 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
                         {/* Challenge Info */}
                         <div className="flex-1 text-center sm:text-left">
                             {/* Market Tag */}
-                            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/70 backdrop-blur-sm rounded-full mb-3 border border-[#d4a574]/40 shadow-sm">
+                            {/* <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/70 backdrop-blur-sm rounded-full mb-3 border border-[#d4a574]/40 shadow-sm">
                                 <div className="w-5 h-5 rounded-full bg-gradient-to-br from-amber-300 to-orange-500 flex items-center justify-center shadow-sm">
                                     <span className="text-[10px] text-[#2d1f1a] font-black">
                                         <Image
@@ -228,16 +225,16 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
                                     </span>
                                 </div>
                                 <span className="text-xs font-bold text-[#2d1f1a] uppercase tracking-wide">{asset} Challenge Markets</span>
-                            </div>
+                            </div> */}
 
                             {/* Title */}
-                            <h2 className="text-[#2d1f1a] leading-tight mb-3">
+                            <h2 className="mt-2 flex text-[#2d1f1a] leading-tight mb-3">
                                 <span className="block text-2xl sm:text-3xl font-bold tracking-tight">
                                     {challenge.title} In
                                 </span>
-                                <span className="block text-2xl sm:text-3xl font-bold tracking-tight">Next
+                                <span className="block text-2xl sm:text-3xl font-bold tracking-tight">
                                     <span className="ml-2 inline-flex items-center gap-1.5 align-middle">
-                                        <span className="text-lg sm:text-xl font-bold text-emerald-900">{endsByCountdown}</span>
+                                        <span className="text-2xl sm:text-3xl font-bold text-emerald-900">{endsByCountdown}</span>
                                         <span className="group relative inline-flex items-center">
                                             <svg className="w-4 h-4 text-emerald-700 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -260,30 +257,20 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
                                     if (!creatorWalletAddress) return;
                                     router.push(`/profile/${creatorWalletAddress}`);
                                 }}
-                                className="group inline-flex w-full sm:w-auto items-center justify-between gap-4 px-3 py-3 sm:py-2.5 bg-white/80 backdrop-blur-sm rounded-2xl border border-[#d4a574]/35 hover:border-[#d4a574] hover:shadow-lg transition-all duration-200 cursor-pointer text-left"
+                                className="inline-flex items-center gap-2.5 rounded-2xl border border-[#d8d2cb] bg-[#f6f3ef] px-3.5 py-2 transition-colors duration-200 hover:border-[#cbc3bb] cursor-pointer"
                             >
-                                <div className="flex items-center gap-3 min-w-0">
-                                    <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[#d4a574]/70 shadow-sm flex-shrink-0">
-                                        <Image
-                                            src={creatorAvatar}
-                                            alt={creatorName}
-                                            width={40}
-                                            height={40}
-                                            className="w-full h-full object-cover"
-                                        />
-                                    </div>
-                                    <div className="min-w-0">
-                                        <p className="text-[11px] font-semibold text-[#8b7355] uppercase tracking-[0.08em] leading-none mb-1">Created by</p>
-                                        <p className="text-[15px] font-bold text-[#2d1f1a] leading-tight truncate">{creatorName}</p>
-                                        <p className="text-[11px] text-[#8b7355] leading-tight truncate">{creatorWalletShort}</p>
-                                    </div>
+                                <div className="h-7 w-7 rounded-full overflow-hidden border border-[#c8c1ba] shrink-0">
+                                    <Image
+                                        src={creatorAvatar}
+                                        alt={creatorName}
+                                        width={28}
+                                        height={28}
+                                        className="w-full h-full object-cover"
+                                    />
                                 </div>
-                                <div className="flex items-center gap-1 text-[#8b7355] group-hover:text-[#2d1f1a] transition-colors flex-shrink-0">
-                                    <span className="text-[11px] font-semibold uppercase tracking-wide">Profile</span>
-                                    <svg className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                    </svg>
-                                </div>
+                                <span className="text-[13px] leading-none text-[#756d66]">
+                                    Created by {creatorName}
+                                </span>
                             </button>
                         </div>
                     </div>
