@@ -12,7 +12,7 @@ import { useSolanaWallet } from "@/app/lib/useSolanaWallet";
 import {
     buildAcceptChallengeTx,
     fetchAllChallenges,
-    solToLamports,
+    usdcToMicroUsdc,
 } from "@/app/lib/rektofun-program";
 import { PublicKey } from "@solana/web3.js";
 
@@ -146,41 +146,41 @@ export function ChallengeCard({
             setBetError("");
             setIsLoading(true);
 
-            const challengeDetails = await getChallengeById(challenge.id);
-            const creatorPubkey = new PublicKey(challenge.creator.wallet_address);
-            const onChainChallenges = await fetchAllChallenges(program);
-            const expectedBetLamports = solToLamports(challenge.initial_bet ?? 0);
-            const expectedExpireAt = Math.floor(new Date(challengeDetails.expire_time).getTime() / 1000);
-            const expectedResolveAt = Math.floor(new Date(challengeDetails.resolve_time).getTime() / 1000);
-            const expectedAsset = challengeDetails.ticker || challenge.market.name;
+            // const challengeDetails = await getChallengeById(challenge.id);
+            // const creatorPubkey = new PublicKey(challenge.creator.wallet_address);
+            // const onChainChallenges = await fetchAllChallenges(program);
+            // const expectedBetMicroUsdc = usdcToMicroUsdc(challenge.initial_bet ?? 0);
+            // const expectedExpireAt = Math.floor(new Date(challengeDetails.expire_time).getTime() / 1000);
+            // const expectedResolveAt = Math.floor(new Date(challengeDetails.resolve_time).getTime() / 1000);
+            // const expectedAsset = challengeDetails.ticker || challenge.market.name;
 
-            const onChainChallenge = onChainChallenges.find((candidate) =>
-                candidate.creator.equals(creatorPubkey) &&
-                candidate.status === "Open" &&
-                candidate.asset === expectedAsset &&
-                candidate.betAmount === expectedBetLamports &&
-                candidate.expiresAt === expectedExpireAt &&
-                candidate.resolvesAt === expectedResolveAt
-            );
+            // const onChainChallenge = onChainChallenges.find((candidate) =>
+            //     candidate.creator.equals(creatorPubkey) &&
+            //     candidate.status === "Open" &&
+            //     candidate.asset === expectedAsset &&
+            //     candidate.betAmount === expectedBetMicroUsdc &&
+            //     candidate.expiresAt === expectedExpireAt &&
+            //     candidate.resolvesAt === expectedResolveAt
+            // );
 
-            if (!onChainChallenge) {
-                throw new Error("Matching on-chain challenge was not found.");
-            }
+            // if (!onChainChallenge) {
+            //     throw new Error("Matching on-chain challenge was not found.");
+            // }
 
-            if (parsedBetAmount !== challenge.initial_bet) {
-                throw new Error(
-                    `This on-chain challenge currently requires an exact ${challenge.initial_bet} ${betCurrency} match.`
-                );
-            }
+            // if (parsedBetAmount !== challenge.initial_bet) {
+            //     throw new Error(
+            //         `This on-chain challenge currently requires an exact ${challenge.initial_bet} ${betCurrency} match.`
+            //     );
+            // }
 
-            const tx = await buildAcceptChallengeTx(
-                program,
-                publicKey,
-                onChainChallenge.publicKey,
-                creatorPubkey
-            );
+            // const tx = await buildAcceptChallengeTx(
+            //     program,
+            //     publicKey,
+            //     onChainChallenge.publicKey,
+            //     creatorPubkey
+            // );
 
-            await sendTransaction(tx);
+            // await sendTransaction(tx);
 
             await joinChallenge({
                 challenge_id: challenge.id,
@@ -212,7 +212,7 @@ export function ChallengeCard({
     };
     const betMeta: BetMetadata = {
         amount: challenge.initial_bet,
-        currency: "SOL", // Defaulting to SOL as per original code
+        currency: "USDC",
     };
     const modeMeta: ModeMetadata = {
         type: challenge.mode === "pool" ? "multi" : "pvp",
@@ -222,7 +222,7 @@ export function ChallengeCard({
         creator: challenge.creator.username,
     };
     const poolMeta: PoolMetadata = {
-        display: `$${challenge.total_pool} SOL`,
+        display: `$${challenge.total_pool} USDC`,
     };
 
     // Determine mode: pvp or multi (mapped from pvp/pool)
@@ -247,10 +247,10 @@ export function ChallengeCard({
 
     // Get bet amount
     const betAmount = betMeta.amount || 0;
-    const betCurrency = betMeta.currency || "SOL";
+    const betCurrency = betMeta.currency || "USDC";
 
     // Get pool display
-    const poolDisplay = poolMeta.display || "$0 SOL";
+    const poolDisplay = poolMeta.display || "$0 USDC";
 
     // Calculate time remaining from expire_time
     const timeRemaining = challenge.expire_time
