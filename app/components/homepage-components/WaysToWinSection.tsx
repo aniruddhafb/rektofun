@@ -171,10 +171,10 @@ export function WaysToWinSection() {
                         {/* Text */}
                         <div className="p-5 flex flex-col flex-1">
                             <h3 className="text-xl font-bold text-black mb-3 leading-snug">
-                                Earn REKTO points
+                                Community Verified Outcomes
                             </h3>
                             <p className="text-gray-500 text-sm leading-relaxed">
-                                Get points for creating and joining challenges, participating in clan battles and reffering friends.
+                                Challenge outcomes and disputes are resolved by the NFT holders community through a transparent voting process.
                             </p>
                         </div>
                     </div>
