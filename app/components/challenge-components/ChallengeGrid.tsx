@@ -20,7 +20,7 @@ export function ChallengeGrid({
 }: ChallengeGridProps) {
     const [challenges, setChallenges] = useState<ChallengeListItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const  {publicKey} = useSolanaWallet();
+    const { publicKey } = useSolanaWallet();
 
     let ownerAddress = publicKey?.toString() || '';
 
@@ -44,7 +44,7 @@ export function ChallengeGrid({
     if (isLoading) {
         return (
             <div className="max-w-7xl mx-auto px-6 lg:px-8 pb-16">
-                <div className="text-center py-16 text-gray-500">Loading challenges…</div>
+                <div className="text-center py-16 text-gray-700">Loading challenges…</div>
             </div>
         );
     }

@@ -59,6 +59,132 @@ interface PoolMetadata {
     display?: string;
 }
 
+function parseDateValue(value: string | number | null | undefined): number | null {
+    if (typeof value === "number") {
+        return Number.isFinite(value) ? value : null;
+    }
+    if (!value) return null;
+
+    const parsed = new Date(value).getTime();
+    return Number.isNaN(parsed) ? null : parsed;
+}
+
+function formatCreatedTimeAgo(timestamp: number | null): string {
+    if (!timestamp) return "recently";
+
+    const diff = Date.now() - timestamp;
+    if (diff < 0) return "just now";
+
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+
+    if (days > 0) return `${days} day${days === 1 ? "" : "s"} ago`;
+    if (hours > 0) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+    if (minutes > 0) return `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
+
+    return "just now";
+}
+
+function formatUtcDateTime(timestamp: number | null): string {
+    if (!timestamp) return "an unknown time";
+
+    return new Intl.DateTimeFormat("en-US", {
+        timeZone: "UTC",
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+    }).format(new Date(timestamp)) + " UTC";
+}
+
+function formatEndsByCountdown(timestamp: number | null, nowMs: number): string {
+    if (!timestamp) return "unknown";
+    const diffMs = timestamp - nowMs;
+    if (diffMs <= 0) return "ended";
+
+    const totalMinutes = Math.floor(diffMs / 60000);
+    const days = Math.floor(totalMinutes / (24 * 60));
+    const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
+    const minutes = totalMinutes % 60;
+
+    if (days > 0) return `${days}d ${hours}h`;
+    if (hours > 0) return `${hours}h ${minutes}m`;
+    return `${minutes}m`;
+}
+
+function formatExpiryCountdown(timestamp: number | null, nowMs: number): string {
+    if (!timestamp) return "N/A";
+    const diffMs = timestamp - nowMs;
+    if (diffMs <= 0) return "0m";
+
+    const totalMinutes = Math.floor(diffMs / 60000);
+    const days = Math.floor(totalMinutes / (24 * 60));
+    const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
+    const minutes = totalMinutes % 60;
+
+    if (days > 0) return `${days}d ${hours}h ${minutes}m`;
+    if (hours > 0) return `${hours}h ${minutes}m`;
+    return `${minutes}m`;
+}
+
+function truncateProfileName(name: string | null | undefined, maxLen = 6): string {
+    const safeName = (name || "").trim();
+    if (!safeName) return "User";
+    if (safeName.length <= maxLen) return safeName;
+    return `${safeName.slice(0, maxLen)}..`;
+}
+
+function formatExactCountdownDetails(timestamp: number | null, nowMs: number): {
+    exactCountdown: string;
+    timeLeftText: string;
+    dayLabel: string;
+} {
+    if (!timestamp) {
+        return {
+            exactCountdown: "Unknown",
+            timeLeftText: "Unknown time left",
+            dayLabel: "Unknown day",
+        };
+    }
+
+    const diffMs = timestamp - nowMs;
+    if (diffMs <= 0) {
+        const endedDate = new Date(timestamp);
+        const endedDay = endedDate.toLocaleDateString("en-US", { weekday: "long", timeZone: "UTC" });
+        return {
+            exactCountdown: "0d 0h 0m",
+            timeLeftText: "Challenge ended",
+            dayLabel: `${endedDay} (UTC)`,
+        };
+    }
+
+    const totalMinutes = Math.floor(diffMs / 60000);
+    const days = Math.floor(totalMinutes / (24 * 60));
+    const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
+    const minutes = totalMinutes % 60;
+
+    const endDate = new Date(timestamp);
+    const weekday = endDate.toLocaleDateString("en-US", { weekday: "long", timeZone: "UTC" });
+    const fullDate = endDate.toLocaleString("en-US", {
+        timeZone: "UTC",
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+    });
+
+    return {
+        exactCountdown: `${days}d ${hours}h ${minutes}m`,
+        timeLeftText: `${days} day${days === 1 ? "" : "s"}, ${hours} hour${hours === 1 ? "" : "s"}, ${minutes} minute${minutes === 1 ? "" : "s"} left`,
+        dayLabel: `${weekday}, ${fullDate} UTC`,
+    };
+}
+
 // Helper types for resolution_details
 export function ChallengeCard({
     challenge,
@@ -81,9 +207,12 @@ export function ChallengeCard({
         return () => window.clearInterval(interval);
     }, []);
 
-    const handleClick = () => {
+    const handleClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+
         if (onClick) {
-            onClick(challenge);
+            // Defer to next tick so the opening click cannot also close the modal backdrop.
+            window.setTimeout(() => onClick(challenge), 0);
         } else if (onRekt) {
             onRekt(challenge);
         }
@@ -241,6 +370,9 @@ export function ChallengeCard({
     const assetSymbol = assetMeta.symbol || challenge.market.name || "BTC";
     const assetIcon = assetMeta.icon || "/scribbles/btc.png";
     const assetName = assetMeta.name || assetSymbol;
+    const creatorName = labelsMeta.creator || challenge.creator.username || "Creator";
+    const creatorDisplayName = truncateProfileName(creatorName, 6);
+    const creatorProfileImage = challenge.creator.profile_image || assetIcon;
 
     // Get title
     const title = uiMeta.title || challenge.title || `Bet on ${assetSymbol}`;
@@ -253,11 +385,51 @@ export function ChallengeCard({
     const poolDisplay = poolMeta.display || "$0 USDC";
 
     // Calculate time remaining from expire_time
-    const timeRemaining = challenge.expire_time
-        ? `${Math.floor((new Date(challenge.expire_time).getTime() - currentTime) / 60000)}m`
-        : "N/A";
+    const expiryTimestamp = parseDateValue(challenge.expire_time);
+    const timeRemaining = formatExpiryCountdown(expiryTimestamp, currentTime);
+    const hasChallengeExpired = Boolean(expiryTimestamp && expiryTimestamp <= currentTime && !isAccepted);
+    const isExpiryUnderOneHour = Boolean(
+        expiryTimestamp &&
+        expiryTimestamp > currentTime &&
+        (expiryTimestamp - currentTime) < 60 * 60 * 1000
+    );
 
     // Get resolution condition value for display
+    const createdTimeText = formatCreatedTimeAgo(parseDateValue(challenge.created_at));
+    const resolveTimestamp = parseDateValue(challenge.resolve_time);
+    const challengeEndTimeText = formatUtcDateTime(resolveTimestamp);
+    const endsByCountdown = formatEndsByCountdown(resolveTimestamp, currentTime);
+    const exactCountdownDetails = formatExactCountdownDetails(resolveTimestamp, currentTime);
+    const isCreator = user?.wallet_address === challenge.creator.wallet_address;
+    const isPvpMode = challenge.mode !== "pool";
+    const isPoolMode = challenge.mode === "pool";
+
+    let ctaLabel = "";
+    let ctaDisabled = false;
+    let ctaClassName = "";
+
+    if (hasChallengeExpired) {
+        ctaLabel = "EXPIRED";
+        ctaDisabled = true;
+        ctaClassName =
+            "w-full py-2.5 px-4 rounded-xl bg-red-100 border border-red-300 text-red-700 font-bold text-sm shadow-sm cursor-not-allowed";
+    } else if (isPvpMode && isAccepted) {
+        ctaLabel = "ONGOING";
+        ctaDisabled = true;
+        ctaClassName =
+            "w-full py-2.5 px-4 rounded-xl bg-[#0c9d63] border border-gray-500 text-white font-bold text-sm shadow-lg cursor-not-allowed";
+    } else if (isPoolMode) {
+        ctaLabel = "JOIN CHALLENGE";
+        ctaDisabled = isLoading;
+        ctaClassName =
+            "w-full py-2.5 px-4 rounded-xl bg-[#246044] hover:bg-[#2b7351] text-white font-bold text-sm shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed";
+    } else {
+        ctaLabel = "ACCEPT CHALLENGE";
+        ctaDisabled = isLoading || isCreator;
+        ctaClassName =
+            "w-full py-2.5 px-4 rounded-xl bg-[#0c9d63] hover:bg-[#0a7d4f] border border-gray-500 text-white font-bold text-base shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed";
+    }
+
     return (
         <div
             onClick={handleClick}
@@ -276,21 +448,27 @@ export function ChallengeCard({
                         />
                     </div>
                     <div>
-                        <h3 className="font-semibold text-gray-900 text-base leading-tight">
-                            {title}
+                        <h3 className="text-gray-900 leading-tight">
+                            <span className="block text-[16px] font-bold tracking-tight">
+                                {title} In
+                            </span>
+                            <span className="block text-[16px] font-bold tracking-tight">Next
+                                <span className="ml-2 inline-flex items-center gap-1.5">
+                                    <span className="text-sm font-bold text-emerald-900">{endsByCountdown}</span>
+                                    <span className="group relative inline-flex items-center">
+                                        <svg className="w-3.5 h-3.5 text-emerald-600 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <span className="absolute left-1/2 top-full z-10 mt-2 w-60 -translate-x-1/2 rounded-lg bg-gray-900 p-2 text-[11px] font-medium text-white opacity-0 invisible transition-all duration-200 group-hover:opacity-100 group-hover:visible normal-case leading-relaxed shadow-lg">
+                                            <span className="block">Exact countdown: {exactCountdownDetails.exactCountdown}</span>
+                                            <span className="block">Time left: {exactCountdownDetails.timeLeftText}</span>
+                                            <span className="block">Ends on: {exactCountdownDetails.dayLabel}</span>
+                                            <span className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-full border-4 border-transparent border-b-gray-900"></span>
+                                        </span>
+                                    </span>
+                                </span>
+                            </span>
                         </h3>
-                        <div className="flex items-center gap-2 mt-0.5">
-                            <div className="w-4 h-4 rounded-full bg-gray-200 overflow-hidden">
-                                <Image
-                                    src={assetIcon}
-                                    alt={assetName}
-                                    width={16}
-                                    height={16}
-                                    className="w-full h-full object-cover"
-                                />
-                            </div>
-                            <span className="text-sm text-gray-600">{labelsMeta.creator || "Creator"}</span>
-                        </div>
                     </div>
                 </div>
                 {/* Watchlist Button */}
@@ -342,8 +520,8 @@ export function ChallengeCard({
                             <div className={`w-14 h-14 rounded-full overflow-hidden border-2 ${hasWon ? "border-amber-400" : "border-[#d4a574]"
                                 } shadow-md`}>
                                 <Image
-                                    src={assetIcon}
-                                    alt={assetName}
+                                    src={creatorProfileImage}
+                                    alt={creatorName}
                                     width={56}
                                     height={56}
                                     className="w-full h-full object-cover"
@@ -356,9 +534,9 @@ export function ChallengeCard({
 
                             {/* Info */}
                             <div className="mt-2 text-center">
-                                <p className="font-bold text-[#2d1f1a] text-xs">{assetSymbol}</p>
+                                <p className="font-bold text-[#2d1f1a] text-xs">{creatorDisplayName}</p>
                                 <p className="text-[10px] text-[#8b7355] mt-0.5">
-                                    {hasWon ? "Won!" : hasLost ? "Lost" : "Created"}
+                                    {hasWon ? "Won!" : hasLost ? "Lost" : "Creator"}
                                 </p>
                             </div>
                         </div>
@@ -396,7 +574,7 @@ export function ChallengeCard({
                         </>
                     </div>
 
-                    {/* Defender Profile */}
+                    {/* opponent Profile */}
                     {isAccepted && challenge.opponent_info ? (
                         <div className="relative group flex flex-col items-center">
                             <div className={`w-[120px] h-[140px] flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-300 ${hasLost
@@ -431,7 +609,7 @@ export function ChallengeCard({
                                 )}
                                 {/* Label */}
                                 <div className="mt-1 px-1.5 py-0.5 bg-[#2d1f1a] text-white text-[9px] font-bold rounded-full">
-                                    {challenge.mode === "pool" ? "POOL" : "DEFENDER"}
+                                    {challenge.mode === "pool" ? "POOL" : "Opponent"}
                                 </div>
 
                                 {/* Info */}
@@ -450,10 +628,11 @@ export function ChallengeCard({
                                 <span className="text-xl">❓</span>
                             </div>
                             <div className="mt-1 px-1.5 py-0.5 bg-[#2d1f1a] text-white text-[9px] font-bold rounded-full">
-                                {challenge.mode === "multi" ? "DEFENDERS" : "DEFENDER"}
+                                {challenge.mode === "multi" ? " OPPONENTS" : "OPPONENT"}
                             </div>
                             <div className="mt-2 text-center">
                                 <p className="font-semibold text-[#8b7355] text-xs">No one yet!</p>
+                                <p className="text-[10px] text-[#8b7355] mt-0.5">Be the first to join!</p>
                             </div>
                         </div>
                     )}
@@ -462,30 +641,22 @@ export function ChallengeCard({
 
             {/* CTA Button */}
             <div className="flex gap-2">
-                {challenge.mode === "pool" ? (
-                    <>
-                        <button
-                            disabled={isLoading}
-                            onClick={(e) => { e.preventDefault(); handleJoinChallenge(e) }}
-                            className="flex-1 py-2.5 px-4 rounded-xl bg-[#246044] hover:bg-[#2b7351] text-white font-bold text-sm shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
-                        >
-                            {isLoading ? "JOINING..." : "JOIN CHALLENGE"}
-                            {!isLoading && <span className="text-lg">⚔️</span>}
-                        </button>
-                    </>
-                ) : (
-                    user?.wallet_address !== challenge.creator.wallet_address && <button
-                        disabled={isLoading}
-                        onClick={(e) => {
-                            e.preventDefault();
-                            openBetForm(e)
-                        }}
-                        className="cursor-pointer w-full py-2.5 px-4 rounded-xl bg-[#0c9d63] hover:bg-[#0a7d4f] border border-gray-500 text-white font-bold text-base shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
-                    >
-                        {isLoading ? "JOINING..." : "ACCEPT CHALLENGE"}
-                        {!isLoading && <span className="text-xl">⚔️</span>}
-                    </button>
-                )}
+                <button
+                    disabled={ctaDisabled}
+                    onClick={(e) => {
+                        e.preventDefault();
+                        if (ctaDisabled) return;
+                        if (isPoolMode) {
+                            handleJoinChallenge(e);
+                            return;
+                        }
+                        openBetForm(e);
+                    }}
+                    className={ctaClassName}
+                >
+                    {isLoading && isPoolMode ? "JOINING..." : ctaLabel}
+                    {!ctaDisabled && !isLoading && <span className="text-lg">⚔️</span>}
+                </button>
             </div>
 
             {isBetFormOpen && (
@@ -557,14 +728,24 @@ export function ChallengeCard({
 
             {/* Challenge Expiry */}
             <div className="flex items-center justify-center gap-1.5 text-xs text-gray-600 mt-1.5">
-                <span>Challenge expires in</span>
-                <span className="font-medium text-gray-900">{timeRemaining}</span>
+                {hasChallengeExpired ? (
+                    <span className="font-semibold text-red-600">Challenge expired</span>
+                ) : (
+                    <>
+                        <span>Challenge expires in</span>
+                        <span className={`font-medium ${isExpiryUnderOneHour ? "text-red-600" : "text-gray-900"}`}>
+                            {timeRemaining}
+                        </span>
+                    </>
+                )}
                 <div className="group relative">
                     <svg className="w-3.5 h-3.5 text-gray-400 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
-                        This challenge will expire in {timeRemaining}, you will not be able to join after that.
+                        {hasChallengeExpired
+                            ? "This challenge has expired and can no longer be joined."
+                            : `This challenge will expire in ${timeRemaining}, you will not be able to join after that.`}
                         <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
                     </div>
                 </div>
@@ -579,13 +760,13 @@ export function ChallengeCard({
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <span className="text-sm">Created <span className="font-semibold text-gray-900">2h ago</span></span>
+                    <span className="text-sm">Created <span className="font-semibold text-gray-900">{createdTimeText}</span></span>
                     <div className="group relative">
                         <svg className="w-3.5 h-3.5 text-gray-400 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-44 p-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
-                            This challenge was created 2 hours ago and will end on September 30, 2024 at 3:00 PM UTC if accepted.
+                            This challenge was created {createdTimeText} and will end on {challengeEndTimeText} if accepted.
                             <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
                         </div>
                     </div>

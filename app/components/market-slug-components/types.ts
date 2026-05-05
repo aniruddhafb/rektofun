@@ -47,7 +47,7 @@ export const PLACEHOLDER_CHALLENGES: any[] = [
         likes: 0,
         mode: "pvp",
         challengerCount: 1,
-        defenderCount: 0,
+        opponentCount: 0,
         totalPool: 100,
     },
     {
@@ -76,7 +76,7 @@ export const PLACEHOLDER_CHALLENGES: any[] = [
         likes: 0,
         mode: "pvp",
         challengerCount: 1,
-        defenderCount: 0,
+        opponentCount: 0,
         totalPool: 50,
     },
 ];
