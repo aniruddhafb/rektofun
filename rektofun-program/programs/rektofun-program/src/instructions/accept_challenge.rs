@@ -67,7 +67,7 @@ pub fn handler(ctx: Context<AcceptChallenge>) -> Result<()> {
     // Transfer matching USDC bet from challenger to vault
     token::transfer(
         CpiContext::new(
-            ctx.accounts.token_program.to_account_info(),
+            ctx.accounts.token_program.key(),
             Transfer {
                 from: ctx.accounts.challenger_usdc_account.to_account_info(),
                 to: ctx.accounts.vault.to_account_info(),

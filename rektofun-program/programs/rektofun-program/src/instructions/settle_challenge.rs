@@ -108,7 +108,7 @@ pub fn handler(ctx: Context<SettleChallenge>, creator_wins: bool) -> Result<()> 
     // Pay winner USDC
     token::transfer(
         CpiContext::new_with_signer(
-            ctx.accounts.token_program.to_account_info(),
+            ctx.accounts.token_program.key(),
             Transfer {
                 from: ctx.accounts.vault.to_account_info(),
                 to: ctx.accounts.winner_usdc_account.to_account_info(),
@@ -122,7 +122,7 @@ pub fn handler(ctx: Context<SettleChallenge>, creator_wins: bool) -> Result<()> 
     // Pay platform fee to treasury USDC account
     token::transfer(
         CpiContext::new_with_signer(
-            ctx.accounts.token_program.to_account_info(),
+            ctx.accounts.token_program.key(),
             Transfer {
                 from: ctx.accounts.vault.to_account_info(),
                 to: ctx.accounts.treasury_usdc_account.to_account_info(),

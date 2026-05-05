@@ -72,7 +72,7 @@ pub fn handler(ctx: Context<CancelChallenge>) -> Result<()> {
     // Refund USDC to creator
     token::transfer(
         CpiContext::new_with_signer(
-            ctx.accounts.token_program.to_account_info(),
+            ctx.accounts.token_program.key(),
             Transfer {
                 from: ctx.accounts.vault.to_account_info(),
                 to: ctx.accounts.creator_usdc_account.to_account_info(),
@@ -85,7 +85,7 @@ pub fn handler(ctx: Context<CancelChallenge>) -> Result<()> {
 
     // Close the vault token account and reclaim rent to creator
     token::close_account(CpiContext::new_with_signer(
-        ctx.accounts.token_program.to_account_info(),
+        ctx.accounts.token_program.key(),
         CloseAccount {
             account: ctx.accounts.vault.to_account_info(),
             destination: ctx.accounts.creator.to_account_info(),

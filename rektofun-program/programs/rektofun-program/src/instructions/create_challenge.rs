@@ -128,7 +128,7 @@ pub fn handler(ctx: Context<CreateChallenge>, params: CreateChallengeParams) -> 
     // --- Transfer USDC bet from creator to vault ---
     token::transfer(
         CpiContext::new(
-            ctx.accounts.token_program.to_account_info(),
+            ctx.accounts.token_program.key(),
             Transfer {
                 from: ctx.accounts.creator_usdc_account.to_account_info(),
                 to: ctx.accounts.vault.to_account_info(),
