@@ -23,6 +23,7 @@ export interface MarketResponse {
 export interface GetMarketsParams {
   market_type?: string;
   parent_id?: string | null;
+  parent_name?: string;
   is_active?: boolean;
   limit?: number;
   offset?: number;
@@ -39,6 +40,7 @@ export async function getMarkets(params: GetMarketsParams = {}): Promise<MarketR
   } else if (params.parent_id) {
     queryParams.append('parent_id', params.parent_id);
   }
+  if (params.parent_name) queryParams.append('parent_name', params.parent_name);
   if (params.is_active !== undefined) queryParams.append('is_active', String(params.is_active));
   if (params.limit !== undefined) queryParams.append('limit', String(params.limit));
   if (params.offset !== undefined) queryParams.append('offset', String(params.offset));

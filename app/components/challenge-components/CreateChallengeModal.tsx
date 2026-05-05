@@ -238,7 +238,7 @@ export function CreateChallengeModal({
             // Build the transaction
             const tx = await buildCreateChallengeTx(program, creatorPubkey, {
                 asset: selectedChildMarket?.symbol || "",
-                betAmountSol: betAmount,
+                betAmountUsdc: betAmount,
                 targetPriceUsdCents,
                 directionAbove: predictionDirection === "Above",
                 expiresAt,
@@ -278,8 +278,8 @@ export function CreateChallengeModal({
                     title: isSportsSelected ? challengeStatement : `${selectedChildMarket?.symbol} ${predictionDirection} $${predictionPrice}`,
                     description: isSportsSelected
                         ? challengeStatement
-                        : `Bet ${betAmount} SOL that ${selectedChildMarket?.symbol} will be ${predictionDirection.toLowerCase()} $${predictionPrice} by ${selectedDate.toISOString()}`,
-                    category: selectedChildMarket?.id || "",
+                        : `Bet ${betAmount} USDC that ${selectedChildMarket?.symbol} will be ${predictionDirection.toLowerCase()} $${predictionPrice} by ${selectedDate.toISOString()}`,
+                    category: selectedChildMarket?.name || "",
                     event_type: "binary",
                     ticker: selectedChildMarket?.symbol || "",
                     created_by: user?.id || "",
