@@ -279,7 +279,7 @@ export function CreateChallengeModal({
                     description: isSportsSelected
                         ? challengeStatement
                         : `Bet ${betAmount} USDC that ${selectedChildMarket?.symbol} will be ${predictionDirection.toLowerCase()} $${predictionPrice} by ${selectedDate.toISOString()}`,
-                    category: selectedChildMarket?.id || "",
+                    category: selectedChildMarket?.name || "",
                     event_type: "binary",
                     ticker: selectedChildMarket?.symbol || "",
                     created_by: user?.id || "",

@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import Image from "next/image";
@@ -84,20 +85,11 @@ export default function MarketsPage() {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [bookmarkedMarkets, setBookmarkedMarkets] = useState<Set<string>>(new Set());
     const [searchTerm, setSearchTerm] = useState("");
-    const [parentId, setParentId] = useState<string | null>(null);
     const [markets, setMarkets] = useState<MarketCardData[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        if (typeof window === "undefined") {
-            return;
-        }
-
-        const params = new URLSearchParams(window.location.search);
-        setParentId(params.get("id"));
-    }, []);
+    
 
     const toggleBookmark = (marketId: string) => {
         setBookmarkedMarkets((prev) => {
@@ -126,24 +118,17 @@ export default function MarketsPage() {
         let isMounted = true;
 
         async function loadMarkets() {
-            if (!parentId) {
-                if (isMounted) {
-                    setMarkets([]);
-                    setError("Missing market id in the URL.");
-                    setIsLoading(false);
-                }
-                return;
-            }
+
 
             try {
                 setIsLoading(true);
                 setError(null);
 
-                const marketsResponse = await getMarkets({ parent_id: parentId });
+                const marketsResponse = await getMarkets({ parent_name: "Crypto" });
                 const marketCards = await Promise.all(
                     marketsResponse.markets.map(async (market) => {
-                        const challengesResponse = await getChallenges({ category: market.id });
-                        console.log({challengesResponse});
+                        console.log("market", market);
+                        const challengesResponse = await getChallenges({ category: market.name });
                         return mapMarketToCardData(market, challengesResponse.challenges);
                     })
                 );
@@ -172,7 +157,7 @@ export default function MarketsPage() {
         return () => {
             isMounted = false;
         };
-    }, [parentId]);
+    }, []);
 
     const filteredMarkets = markets.filter((market) => {
         const normalizedSearch = searchTerm.trim().toLowerCase();
@@ -372,10 +357,12 @@ export default function MarketsPage() {
                                     </div>
                                 </div>
 
-                                <button className="w-full py-2.5 sm:py-3 bg-[#2b7351] hover:bg-[#246044] text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-2 group text-sm sm:text-base">
-                                    View Challenges
-                                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                                </button>
+                                <Link href={`/markets/crypto/${market.name}`}>
+                                    <button className="w-full py-2.5 sm:py-3 bg-[#2b7351] hover:bg-[#246044] text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-2 group text-sm sm:text-base">
+                                        View Challenges
+                                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                    </button>
+                                </Link>
                             </div>
                         ))}
                     </div>

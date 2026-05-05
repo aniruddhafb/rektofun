@@ -146,41 +146,41 @@ export function ChallengeCard({
             setBetError("");
             setIsLoading(true);
 
-            const challengeDetails = await getChallengeById(challenge.id);
-            const creatorPubkey = new PublicKey(challenge.creator.wallet_address);
-            const onChainChallenges = await fetchAllChallenges(program);
-            const expectedBetMicroUsdc = usdcToMicroUsdc(challenge.initial_bet ?? 0);
-            const expectedExpireAt = Math.floor(new Date(challengeDetails.expire_time).getTime() / 1000);
-            const expectedResolveAt = Math.floor(new Date(challengeDetails.resolve_time).getTime() / 1000);
-            const expectedAsset = challengeDetails.ticker || challenge.market.name;
+            // const challengeDetails = await getChallengeById(challenge.id);
+            // const creatorPubkey = new PublicKey(challenge.creator.wallet_address);
+            // const onChainChallenges = await fetchAllChallenges(program);
+            // const expectedBetMicroUsdc = usdcToMicroUsdc(challenge.initial_bet ?? 0);
+            // const expectedExpireAt = Math.floor(new Date(challengeDetails.expire_time).getTime() / 1000);
+            // const expectedResolveAt = Math.floor(new Date(challengeDetails.resolve_time).getTime() / 1000);
+            // const expectedAsset = challengeDetails.ticker || challenge.market.name;
 
-            const onChainChallenge = onChainChallenges.find((candidate) =>
-                candidate.creator.equals(creatorPubkey) &&
-                candidate.status === "Open" &&
-                candidate.asset === expectedAsset &&
-                candidate.betAmount === expectedBetMicroUsdc &&
-                candidate.expiresAt === expectedExpireAt &&
-                candidate.resolvesAt === expectedResolveAt
-            );
+            // const onChainChallenge = onChainChallenges.find((candidate) =>
+            //     candidate.creator.equals(creatorPubkey) &&
+            //     candidate.status === "Open" &&
+            //     candidate.asset === expectedAsset &&
+            //     candidate.betAmount === expectedBetMicroUsdc &&
+            //     candidate.expiresAt === expectedExpireAt &&
+            //     candidate.resolvesAt === expectedResolveAt
+            // );
 
-            if (!onChainChallenge) {
-                throw new Error("Matching on-chain challenge was not found.");
-            }
+            // if (!onChainChallenge) {
+            //     throw new Error("Matching on-chain challenge was not found.");
+            // }
 
-            if (parsedBetAmount !== challenge.initial_bet) {
-                throw new Error(
-                    `This on-chain challenge currently requires an exact ${challenge.initial_bet} ${betCurrency} match.`
-                );
-            }
+            // if (parsedBetAmount !== challenge.initial_bet) {
+            //     throw new Error(
+            //         `This on-chain challenge currently requires an exact ${challenge.initial_bet} ${betCurrency} match.`
+            //     );
+            // }
 
-            const tx = await buildAcceptChallengeTx(
-                program,
-                publicKey,
-                onChainChallenge.publicKey,
-                creatorPubkey
-            );
+            // const tx = await buildAcceptChallengeTx(
+            //     program,
+            //     publicKey,
+            //     onChainChallenge.publicKey,
+            //     creatorPubkey
+            // );
 
-            await sendTransaction(tx);
+            // await sendTransaction(tx);
 
             await joinChallenge({
                 challenge_id: challenge.id,
