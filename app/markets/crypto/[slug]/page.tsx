@@ -7,6 +7,7 @@ import { MarketHeader } from "../../../components/market-slug-components/MarketH
 import { ChartSection } from "../../../components/market-slug-components/ChartSection";
 import { TopTradersSection } from "../../../components/market-slug-components/TopTradersSection";
 import { FilterBar } from "../../../components/market-slug-components/FilterBar";
+import { LoadingPage } from "../../../components/LoadingPage";
 import { MarketChallengesGrid } from "../../../components/market-slug-components/MarketChallengesGrid";
 import {
     getChallenges,
@@ -18,20 +19,22 @@ import {
 } from "@/app/lib/markets-service/market";
 
 function formatMarketTitle(name: string) {
-    return `${name} Challenge Markets`;
+    return `${name}`;
 }
 
 function formatMarketDescription(name: string) {
-    return `Predict and earn by betting on ${name} market movements`;
+    return `${name}`;
 }
 
 export default function MarketPage() {
     const params = useParams<{ slug: string }>();
     const slugName = useMemo(() => decodeURIComponent(params.slug ?? ""), [params.slug]);
-    const [showChart, setShowChart] = useState(true);
+    const [showChart, setShowChart] = useState(false);
     const [showTopTraders, setShowTopTraders] = useState(false);
-    const [filterOpen, setFilterOpen] = useState(false);
-    const [selectedFilter, setSelectedFilter] = useState("Latest");
+    const [statusOpen, setStatusOpen] = useState(false);
+    const [modeOpen, setModeOpen] = useState(false);
+    const [selectedStatus, setSelectedStatus] = useState("Latest");
+    const [selectedMode, setSelectedMode] = useState("All Modes");
     const [isCreateChallengeOpen, setIsCreateChallengeOpen] = useState(false);
     const [market, setMarket] = useState<Market | null>(null);
     const [challenges, setChallenges] = useState<ChallengeListItem[]>([]);
@@ -99,9 +102,37 @@ export default function MarketPage() {
         market?.description || formatMarketDescription(marketName);
     const marketLogo = market?.icon || market?.image || "/scribbles/coins.png";
 
+    // Filter challenges based on selected status and mode
+    const filteredChallenges = useMemo(() => {
+        let result = challenges;
+
+        // Filter by status
+        if (selectedStatus !== "Latest") {
+            const statusMap: Record<string, string> = {
+                "Expired": "cancelled",
+                "Expiring Soon": "locked",
+                "Ongoing": "open",
+                "Completed": "resolved",
+            };
+            const mappedStatus = statusMap[selectedStatus];
+            if (mappedStatus) {
+                result = result.filter((c) => c.status === mappedStatus);
+            }
+        }
+
+        // Filter by mode
+        if (selectedMode !== "All Modes") {
+            const modeValue = selectedMode === "PVP" ? "pvp" : "multi";
+            result = result.filter((c) => c.mode?.toLowerCase() === modeValue);
+        }
+
+        return result;
+    }, [challenges, selectedStatus, selectedMode]);
+
     return (
         <div className="min-h-screen" style={{ backgroundColor: "#f3e1d7" }}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+                {/* header section  */}
                 <MarketHeader
                     marketName={formatMarketTitle(marketName)}
                     marketDescription={marketDescription}
@@ -109,39 +140,43 @@ export default function MarketPage() {
                     onCreateChallenge={() => setIsCreateChallengeOpen(true)}
                 />
 
+                {/* main section  */}
                 <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
                     <div className="flex-1 min-w-0">
                         <ChartSection
+                            slugName={slugName}
                             showChart={showChart}
                             onToggleChart={() => setShowChart(!showChart)}
                         />
 
-                        <TopTradersSection
+                        {/* <TopTradersSection
                             showTopTraders={showTopTraders}
                             onToggleTopTraders={() => setShowTopTraders(!showTopTraders)}
-                        />
+                        /> */}
 
                         <FilterBar
-                            selectedFilter={selectedFilter}
-                            onFilterChange={setSelectedFilter}
-                            filterOpen={filterOpen}
-                            onFilterOpenChange={setFilterOpen}
+                            selectedStatus={selectedStatus}
+                            onStatusChange={setSelectedStatus}
+                            selectedMode={selectedMode}
+                            onModeChange={setSelectedMode}
+                            statusOpen={statusOpen}
+                            onStatusOpenChange={setStatusOpen}
+                            modeOpen={modeOpen}
+                            onModeOpenChange={setModeOpen}
                         />
 
                         {isLoading ? (
-                            <div className="rounded-2xl bg-white/40 border border-white/50 p-8 text-center text-gray-700">
-                                Loading challenges...
-                            </div>
+                            <LoadingPage variant="simple" message="Loading challenges..." />
                         ) : error ? (
-                            <div className="rounded-2xl bg-white/40 border border-white/50 p-8 text-center text-red-700">
+                            <div className="mt-4 rounded-2xl bg-white/40 border border-white/50 p-8 text-center text-red-700">
                                 {error}
                             </div>
-                        ) : challenges.length === 0 ? (
-                            <div className="rounded-2xl bg-white/40 border border-white/50 p-8 text-center text-gray-700">
-                                No challenges found for {marketName}.
+                        ) : filteredChallenges.length === 0 ? (
+                            <div className="mt-4 rounded-2xl bg-white/40 border border-white/50 p-8 text-center text-gray-700">
+                                No Challenges Found.
                             </div>
                         ) : (
-                            <MarketChallengesGrid challenges={challenges} />
+                            <MarketChallengesGrid challenges={filteredChallenges} />
                         )}
                     </div>
                 </div>

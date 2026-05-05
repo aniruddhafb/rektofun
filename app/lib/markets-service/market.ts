@@ -60,3 +60,33 @@ export async function getMarkets(params: GetMarketsParams = {}): Promise<MarketR
 
   return response.json();
 }
+
+export interface CreateMarketParams {
+  name: string;
+  symbol: string;
+  description?: string;
+  image?: string;
+  icon?: string;
+  parent_id?: string | null;
+  market_type?: string;
+  resolution_source?: string | null;
+}
+
+export async function createMarket(params: CreateMarketParams): Promise<Market> {
+  const url = `${BASE_URL}/markets`;
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'accept': 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(params),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Error creating market: ${response.statusText}`);
+  }
+
+  return response.json();
+}

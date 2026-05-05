@@ -102,11 +102,11 @@ export default function CategoryPage() {
                         style={{
                             background: "linear-gradient(145deg, #f3e1d7 0%, #f8ede4 40%, #f5e4d0 100%)",
                             boxShadow: "0 4px 24px -6px rgba(220,180,140,0.3), 0 1px 4px rgba(0,0,0,0.04)",
-                            border: "1.5px solid rgba(230,180,130,0.25)",
+                            border: "2.5px solid rgba(0, 0, 0, 0.25)",
                         }}
                     >
                         {/* Decorative top stripe */}
-                        <div className="h-1.5 w-full" style={{ background: "linear-gradient(90deg, #e8a050, #f0b060, #f5c880)" }} />
+                        {/* <div className="h-1.5 w-full" style={{ background: "linear-gradient(90deg, #e8a050, #f0b060, #f5c880)" }} /> */}
 
                         {/* Top visual area — shorter for rectangular look */}
                         <div className="relative h-44 sm:h-48 overflow-hidden flex-shrink-0 px-6 pt-6">
@@ -229,7 +229,7 @@ export default function CategoryPage() {
                         <div className="px-5 pb-4">
                             <Link
                                 href="/markets/crypto"
-                                className="group/btn flex items-center justify-between w-full px-5 py-3.5 rounded-xl text-white font-bold text-sm sm:text-base transition-all duration-300 hover:opacity-95 hover:scale-[1.02] active:scale-[0.98]"
+                                className="group/btn border border-gray-700 flex items-center justify-between w-full px-5 py-3.5 rounded-xl text-white font-bold text-sm sm:text-base transition-all duration-300 hover:opacity-95 hover:scale-[1.02] active:scale-[0.98]"
                                 style={{
                                     background: "linear-gradient(135deg, #e8a050 0%, #d09040 100%)",
                                     boxShadow: "0 4px 16px rgba(220,150,60,0.3), inset 0 1px 0 rgba(255,255,255,0.15)",
@@ -249,11 +249,11 @@ export default function CategoryPage() {
                         style={{
                             background: "linear-gradient(145deg, #f3e1d7 0%, #f0e8ef 40%, #ece4f5 100%)",
                             boxShadow: "0 4px 24px -6px rgba(200,170,190,0.3), 0 1px 4px rgba(0,0,0,0.04)",
-                            border: "1.5px solid rgba(190,160,210,0.25)",
+                            border: "2.5px solid rgba(0, 0, 0, 0.25)",
                         }}
                     >
                         {/* Decorative top stripe */}
-                        <div className="h-1.5 w-full" style={{ background: "linear-gradient(90deg, #b080d0, #c8a0e0, #d8b8e8)" }} />
+                        {/* <div className="h-1.5 w-full" style={{ background: "linear-gradient(90deg, #b080d0, #c8a0e0, #d8b8e8)" }} /> */}
 
                         {/* Top visual area — shorter for rectangular look */}
                         <div className="relative h-44 sm:h-48 overflow-hidden flex-shrink-0 px-6 pt-6">
@@ -346,18 +346,6 @@ export default function CategoryPage() {
                                             <div className="absolute bottom-1/4 left-1/4 right-1/4 h-0.5 bg-[#b08040] rounded-full" style={{ transform: "rotate(20deg)" }} />
                                         </div>
                                     </div>
-
-                                    {/* Trophy accent */}
-                                    <div
-                                        className="absolute top-2 left-2 w-9 h-9 rounded-xl flex items-center justify-center animate-float-wavy"
-                                        style={{
-                                            background: "rgba(255,255,255,0.85)",
-                                            boxShadow: "0 4px 12px rgba(190,160,210,0.25)",
-                                            animationDelay: "1.2s",
-                                        }}
-                                    >
-                                        <span className="text-lg">🏆</span>
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -395,7 +383,7 @@ export default function CategoryPage() {
                         <div className="px-5 pb-4">
                             <Link
                                 href="/markets/sports"
-                                className="group/btn flex items-center justify-between w-full px-5 py-3.5 rounded-xl text-white font-bold text-sm sm:text-base transition-all duration-300 hover:opacity-95 hover:scale-[1.02] active:scale-[0.98]"
+                                className="group/btn border border-gray-700 flex items-center justify-between w-full px-5 py-3.5 rounded-xl text-white font-bold text-sm sm:text-base transition-all duration-300 hover:opacity-95 hover:scale-[1.02] active:scale-[0.98]"
                                 style={{
                                     background: "linear-gradient(135deg, #b080d0 0%, #a070c0 100%)",
                                     boxShadow: "0 4px 16px rgba(190,150,210,0.3), inset 0 1px 0 rgba(255,255,255,0.15)",

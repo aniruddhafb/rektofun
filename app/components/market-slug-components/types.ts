@@ -256,4 +256,5 @@ export const topTradersData: TopTrader[] = [
 ];
 
 // Filter options
-export const filterOptions = ["Latest", "Expired", "Expiring Soon", "Ongoing", "Completed"];
+export const statusFilterOptions = ["Latest", "Expired", "Expiring Soon", "Ongoing", "Completed"];
+export const modeFilterOptions = ["All Modes", "PVP", "Multi"];

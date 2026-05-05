@@ -222,7 +222,7 @@ export function ChallengeCard({
         creator: challenge.creator.username,
     };
     const poolMeta: PoolMetadata = {
-        display: `$${challenge.total_pool} USDC`,
+        display: `$${challenge.total_pool}`,
     };
 
     // Determine mode: pvp or multi (mapped from pvp/pool)
@@ -261,7 +261,7 @@ export function ChallengeCard({
     return (
         <div
             onClick={handleClick}
-            className="bg-[#f8ede7] rounded-2xl p-4 shadow-sm border border-gray-300 hover:shadow-lg transition-shadow block cursor-pointer"
+            className="bg-[#f8ede7] rounded-2xl border border-gray-400 p-4 shadow-sm border border-gray-300 hover:shadow-lg transition-shadow block cursor-pointer"
         >
             {/* Header */}
             <div className="flex items-start justify-between mb-3">
@@ -476,9 +476,11 @@ export function ChallengeCard({
                 ) : (
                     user?.wallet_address !== challenge.creator.wallet_address && <button
                         disabled={isLoading}
-                        onClick={(e) => { e.preventDefault(); 
-                            openBetForm(e) }}
-                        className="w-full py-2.5 px-4 rounded-xl bg-[#246044] hover:bg-[#2b7351] text-white font-bold text-base shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            openBetForm(e)
+                        }}
+                        className="cursor-pointer w-full py-2.5 px-4 rounded-xl bg-[#0c9d63] hover:bg-[#0a7d4f] border border-gray-500 text-white font-bold text-base shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                     >
                         {isLoading ? "JOINING..." : "ACCEPT CHALLENGE"}
                         {!isLoading && <span className="text-xl">⚔️</span>}

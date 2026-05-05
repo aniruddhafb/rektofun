@@ -18,6 +18,7 @@ import {
     getChallenges,
     type ChallengeListItem,
 } from "@/app/lib/challenges-service/challenges";
+import { LoadingPage } from "@/app/components";
 
 interface MarketCardData {
     id: string;
@@ -88,8 +89,42 @@ export default function MarketsPage() {
     const [markets, setMarkets] = useState<MarketCardData[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [showDevnetNotice, setShowDevnetNotice] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
-    
+
+
+    const handleCreateClick = () => {
+        setShowDevnetNotice(true);
+        setTimeout(() => setShowDevnetNotice(false), 3000);
+    };
+
+    const reloadMarkets = async () => {
+        try {
+            setIsLoading(true);
+            setError(null);
+
+            const marketsResponse = await getMarkets({ parent_name: "Crypto" });
+            const marketCards = await Promise.all(
+                marketsResponse.markets.map(async (market) => {
+                    console.log("market", market);
+                    const challengesResponse = await getChallenges({ category: market.name });
+                    return mapMarketToCardData(market, challengesResponse.challenges);
+                })
+            );
+
+            setMarkets(marketCards);
+        } catch (fetchError) {
+            setError(
+                fetchError instanceof Error
+                    ? fetchError.message
+                    : "Something went wrong while loading markets."
+            );
+            setMarkets([]);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
 
     const toggleBookmark = (marketId: string) => {
         setBookmarkedMarkets((prev) => {
@@ -180,11 +215,28 @@ export default function MarketsPage() {
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 sm:mb-8">
                     <div>
                         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
-                            Markets Challenges
+                            Challenge Markets
                         </h1>
                         <p className="text-gray-600 text-base sm:text-lg">
                             Predict trends and earn big on top challenge markets
                         </p>
+                    </div>
+                    <div className="relative">
+                        <button
+                            onClick={handleCreateClick}
+                            className="inline-flex items-center justify-center px-6 py-3 bg-white/50 border border-gray-400 text-black text-sm font-medium rounded-full cursor-not-allowed"
+
+                        >
+                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                            Create Market
+                        </button>
+                        {showDevnetNotice && (
+                            <div className="absolute top-full mt-2 right-0 bg-yellow-50 border border-yellow-300 text-yellow-800 text-sm px-4 py-2 rounded-xl shadow-lg whitespace-nowrap z-10">
+                                ⚠️ Creating challenge markets is disabled on devnet
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -197,55 +249,14 @@ export default function MarketsPage() {
                                 value={searchTerm}
                                 onChange={(event) => setSearchTerm(event.target.value)}
                                 placeholder="Search"
-                                className="pl-10 pr-4 py-2.5 bg-white/50 rounded-full text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200 w-full sm:w-48 lg:w-88"
+                                className="pl-10 pr-4 py-2.5 bg-white/50 rounded-full border border-gray-400 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200 w-full sm:w-48 lg:w-88"
                             />
-                        </div>
-
-                        <div className="relative" ref={dropdownRef}>
-                            <button
-                                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                className="cursor-pointer flex items-center gap-2 px-3 sm:px-4 py-2.5 bg-white/50 rounded-full text-sm text-gray-700 hover:bg-white/70 transition-colors whitespace-nowrap"
-                            >
-                                <span className="hidden sm:inline">{sortBy}</span>
-                                <span className="sm:hidden">
-                                    {sortOptions.find((option) => option.label === sortBy)?.icon}
-                                </span>
-                                <ChevronDown
-                                    className={`w-4 h-4 transition-transform ${
-                                        isDropdownOpen ? "rotate-180" : ""
-                                    }`}
-                                />
-                            </button>
-
-                            {isDropdownOpen && (
-                                <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-10">
-                                    {sortOptions.map((option) => (
-                                        <button
-                                            key={option.label}
-                                            onClick={() => {
-                                                setSortBy(option.label);
-                                                setIsDropdownOpen(false);
-                                            }}
-                                            className={`w-full cursor-pointer flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors ${
-                                                sortBy === option.label
-                                                    ? "text-black font-semibold"
-                                                    : "text-gray-700 hover:bg-gray-50"
-                                            }`}
-                                        >
-                                            {option.icon}
-                                            {option.label}
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
                         </div>
                     </div>
                 </div>
 
                 {isLoading ? (
-                    <div className="rounded-2xl bg-white/40 border border-white/50 p-8 text-center text-gray-700">
-                        Loading markets...
-                    </div>
+                    <LoadingPage variant="simple" message="Loading challenge markets..." />
                 ) : error ? (
                     <div className="rounded-2xl bg-white/40 border border-white/50 p-8 text-center text-red-700">
                         {error}
@@ -259,7 +270,7 @@ export default function MarketsPage() {
                         {filteredMarkets.map((market) => (
                             <div
                                 key={market.id}
-                                className="bg-white/40 backdrop-blur-sm rounded-2xl p-4 sm:p-5 border border-white/50 hover:shadow-lg transition-shadow duration-300 flex flex-col"
+                                className="bg-white/40 backdrop-blur-sm rounded-2xl p-4 sm:p-5 border border-gray-500 hover:shadow-lg transition-shadow duration-300 flex flex-col"
                             >
                                 <div className="flex items-start gap-3 mb-3 sm:mb-4">
                                     <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden bg-white/50 flex-shrink-0">
@@ -273,7 +284,7 @@ export default function MarketsPage() {
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <h3 className="font-semibold text-gray-900 text-base sm:text-lg leading-tight mb-1">
-                                            {market.name}
+                                            {market.name} Challenges
                                         </h3>
                                     </div>
                                     <button
@@ -286,11 +297,10 @@ export default function MarketsPage() {
                                         }
                                     >
                                         <Bookmark
-                                            className={`w-5 h-5 transition-colors ${
-                                                bookmarkedMarkets.has(market.id)
-                                                    ? "fill-[#5a7c6c] text-[#5a7c6c]"
-                                                    : "text-gray-400 hover:text-gray-600"
-                                            }`}
+                                            className={`w-5 h-5 transition-colors ${bookmarkedMarkets.has(market.id)
+                                                ? "fill-[#5a7c6c] text-[#5a7c6c]"
+                                                : "text-gray-400 hover:text-gray-600"
+                                                }`}
                                         />
                                     </button>
                                 </div>
@@ -311,19 +321,19 @@ export default function MarketsPage() {
                                                 market.challenges.map((challenge) => (
                                                     <div
                                                         key={challenge.id}
-                                                        className="flex items-center justify-between p-2.5 bg-white/30 rounded-lg"
+                                                        className=" flex items-center border border-gray-300 justify-between p-2.5 bg-white/30 rounded-lg"
                                                     >
                                                         <span className="text-sm text-gray-800 font-medium truncate pr-2">
                                                             {challenge.title}
                                                         </span>
-                                                        <button className="px-3 py-1.5 bg-[#246044] hover:bg-[#2b7351] text-white text-xs font-medium rounded-lg transition-colors whitespace-nowrap">
+                                                        <button className="cursor-pointer px-3 py-1.5 bg-[#0d9b62] hover:bg-[#11a76b] border border-gray-500 text-white text-xs font-medium rounded-lg transition-colors whitespace-nowrap">
                                                             Accept
                                                         </button>
                                                     </div>
                                                 ))
                                             ) : (
-                                                <div className="p-2.5 bg-white/30 rounded-lg text-sm text-gray-600">
-                                                    No challenges available.
+                                                <div className="p-2.5 bg-white/30 border border-gray-200 rounded-lg text-sm text-gray-800">
+                                                    No challenges available!!
                                                 </div>
                                             )}
                                         </div>
@@ -358,7 +368,7 @@ export default function MarketsPage() {
                                 </div>
 
                                 <Link href={`/markets/crypto/${market.name}`}>
-                                    <button className="w-full py-2.5 sm:py-3 bg-[#2b7351] hover:bg-[#246044] text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-2 group text-sm sm:text-base">
+                                    <button className="cursor-pointer w-full py-2.5 sm:py-3 bg-[#0d9b62] hover:bg-[#11a76b] border border-gray-700 text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-2 group text-sm sm:text-base">
                                         View Challenges
                                         <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                                     </button>
@@ -368,17 +378,17 @@ export default function MarketsPage() {
                     </div>
                 )}
 
-                <div className="flex items-center justify-center gap-2">
+                {/* pagination  */}
+                {/* <div className="flex items-center justify-center gap-2">
                     <div className="flex items-center gap-1">
                         {[1, 2, 3].map((page) => (
                             <button
                                 key={page}
                                 onClick={() => setCurrentPage(page)}
-                                className={`w-10 h-10 rounded-lg text-sm font-medium transition-colors ${
-                                    currentPage === page
-                                        ? "bg-[#d4c4b5] text-gray-800"
-                                        : "text-gray-600 hover:bg-white/30"
-                                }`}
+                                className={`w-10 h-10 rounded-lg text-sm font-medium transition-colors ${currentPage === page
+                                    ? "bg-[#d4c4b5] text-gray-800"
+                                    : "text-gray-600 hover:bg-white/30"
+                                    }`}
                             >
                                 {page}
                             </button>
@@ -387,7 +397,8 @@ export default function MarketsPage() {
                             <ChevronDown className="w-4 h-4 rotate-[-90deg]" />
                         </button>
                     </div>
-                </div>
+                </div> */}
+
             </div>
         </div>
     );

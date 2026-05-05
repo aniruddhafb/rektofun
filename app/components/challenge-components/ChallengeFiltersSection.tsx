@@ -77,7 +77,7 @@ export function ChallengeFiltersSection({
                         placeholder="Search challenges..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 bg-white/50 rounded-full text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                        className="w-full pl-10 pr-4 py-2.5 bg-white/50 rounded-full border border-gray-400 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
                     />
                 </div>
 
@@ -87,7 +87,7 @@ export function ChallengeFiltersSection({
                     <div className="relative" ref={filterDropdownRef}>
                         <button
                             onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
-                            className="cursor-pointer flex items-center gap-2 px-3 py-2 bg-white/50 rounded-full text-sm text-gray-700 hover:bg-white/70 transition-colors justify-between flex-1"
+                            className=" border border-gray-400 cursor-pointer flex items-center gap-2 px-3 py-2 bg-white/50 rounded-full text-sm text-gray-700 hover:bg-white/70 transition-colors justify-between flex-1"
                         >
                             <div className="flex items-center gap-2">
                                 <span>{getCurrentFilterIcon()}</span>
@@ -122,7 +122,7 @@ export function ChallengeFiltersSection({
                     <div className="relative" ref={marketDropdownRef}>
                         <button
                             onClick={() => setIsMarketDropdownOpen(!isMarketDropdownOpen)}
-                            className="cursor-pointer flex items-center gap-2 px-3 py-2 bg-white/50 rounded-full text-sm text-gray-700 hover:bg-white/70 transition-colors justify-between flex-1"
+                            className=" border border-gray-400 cursor-pointer flex items-center gap-2 px-3 py-2 bg-white/50 rounded-full text-sm text-gray-700 hover:bg-white/70 transition-colors justify-between flex-1"
                         >
                             <div className="flex items-center gap-2">
                                 <span>{activeAsset}</span>

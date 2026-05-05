@@ -61,7 +61,7 @@ export default function SportsPage() {
                     {sports.map((sport) => (
                         <div
                             key={sport.id}
-                            className="bg-[#f8ede7] rounded-2xl p-5 shadow-sm border border-gray-300 hover:shadow-lg transition-all duration-300"
+                            className="bg-[#f8ede7] rounded-2xl p-5 shadow-sm border border-gray-400 hover:shadow-lg transition-all duration-300"
                         >
 
                             {/* Header */}
