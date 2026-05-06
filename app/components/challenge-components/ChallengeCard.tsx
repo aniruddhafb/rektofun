@@ -209,11 +209,20 @@ export function ChallengeCard({
     const [joinSide, setJoinSide] = React.useState<"challenger" | "opponent">("opponent");
     const [currentTime, setCurrentTime] = React.useState(() => Date.now());
     const [fallbackPoolAmount, setFallbackPoolAmount] = React.useState<number | null>(null);
+    const [modalMinAcceptBet, setModalMinAcceptBet] = React.useState<number | undefined>(challenge.min_accept_bet);
+    const [modalMaxAcceptBet, setModalMaxAcceptBet] = React.useState<number | undefined>(challenge.max_accept_bet);
+    const [escrowAddress, setEscrowAddress] = React.useState<string | undefined>(undefined);
     const creator = challenge.creator ?? {
         username: "",
         profile_image: "",
         wallet_address: "",
     };
+
+    React.useEffect(() => {
+        setModalMinAcceptBet(challenge.min_accept_bet);
+        setModalMaxAcceptBet(challenge.max_accept_bet);
+        setEscrowAddress(undefined);
+    }, [challenge.id, challenge.min_accept_bet, challenge.max_accept_bet]);
 
     React.useEffect(() => {
         const interval = window.setInterval(() => {
@@ -281,6 +290,37 @@ export function ChallengeCard({
         setIsBetFormOpen(true);
     };
 
+    React.useEffect(() => {
+        if (!isBetFormOpen) return;
+
+        let cancelled = false;
+        const loadChallengeModalData = async () => {
+            try {
+                const details = await getChallengeById(challenge.id);
+                if (cancelled) return;
+
+                setModalMinAcceptBet(
+                    typeof details.min_accept_bet === "number" ? details.min_accept_bet : challenge.min_accept_bet
+                );
+                setModalMaxAcceptBet(
+                    typeof details.max_accept_bet === "number" ? details.max_accept_bet : challenge.max_accept_bet
+                );
+
+                const metadata = (details.metadata as Record<string, unknown> | undefined) ?? {};
+                const onchain = (metadata.onchain as Record<string, unknown> | undefined) ?? {};
+                const maybeChallengePda = metadata.challenge_pda ?? onchain.challenge_pda;
+                setEscrowAddress(typeof maybeChallengePda === "string" ? maybeChallengePda : undefined);
+            } catch (error) {
+                console.error("Failed to load fresh challenge details for modal:", error);
+            }
+        };
+
+        loadChallengeModalData();
+        return () => {
+            cancelled = true;
+        };
+    }, [isBetFormOpen, challenge.id, challenge.min_accept_bet, challenge.max_accept_bet]);
+
     const openProfile = (e: React.MouseEvent, walletAddress: string | null | undefined) => {
         e.preventDefault();
         e.stopPropagation();
@@ -316,8 +356,8 @@ export function ChallengeCard({
         }
 
         const parsedBetAmount = Number(betInput);
-        const minAcceptBet = challenge.min_accept_bet;
-        const maxAcceptBet = challenge.max_accept_bet;
+        const minAcceptBet = modalMinAcceptBet;
+        const maxAcceptBet = modalMaxAcceptBet;
 
         if (!Number.isFinite(parsedBetAmount) || parsedBetAmount <= 0) {
             setBetError("Please enter a valid bet amount.");
@@ -954,8 +994,9 @@ export function ChallengeCard({
                     betInput={betInput}
                     betError={betError}
                     betCurrency={betCurrency}
-                    minAcceptBet={challenge.min_accept_bet}
-                    maxAcceptBet={challenge.max_accept_bet}
+                    minAcceptBet={modalMinAcceptBet}
+                    maxAcceptBet={modalMaxAcceptBet}
+                    escrowAddress={escrowAddress}
                     resolveCountdown={exactCountdownDetails.exactCountdown}
                     resolveLabel={exactCountdownDetails.dayLabel}
                     isPoolMode={isPoolMode}

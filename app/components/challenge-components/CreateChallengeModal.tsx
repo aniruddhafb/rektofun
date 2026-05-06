@@ -13,6 +13,7 @@ import {
 import { createChallenge } from "@/app/lib/challenges-service/challenges";
 import { getMarkets, Market } from "@/app/lib/markets-service/market";
 import { useUserStore } from "@/app/store/useUserStore";
+import { blockedContentError, hasBlockedContent } from "@/app/lib/content-moderation";
 
 interface CreateChallengeModalProps {
     isOpen: boolean;
@@ -200,6 +201,10 @@ export function CreateChallengeModal({
         if (isSportsSelected) {
             if (!challengeStatement.trim()) {
                 setTxError("Please enter a challenge statement.");
+                return;
+            }
+            if (hasBlockedContent(challengeStatement)) {
+                setTxError(blockedContentError("Challenge statement"));
                 return;
             }
         } else {
@@ -507,7 +512,10 @@ export function CreateChallengeModal({
                                 required
                                 type="text"
                                 value={challengeStatement}
-                                onChange={(e) => setChallengeStatement(e.target.value)}
+                                onChange={(e) => {
+                                    setChallengeStatement(e.target.value);
+                                    if (txError) setTxError(null);
+                                }}
                                 placeholder={
                                     selectedChildMarket?.symbol?.toLowerCase() === 'cricket'
                                         ? "e.g. rohit sharma will hit a six in todays MI vs RCB IPL match"

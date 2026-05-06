@@ -8,6 +8,7 @@ import { useSolanaWallet } from "@/app/lib/useSolanaWallet";
 import * as components from "./navbar-components";
 import { ensureUserByWallet, updateUser, getUserByWallet, acceptReferral, User } from "@/app/lib/users-service/users";
 import { useUserStore } from "@/app/store/useUserStore";
+import { blockedContentError, hasBlockedContent } from "@/app/lib/content-moderation";
 
 export default function Navbar() {
     const { setUser, updateUser: updateStoreUser, clearUser } = useUserStore();
@@ -22,6 +23,7 @@ export default function Navbar() {
     const [editBio, setEditBio] = useState("");
     const [editProfileIndex, setEditProfileIndex] = useState(0);
     const [editInviteCode, setEditInviteCode] = useState("");
+    const [profileFormError, setProfileFormError] = useState<string | null>(null);
     const [hasCalledCreateUser, setHasCalledCreateUser] = useState(false);
     const [userProfileData, setUserProfileData] = useState<{ username: string; profileImage: string } | null>(null);
     const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -123,6 +125,15 @@ export default function Navbar() {
     // Handle profile form submission
     const handleProfileSubmit = async () => {
         if (!publicKey) return;
+        if (hasBlockedContent(editUsername)) {
+            setProfileFormError(blockedContentError("Username"));
+            return;
+        }
+        if (hasBlockedContent(editBio)) {
+            setProfileFormError(blockedContentError("Bio"));
+            return;
+        }
+        setProfileFormError(null);
 
         const profileIndex = editProfileIndex + 1;
         const referralCode = editInviteCode || inviteCodeFromUrl;
@@ -187,6 +198,7 @@ export default function Navbar() {
                 }
                 // Pre-fill invite code from URL if available
                 setEditInviteCode(inviteCodeFromUrl || "");
+                setProfileFormError(null);
             }
         };
         fetchUserData();
@@ -401,7 +413,10 @@ export default function Navbar() {
                                         type="text"
                                         value={editUsername}
                                         onChange={(e) =>
-                                            setEditUsername(e.target.value)
+                                            {
+                                                setEditUsername(e.target.value);
+                                                if (profileFormError) setProfileFormError(null);
+                                            }
                                         }
                                         className="w-full px-4 py-2 bg-white/80 border border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent required"
                                         placeholder="Enter username"
@@ -417,12 +432,20 @@ export default function Navbar() {
                                         required
                                         value={editBio}
                                         onChange={(e) =>
-                                            setEditBio(e.target.value)
+                                            {
+                                                setEditBio(e.target.value);
+                                                if (profileFormError) setProfileFormError(null);
+                                            }
                                         }
                                         className="w-full px-4 py-2 bg-white/80 border border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent required"
                                         placeholder="Write a short bio"
                                     />
                                 </div>
+                                {profileFormError && (
+                                    <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+                                        {profileFormError}
+                                    </div>
+                                )}
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">

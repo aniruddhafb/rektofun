@@ -11,6 +11,7 @@ interface AcceptChallengeModalProps {
     betCurrency: string;
     minAcceptBet?: number;
     maxAcceptBet?: number;
+    escrowAddress?: string;
     resolveCountdown: string;
     resolveLabel: string;
     isPoolMode: boolean;
@@ -32,6 +33,7 @@ export function AcceptChallengeModal({
     betCurrency,
     minAcceptBet,
     maxAcceptBet,
+    escrowAddress,
     resolveCountdown,
     resolveLabel,
     isPoolMode,
@@ -95,6 +97,16 @@ export function AcceptChallengeModal({
             onBetInputChange(String(minAcceptBet));
         }
     };
+
+    const escrowAddressDisplay = React.useMemo(() => {
+        if (!escrowAddress) return "Not available";
+        if (escrowAddress.length <= 14) return escrowAddress;
+        return `${escrowAddress.slice(0, 6)}...${escrowAddress.slice(-6)}`;
+    }, [escrowAddress]);
+    const escrowHref = React.useMemo(() => {
+        if (!escrowAddress) return null;
+        return `https://solscan.io/account/${encodeURIComponent(escrowAddress)}?cluster=devnet`;
+    }, [escrowAddress]);
 
     return (
         <div
@@ -186,17 +198,17 @@ export function AcceptChallengeModal({
                         <div className="flex items-center gap-3">
                             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 text-lg">⏱️</div>
                             <div>
-                                <p className="text-xs font-medium text-[#7e756d]">Challenge resolves in</p>
+                                <p className="text-xs font-medium text-gray-900">Challenge resolves in</p>
                                 <p className="text-2xl font-bold text-[#1f1b16]">{resolveCountdown}</p>
-                                <p className="text-xs text-[#8a837b]">{resolveLabel}</p>
+                                <p className="text-xs text-gray-900">{resolveLabel}</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-3 border-t border-[#eee2d8] pt-3 md:border-l md:border-t-0 md:pl-4 md:pt-0">
                             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-lg">💵</div>
                             <div>
-                                <p className="text-xs font-medium text-[#7e756d]">Min bet set by creator</p>
-                                <p className="text-2xl font-bold text-[#1f1b16]">{(minAcceptBet ?? 0)} {betCurrency}</p>
-                                <p className="text-xs text-[#8a837b]">You can bet {(minAcceptBet ?? 0)} {betCurrency} or more</p>
+                                <p className="text-xs font-medium text-gray-900">Min bet set by creator</p>
+                                <p className="text-2xl font-bold text-[#1f1b16]">${(minAcceptBet ?? 0)}</p>
+                                <p className="text-xs text-gray-900">You can bet ${(minAcceptBet ?? 0)} or more</p>
                             </div>
                         </div>
                     </div>
@@ -278,8 +290,18 @@ export function AcceptChallengeModal({
                                     </p>
                                     <p className="text-[11px] text-[#7b746d]">Escrow Contract</p>
                                     <div className="mt-0.5 flex items-center gap-1">
-                                        <p className="text-sm font-bold text-emerald-700">0x7f3a...9cB1e</p>
-                                        <span className="text-xs text-emerald-600">↗</span>
+                                        {escrowHref ? (
+                                            <a
+                                                href={escrowHref}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-sm font-bold text-emerald-700 underline-offset-2 hover:underline"
+                                            >
+                                                {escrowAddressDisplay} ↗
+                                            </a>
+                                        ) : (
+                                            <p className="text-sm font-bold text-emerald-700">{escrowAddressDisplay} ↗</p>
+                                        )}
                                     </div>
                                 </div>
                             </div>
