@@ -28,6 +28,7 @@ function formatMarketDescription(name: string) {
 }
 
 export default function MarketPage() {
+    const CREATE_TOAST_DURATION_MS = 3000;
     const params = useParams<{ slug: string }>();
     const slugName = useMemo(() => decodeURIComponent(params.slug ?? ""), [params.slug]);
     const [showChart, setShowChart] = useState(false);
@@ -44,51 +45,52 @@ export default function MarketPage() {
     const [selectedChallenge, setSelectedChallenge] = useState<ChallengeListItem | null>(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const [showCreateSuccessToast, setShowCreateSuccessToast] = useState(false);
+    const [createToastProgress, setCreateToastProgress] = useState(100);
 
     const loadMarketChallenges = async (isMountedCheck?: () => boolean) => {
-            if (!slugName) {
-                if (!isMountedCheck || isMountedCheck()) {
-                    setMarket(null);
-                    setChallenges([]);
-                    setError("Market not found.");
-                    setIsLoading(false);
-                }
-                return;
+        if (!slugName) {
+            if (!isMountedCheck || isMountedCheck()) {
+                setMarket(null);
+                setChallenges([]);
+                setError("Market not found.");
+                setIsLoading(false);
             }
+            return;
+        }
 
-            try {
-                setIsLoading(true);
-                setError(null);
+        try {
+            setIsLoading(true);
+            setError(null);
 
-                const [marketsResponse, challengesResponse] = await Promise.all([
-                    getMarkets({ parent_name: "Crypto" }),
-                    getChallenges({ category: slugName }),
-                ]);
+            const [marketsResponse, challengesResponse] = await Promise.all([
+                getMarkets({ parent_name: "Crypto" }),
+                getChallenges({ category: slugName }),
+            ]);
 
-                const matchedMarket =
-                    marketsResponse.markets.find(
-                        (item) => item.name.toLowerCase() === slugName.toLowerCase()
-                    ) ?? null;
+            const matchedMarket =
+                marketsResponse.markets.find(
+                    (item) => item.name.toLowerCase() === slugName.toLowerCase()
+                ) ?? null;
 
-                if (!isMountedCheck || isMountedCheck()) {
-                    setMarket(matchedMarket);
-                    setChallenges(challengesResponse.challenges);
-                }
-            } catch (fetchError) {
-                if (!isMountedCheck || isMountedCheck()) {
-                    setMarket(null);
-                    setChallenges([]);
-                    setError(
-                        fetchError instanceof Error
-                            ? fetchError.message
-                            : "Something went wrong while loading challenges."
-                    );
-                }
-            } finally {
-                if (!isMountedCheck || isMountedCheck()) {
-                    setIsLoading(false);
-                }
+            if (!isMountedCheck || isMountedCheck()) {
+                setMarket(matchedMarket);
+                setChallenges(challengesResponse.challenges);
             }
+        } catch (fetchError) {
+            if (!isMountedCheck || isMountedCheck()) {
+                setMarket(null);
+                setChallenges([]);
+                setError(
+                    fetchError instanceof Error
+                        ? fetchError.message
+                        : "Something went wrong while loading challenges."
+                );
+            }
+        } finally {
+            if (!isMountedCheck || isMountedCheck()) {
+                setIsLoading(false);
+            }
+        }
     };
 
     useEffect(() => {
@@ -103,8 +105,21 @@ export default function MarketPage() {
 
     useEffect(() => {
         if (!showCreateSuccessToast) return;
-        const timeout = window.setTimeout(() => setShowCreateSuccessToast(false), 3000);
-        return () => window.clearTimeout(timeout);
+        const start = Date.now();
+        const interval = window.setInterval(() => {
+            const elapsed = Date.now() - start;
+            const nextProgress = Math.max(0, 100 - (elapsed / CREATE_TOAST_DURATION_MS) * 100);
+            setCreateToastProgress(nextProgress);
+        }, 50);
+        const timeout = window.setTimeout(() => {
+            setShowCreateSuccessToast(false);
+            setCreateToastProgress(100);
+        }, CREATE_TOAST_DURATION_MS);
+
+        return () => {
+            window.clearInterval(interval);
+            window.clearTimeout(timeout);
+        };
     }, [showCreateSuccessToast]);
 
     const marketName = market?.name || slugName || "Market";
@@ -151,6 +166,7 @@ export default function MarketPage() {
 
     const handleChallengeCreated = async () => {
         setIsCreateChallengeOpen(false);
+        setCreateToastProgress(100);
         setShowCreateSuccessToast(true);
         await loadMarketChallenges();
     };
@@ -158,8 +174,25 @@ export default function MarketPage() {
     return (
         <div className="min-h-screen" style={{ backgroundColor: "#f3e1d7" }}>
             {showCreateSuccessToast && (
-                <div className="fixed top-4 right-4 z-[60] rounded-xl bg-green-600 text-white px-4 py-3 shadow-lg">
-                    Challenge created successfully.
+                <div className="fixed right-4 top-40 sm:top-40 z-[60] w-[min(92vw,24rem)] overflow-hidden rounded-xl border border-green-300 bg-green-600 text-white shadow-2xl">
+                    <button
+                        type="button"
+                        onClick={() => setShowCreateSuccessToast(false)}
+                        className="absolute right-3 top-2 text-lg leading-none text-green-100 transition hover:text-white"
+                        aria-label="Close success notification"
+                    >
+                        ×
+                    </button>
+                    <div className="px-5 pb-4 pt-4 pr-10">
+                        <p className="text-base font-semibold">Challenge created successfully</p>
+                        <p className="mt-1 text-sm text-green-100">Your challenge is now live and visible to everyone.</p>
+                    </div>
+                    <div className="h-1.5 w-full bg-green-500/60">
+                        <div
+                            className="h-full bg-white/90 transition-[width] duration-75 ease-linear"
+                            style={{ width: `${createToastProgress}%` }}
+                        />
+                    </div>
                 </div>
             )}
 
@@ -231,3 +264,4 @@ export default function MarketPage() {
         </div>
     );
 }
+

@@ -2,6 +2,8 @@
 
 import React from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { AcceptChallengeModal } from "./AcceptChallengeModal";
 import {
     ChallengeListItem,
     getChallengeById,
@@ -136,6 +138,13 @@ function truncateProfileName(name: string | null | undefined, maxLen = 6): strin
     return `${safeName.slice(0, maxLen)}..`;
 }
 
+function formatWalletAddress(address: string | null | undefined): string {
+    const safeAddress = (address || "").trim();
+    if (!safeAddress) return "Wallet unavailable";
+    if (safeAddress.length <= 12) return safeAddress;
+    return `${safeAddress.slice(0, 4)}...${safeAddress.slice(-4)}`;
+}
+
 function formatExactCountdownDetails(timestamp: number | null, nowMs: number): {
     exactCountdown: string;
     timeLeftText: string;
@@ -190,12 +199,14 @@ export function ChallengeCard({
     onClick,
     onRekt
 }: ChallengeCardProps) {
+    const router = useRouter();
     const { user } = useUserStore();
-    const { authenticated, login, program, publicKey, sendTransaction } = useSolanaWallet();
+    const { authenticated, login, program, publicKey, sendTransaction, usdcBalance } = useSolanaWallet();
     const [isLoading, setIsLoading] = React.useState(false);
     const [isBetFormOpen, setIsBetFormOpen] = React.useState(false);
     const [betInput, setBetInput] = React.useState(String(challenge.initial_bet ?? ""));
     const [betError, setBetError] = React.useState("");
+    const [joinSide, setJoinSide] = React.useState<"challenger" | "opponent">("opponent");
     const [currentTime, setCurrentTime] = React.useState(() => Date.now());
     const [fallbackPoolAmount, setFallbackPoolAmount] = React.useState<number | null>(null);
 
@@ -209,16 +220,20 @@ export function ChallengeCard({
 
     React.useEffect(() => {
         let isCancelled = false;
-        const totalPoolValue = Number(challenge.total_pool ?? 0);
-
-        if (Number.isFinite(totalPoolValue) && totalPoolValue > 0) {
-            setFallbackPoolAmount(totalPoolValue);
-            return;
-        }
-
-        setFallbackPoolAmount(null);
-
         const loadFallbackPool = async () => {
+            const totalPoolValue = Number(challenge.total_pool ?? 0);
+
+            if (Number.isFinite(totalPoolValue) && totalPoolValue > 0) {
+                if (!isCancelled) {
+                    setFallbackPoolAmount(totalPoolValue);
+                }
+                return;
+            }
+
+            if (!isCancelled) {
+                setFallbackPoolAmount(null);
+            }
+
             try {
                 const challengeDetails = await getChallengeById(challenge.id);
                 const initialBetValue = Number(
@@ -257,7 +272,15 @@ export function ChallengeCard({
         e.stopPropagation();
         setBetInput(String(challenge.initial_bet ?? ""));
         setBetError("");
+        setJoinSide(challenge.mode === "pool" ? "challenger" : "opponent");
         setIsBetFormOpen(true);
+    };
+
+    const openProfile = (e: React.MouseEvent, walletAddress: string | null | undefined) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!walletAddress) return;
+        router.push(`/profile/${walletAddress}`);
     };
 
     const closeBetForm = (e?: React.MouseEvent) => {
@@ -293,6 +316,15 @@ export function ChallengeCard({
 
         if (!Number.isFinite(parsedBetAmount) || parsedBetAmount <= 0) {
             setBetError("Please enter a valid bet amount.");
+            return;
+        }
+
+        if (
+            typeof usdcBalance === "number" &&
+            Number.isFinite(usdcBalance) &&
+            parsedBetAmount > usdcBalance
+        ) {
+            setBetError("Not enough balance.");
             return;
         }
 
@@ -387,7 +419,7 @@ export function ChallengeCard({
             await joinChallenge({
                 challenge_id: challenge.id,
                 user_id: user.id,
-                side: "opponent",
+                side: challenge.mode === "pool" ? joinSide : "opponent",
                 bet_amount: requiredBetUsdc,
             });
 
@@ -407,6 +439,32 @@ export function ChallengeCard({
             alert(message);
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleShareChallenge = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const shareUrl = `${window.location.origin}/challenges?challengeId=${encodeURIComponent(challenge.id)}`;
+        const shareText = `Check out this challenge: ${challenge.title}`;
+
+        try {
+            if (navigator.share) {
+                await navigator.share({
+                    title: challenge.title,
+                    text: shareText,
+                    url: shareUrl,
+                });
+            } else {
+                await navigator.clipboard.writeText(shareUrl);
+            }
+        } catch {
+            try {
+                await navigator.clipboard.writeText(shareUrl);
+            } catch {
+                // no-op
+            }
         }
     };
 
@@ -464,11 +522,13 @@ export function ChallengeCard({
     const assetName = assetMeta.name || assetSymbol;
     const creatorName = labelsMeta.creator || challenge.creator.username || "Creator";
     const creatorDisplayName = truncateProfileName(creatorName, 6);
+    const creatorWalletDisplay = formatWalletAddress(challenge.creator.wallet_address);
     const creatorProfileImage = challenge.creator.profile_image || assetIcon;
     const opponentInfo = challenge.opponent_info ?? null;
     const hasOpponentInfo = Boolean(opponentInfo?.username || opponentInfo?.wallet_address);
     const opponentProfileImage = opponentInfo?.profile_image || assetIcon;
     const opponentDisplayName = opponentInfo?.username || "Opponent";
+    const opponentWalletDisplay = formatWalletAddress(opponentInfo?.wallet_address);
 
     // Get title
     const title = uiMeta.title || challenge.title || `Bet on ${assetSymbol}`;
@@ -499,38 +559,114 @@ export function ChallengeCard({
     const isCreator = user?.wallet_address === challenge.creator.wallet_address;
     const isPvpMode = challenge.mode !== "pool";
     const isPoolMode = challenge.mode === "pool";
+    const totalOpponents = Number(challenge.total_opponents ?? 0);
+    const hasOpponents = totalOpponents > 0;
+    const isExpireTimeAchieved = Boolean(expiryTimestamp && expiryTimestamp <= currentTime);
+    const isResolveTimeAchieved = Boolean(resolveTimestamp && resolveTimestamp <= currentTime);
+    const challengeWithResolution = challenge as ChallengeListItem & {
+        resolving_status?: string;
+        resolution_status?: string;
+    };
+    const resolutionStatusRaw = String(
+        challengeWithResolution.resolving_status ??
+        challengeWithResolution.resolution_status ??
+        ""
+    ).toLowerCase();
+    const isResolutionPending = resolutionStatusRaw === "pending";
+    const isResolutionResolved = resolutionStatusRaw === "resolved";
 
     let ctaLabel = "";
     let ctaDisabled = false;
     let ctaClassName = "";
+    const activeCtaClassName =
+        "cursor-pointer w-full py-2.5 px-4 rounded-xl bg-[#246044] hover:bg-[#2b7351] text-white font-bold text-sm shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed";
+    const activePvpCtaClassName =
+        "cursor-pointer w-full py-2.5 px-4 rounded-xl bg-[#0c9d63] hover:bg-[#0a7d4f] border border-gray-500 text-white font-bold text-base shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed";
+    const ongoingCtaClassName =
+        "cursor-not-allowed w-full py-2.5 px-4 rounded-xl bg-[#0c9d63] border border-gray-500 text-white font-bold text-sm shadow-lg";
+    const expiredCtaClassName =
+        "w-full py-2.5 px-4 rounded-xl bg-red-100 border border-red-300 text-red-700 font-bold text-sm shadow-sm cursor-not-allowed";
+    const resolvingCtaClassName =
+        "w-full py-2.5 px-4 rounded-xl bg-amber-100 border border-amber-300 text-amber-700 font-bold text-sm shadow-sm cursor-not-allowed";
+    const completedCtaClassName =
+        "w-full py-2.5 px-4 rounded-xl bg-gray-200 border border-gray-300 text-gray-700 font-bold text-sm shadow-sm cursor-not-allowed";
 
-    if (hasChallengeExpired) {
-        ctaLabel = "EXPIRED";
-        ctaDisabled = true;
-        ctaClassName =
-            "w-full py-2.5 px-4 rounded-xl bg-red-100 border border-red-300 text-red-700 font-bold text-sm shadow-sm cursor-not-allowed";
-    } else if (isPvpMode && isAccepted) {
-        ctaLabel = "ONGOING";
-        ctaDisabled = true;
-        ctaClassName =
-            "w-full py-2.5 px-4 rounded-xl bg-[#0c9d63] border border-gray-500 text-white font-bold text-sm shadow-lg cursor-not-allowed";
+    if (isPvpMode) {
+        if (isResolveTimeAchieved && isResolutionResolved) {
+            ctaLabel = "COMPLETED ✅";
+            ctaDisabled = true;
+            ctaClassName = completedCtaClassName;
+        } else if (isResolveTimeAchieved && isResolutionPending) {
+            ctaLabel = "RESOLVING...";
+            ctaDisabled = true;
+            ctaClassName = resolvingCtaClassName;
+        } else if (!isResolveTimeAchieved && hasOpponents) {
+            ctaLabel = "ONGOING ⚔️";
+            ctaDisabled = true;
+            ctaClassName = ongoingCtaClassName;
+        } else if (isExpireTimeAchieved && !hasOpponents) {
+            ctaLabel = "EXPIRED!";
+            ctaDisabled = true;
+            ctaClassName = expiredCtaClassName;
+        } else {
+            ctaLabel = "ACCEPT CHALLENGE";
+            ctaDisabled = isLoading || isCreator;
+            ctaClassName = activePvpCtaClassName;
+        }
     } else if (isPoolMode) {
-        ctaLabel = "JOIN CHALLENGE";
-        ctaDisabled = isLoading;
-        ctaClassName =
-            "w-full py-2.5 px-4 rounded-xl bg-[#246044] hover:bg-[#2b7351] text-white font-bold text-sm shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed";
-    } else {
-        ctaLabel = "ACCEPT CHALLENGE";
-        ctaDisabled = isLoading || isCreator;
-        ctaClassName =
-            "w-full py-2.5 px-4 rounded-xl bg-[#0c9d63] hover:bg-[#0a7d4f] border border-gray-500 text-white font-bold text-base shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed";
+        if (isResolveTimeAchieved && isResolutionResolved) {
+            ctaLabel = "COMPLETED";
+            ctaDisabled = true;
+            ctaClassName = completedCtaClassName;
+        } else if (isResolveTimeAchieved && isResolutionPending) {
+            ctaLabel = "RESOLVING...";
+            ctaDisabled = true;
+            ctaClassName = resolvingCtaClassName;
+        } else if (isExpireTimeAchieved && !hasOpponents) {
+            ctaLabel = "EXPIRED";
+            ctaDisabled = true;
+            ctaClassName = expiredCtaClassName;
+        } else if (!isExpireTimeAchieved) {
+            ctaLabel = "JOIN CHALLENGE";
+            ctaDisabled = isLoading;
+            ctaClassName = activeCtaClassName;
+        } else {
+            ctaLabel = "ONGOING";
+            ctaDisabled = true;
+            ctaClassName = ongoingCtaClassName;
+        }
     }
+    const isOngoingCta = ctaLabel.startsWith("ONGOING");
+    const showCreatorCtaHoverHint = isCreator && ctaLabel === "ACCEPT CHALLENGE";
+    const isBattleOnState = !isResolveTimeAchieved && hasOpponents;
+    const isChallengeExpiredState = isExpireTimeAchieved && !hasOpponents;
+    const isResolvingState = isResolveTimeAchieved && isResolutionPending;
+    const isCompletedState = isResolveTimeAchieved && isResolutionResolved;
+    const isExpiresInState = !isExpireTimeAchieved && !hasOpponents;
+
+    const expiryStatusText = isCompletedState
+        ? "Challenge completed"
+        : isResolvingState
+            ? "Challenge is resolving"
+            : isBattleOnState
+                ? "The battle is on"
+                : isChallengeExpiredState
+                    ? "Challenge expired"
+                    : "Challenge expires in";
+    const expiryTooltipText = isCompletedState
+        ? "This challenge has been resolved and marked completed."
+        : isResolvingState
+            ? "Resolve time has been reached and this challenge is currently resolving."
+            : isBattleOnState
+                ? `Opponents have joined and the battle is live. It resolves in ${endsByCountdown}.`
+                : isChallengeExpiredState
+                    ? "Expire time was reached before anyone joined, so this challenge is expired."
+                    : `No opponents yet. This challenge will expire in ${timeRemaining} if nobody joins.`;
 
     return (
         <>
             <div
-                onClick={handleClick}
-                className="bg-[#f8ede7] rounded-2xl border border-gray-400 p-4 shadow-sm border border-gray-300 hover:shadow-lg transition-shadow block cursor-pointer"
+                className="bg-[#f8ede7] rounded-2xl border border-gray-400 p-4 shadow-sm border border-gray-300 hover:shadow-lg transition-shadow block"
             >
                 {/* Header */}
                 <div className="flex items-start justify-between mb-3">
@@ -546,10 +682,17 @@ export function ChallengeCard({
                         </div>
                         <div>
                             <h3 className="text-gray-900 leading-tight">
-                                <span className="block text-[16px] font-bold tracking-tight">
+                                <span
+                                    onClick={handleClick}
+                                    className="block text-[16px] font-bold tracking-tight cursor-pointer"
+                                >
                                     {title} In
                                 </span>
-                                <span className="block text-[16px] font-bold tracking-tight">Next
+                                <span
+                                    onClick={handleClick}
+                                    className="block text-[16px] font-bold tracking-tight cursor-pointer"
+                                >
+                                    Next
                                     <span className="ml-2 inline-flex items-center gap-1.5">
                                         <span className="text-sm font-bold text-emerald-900">{endsByCountdown}</span>
                                         <span className="group relative inline-flex items-center">
@@ -580,7 +723,7 @@ export function ChallengeCard({
                 <div className="border-t border-gray-200 my-3"></div>
 
                 {/* Challenge Mode Info */}
-                <div className="flex items-center justify-center gap-2 mb-4">
+                <div onClick={handleClick} className="flex items-center justify-center gap-2 mb-4 cursor-pointer">
                     <h2 className="text-sm font-medium text-black">
                         {modeMeta.display || (challengeMode === "pvp" ? "PVP Mode" : "Multi Mode")}
                     </h2>
@@ -614,7 +757,10 @@ export function ChallengeCard({
                 <div className="mb-5">
                     <div className="flex flex-row items-center justify-center gap-2 sm:gap-4">
                         {/* Challenger Profile */}
-                        <div className="relative group flex flex-col items-center">
+                        <div
+                            onClick={(e) => openProfile(e, challenge.creator.wallet_address)}
+                            className="relative group flex flex-col items-center cursor-pointer"
+                        >
                             <div className={`w-[120px] h-[140px] flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-300 ${hasWon
                                 ? "bg-gradient-to-br from-amber-100 to-yellow-50 border-2 border-amber-400"
                                 : hasLost
@@ -648,7 +794,7 @@ export function ChallengeCard({
                                 <div className="mt-2 text-center">
                                     <p className="font-bold text-[#2d1f1a] text-xs">{creatorDisplayName}</p>
                                     <p className="text-[10px] text-[#8b7355] mt-0.5">
-                                        {hasWon ? "Won!" : hasLost ? "Lost" : "Creator"}
+                                        {hasWon ? "Won!" : hasLost ? "Lost" : creatorWalletDisplay}
                                     </p>
                                 </div>
                             </div>
@@ -658,7 +804,18 @@ export function ChallengeCard({
                         <div className="flex flex-col items-center justify-center px-2">
                             <>
                                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#2d1f1a] to-[#4a3830] flex items-center justify-center shadow-lg">
-                                    <span className="text-lg font-black text-[#f3e1d7]">VS</span>
+                                    {isOngoingCta ? (
+                                        <video
+                                            src="/animations/Sword%20Battle.webm"
+                                            autoPlay
+                                            loop
+                                            muted
+                                            playsInline
+                                            className="w-10 h-10 object-contain"
+                                        />
+                                    ) : (
+                                        <span className="text-lg font-black text-[#f3e1d7]">VS</span>
+                                    )}
                                 </div>
                                 {/* Pool Display */}
                                 <div className="mt-2 px-3 py-1.5 bg-emerald-50 rounded-lg text-center border border-emerald-200">
@@ -688,7 +845,10 @@ export function ChallengeCard({
 
                         {/* opponent Profile */}
                         {hasOpponentInfo ? (
-                            <div className="relative group flex flex-col items-center">
+                            <div
+                                onClick={(e) => openProfile(e, opponentInfo?.wallet_address)}
+                                className="relative group flex flex-col items-center cursor-pointer"
+                            >
                                 <div className={`w-[120px] h-[140px] flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-300 ${hasLost
                                     ? "bg-gradient-to-br from-amber-100 to-yellow-50 border-2 border-amber-400"
                                     : hasWon
@@ -728,7 +888,7 @@ export function ChallengeCard({
                                     <div className="mt-2 text-center">
                                         <p className="font-bold text-[#2d1f1a] text-xs">{opponentDisplayName}</p>
                                         <p className="text-[10px] text-[#8b7355] mt-0.5">
-                                            {hasLost ? "Won!" : hasWon ? "Lost" : "Opposer"}
+                                            {hasLost ? "Won!" : hasWon ? "Lost" : opponentWalletDisplay}
                                         </p>
                                     </div>
                                 </div>
@@ -742,10 +902,15 @@ export function ChallengeCard({
                                 <div className="mt-1 px-1.5 py-0.5 bg-[#2d1f1a] text-white text-[9px] font-bold rounded-full">
                                     {challenge.mode === "multi" ? " OPPONENTS" : "OPPONENT"}
                                 </div>
-                                <div className="mt-2 text-center">
-                                    <p className="font-semibold text-[#8b7355] text-xs">No one yet!</p>
-                                    <p className="text-[10px] text-[#8b7355] mt-0.5">Be the first to join!</p>
-                                </div>
+                                {isExpireTimeAchieved && !hasOpponents ? (
+                                    <div className="mt-2 text-center">
+                                        <p className="text-[10px] text-[#8b7355] mt-0.5">No one joined, challenge expired!</p>
+                                    </div>
+                                ) :
+                                    (<div className="mt-2 text-center">
+                                        <p className="font-semibold text-[#8b7355] text-xs">No one yet!</p>
+                                        <p className="text-[10px] text-[#8b7355] mt-0.5">Be the first to join!</p>
+                                    </div>)}
                             </div>
                         )}
                     </div>
@@ -753,111 +918,80 @@ export function ChallengeCard({
 
                 {/* CTA Button */}
                 <div className="flex gap-2">
-                    <button
-                        disabled={ctaDisabled}
-                        onClick={(e) => {
-                            e.preventDefault();
-                            if (ctaDisabled) return;
-                            if (isPoolMode) {
-                                handleJoinChallenge(e);
-                                return;
-                            }
-                            openBetForm(e);
-                        }}
-                        className={ctaClassName}
-                    >
-                        {isLoading && isPoolMode ? "JOINING..." : ctaLabel}
-                        {!ctaDisabled && !isLoading && <span className="text-lg">⚔️</span>}
-                    </button>
+                    <div className="group relative w-full">
+                        <button
+                            disabled={ctaDisabled}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                if (ctaDisabled) return;
+                                openBetForm(e);
+                            }}
+                            className={ctaClassName}
+                        >
+                            {isLoading && isPoolMode ? "JOINING..." : ctaLabel}
+                            {!ctaDisabled && !isLoading && <span className="text-lg">⚔️</span>}
+                        </button>
+                        {showCreatorCtaHoverHint && (
+                            <div className="pointer-events-none absolute left-1/2 bottom-full z-10 mb-1 -translate-x-1/2 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                                You created this challenge
+                            </div>
+                        )}
+                    </div>
                 </div>
 
-                {isBetFormOpen && (
-                    <div
-                        onClick={closeBetForm}
-                        className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-                    >
-                        <div
-                            onClick={(e) => e.stopPropagation()}
-                            className="w-full max-w-sm rounded-2xl bg-[#f8ede7] border border-gray-200 shadow-2xl p-5"
-                        >
-                            <div className="flex items-start justify-between gap-4">
-                                <div>
-                                    <h3 className="text-lg font-semibold text-gray-900">Place your bet</h3>
-                                    <p className="text-sm text-gray-600 mt-1">
-                                        Enter the amount you want to bet on this challenge.
-                                    </p>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={closeBetForm}
-                                    disabled={isLoading}
-                                    className="text-gray-500 hover:text-gray-700 transition-colors disabled:opacity-60"
-                                >
-                                    x
-                                </button>
-                            </div>
-
-                            <form onSubmit={handleJoinChallenge} className="mt-4 space-y-4">
-                                <div>
-                                    <label htmlFor={`bet-amount-${challenge.id}`} className="block text-sm font-medium text-gray-700 mb-1.5">
-                                        Bet amount
-                                    </label>
-                                    <input
-                                        id={`bet-amount-${challenge.id}`}
-                                        type="number"
-                                        min={challenge.min_accept_bet ?? 0}
-                                        max={challenge.max_accept_bet}
-                                        step="any"
-                                        value={betInput}
-                                        onChange={(e) => {
-                                            setBetInput(e.target.value);
-                                            if (betError) {
-                                                setBetError("");
-                                            }
-                                        }}
-                                        className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-gray-900 outline-none focus:border-[#246044] focus:ring-2 focus:ring-[#246044]/20"
-                                        placeholder={`Enter amount in ${betCurrency}`}
-                                    />
-                                    {betError && (
-                                        <p className="mt-1 text-xs text-red-600">{betError}</p>
-                                    )}
-                                    <p className="mt-1 text-xs text-gray-500">
-                                        Default bet: {challenge.initial_bet} {betCurrency}
-                                    </p>
-                                </div>
-
-                                <button
-                                    type="submit"
-                                    disabled={isLoading}
-                                    className="w-full py-2.5 px-4 rounded-xl bg-[#246044] hover:bg-[#2b7351] text-white font-bold text-sm shadow-lg hover:shadow-xl transition-all disabled:opacity-70 disabled:cursor-not-allowed"
-                                >
-                                    {isLoading ? "PLACING BET..." : "BET"}
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                )}
+                <AcceptChallengeModal
+                    isOpen={isBetFormOpen}
+                    isLoading={isLoading}
+                    usdcBalance={usdcBalance}
+                    betInput={betInput}
+                    betError={betError}
+                    betCurrency={betCurrency}
+                    minAcceptBet={challenge.min_accept_bet}
+                    maxAcceptBet={challenge.max_accept_bet}
+                    resolveCountdown={exactCountdownDetails.exactCountdown}
+                    resolveLabel={exactCountdownDetails.dayLabel}
+                    isPoolMode={isPoolMode}
+                    joinSide={joinSide}
+                    onClose={() => closeBetForm()}
+                    onSubmit={(e) => handleJoinChallenge(e)}
+                    onBetInputChange={(value) => {
+                        setBetInput(value);
+                        if (betError) {
+                            setBetError("");
+                        }
+                    }}
+                    onJoinSideChange={(side) => setJoinSide(side)}
+                />
 
                 {/* Challenge Expiry */}
                 <div className="flex items-center justify-center gap-1.5 text-xs text-gray-600 mt-1.5">
-                    {hasChallengeExpired ? (
-                        <span className="font-semibold text-red-600">Challenge expired</span>
-                    ) : (
+                    {isExpiresInState ? (
                         <>
-                            <span>Challenge expires in</span>
+                            <span>{expiryStatusText}</span>
                             <span className={`font-medium ${isExpiryUnderOneHour ? "text-red-600" : "text-gray-900"}`}>
                                 {timeRemaining}
                             </span>
                         </>
+                    ) : (
+                        <span
+                            className={`font-semibold ${isCompletedState
+                                ? "text-gray-700"
+                                : isResolvingState
+                                    ? "text-amber-700"
+                                    : isBattleOnState
+                                        ? "text-emerald-700"
+                                        : "text-red-600"
+                                }`}
+                        >
+                            {expiryStatusText}
+                        </span>
                     )}
                     <div className="group relative">
                         <svg className="w-3.5 h-3.5 text-gray-400 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
-                            {hasChallengeExpired
-                                ? "This challenge has expired and can no longer be joined."
-                                : `This challenge will expire in ${timeRemaining}, you will not be able to join after that.`}
+                            {expiryTooltipText}
                             <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
                         </div>
                     </div>
@@ -884,8 +1018,14 @@ export function ChallengeCard({
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
-                        <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <button
+                            type="button"
+                            onClick={handleShareChallenge}
+                            className="flex flex-col items-center p-2 rounded-lg transition-colors cursor-pointer"
+                            title="Share challenge link"
+                            aria-label="Share challenge link"
+                        >
+                            <svg className="w-5 h-5 text-gray-500 hover:text-gray-900 " fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
                             </svg>
                         </button>

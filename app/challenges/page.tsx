@@ -12,6 +12,7 @@ import ChallengeDetailModal from "../components/challenge-components/ChallengeDe
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 export default function ChallengesPage() {
+  const CREATE_TOAST_DURATION_MS = 3000;
   const [activeFilter, setActiveFilter] = useState("Expiring Soon");
   const [activeAsset, setActiveAsset] = useState("All Markets");
   const [searchQuery, setSearchQuery] = useState("");
@@ -27,6 +28,7 @@ export default function ChallengesPage() {
   const [ignoreDeepLink, setIgnoreDeepLink] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [showCreateSuccessToast, setShowCreateSuccessToast] = useState(false);
+  const [createToastProgress, setCreateToastProgress] = useState(100);
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -90,20 +92,51 @@ export default function ChallengesPage() {
   const handleChallengeCreated = () => {
     setIsCreateModalOpen(false);
     setRefreshKey((prev) => prev + 1);
+    setCreateToastProgress(100);
     setShowCreateSuccessToast(true);
   };
 
   useEffect(() => {
     if (!showCreateSuccessToast) return;
-    const timeout = window.setTimeout(() => setShowCreateSuccessToast(false), 3000);
-    return () => window.clearTimeout(timeout);
+    const start = Date.now();
+    const interval = window.setInterval(() => {
+      const elapsed = Date.now() - start;
+      const nextProgress = Math.max(0, 100 - (elapsed / CREATE_TOAST_DURATION_MS) * 100);
+      setCreateToastProgress(nextProgress);
+    }, 50);
+    const timeout = window.setTimeout(() => {
+      setShowCreateSuccessToast(false);
+      setCreateToastProgress(100);
+    }, CREATE_TOAST_DURATION_MS);
+
+    return () => {
+      window.clearInterval(interval);
+      window.clearTimeout(timeout);
+    };
   }, [showCreateSuccessToast]);
 
   return (
     <div className="min-h-full">
       {showCreateSuccessToast && (
-        <div className="fixed top-4 right-4 z-[60] rounded-xl bg-green-600 text-white px-4 py-3 shadow-lg">
-          Challenge created successfully.
+        <div className="fixed right-4 top-40 sm:top-40 z-[60] w-[min(92vw,24rem)] overflow-hidden rounded-xl border border-green-300 bg-green-600 text-white shadow-2xl">
+          <button
+            type="button"
+            onClick={() => setShowCreateSuccessToast(false)}
+            className="absolute right-3 top-2 text-lg leading-none text-green-100 transition hover:text-white"
+            aria-label="Close success notification"
+          >
+            ×
+          </button>
+          <div className="px-5 pb-4 pt-4 pr-10">
+            <p className="text-base font-semibold">Challenge created successfully</p>
+            <p className="mt-1 text-sm text-green-100">Your challenge is now live and visible to everyone.</p>
+          </div>
+          <div className="h-1.5 w-full bg-green-500/60">
+            <div
+              className="h-full bg-white/90 transition-[width] duration-75 ease-linear"
+              style={{ width: `${createToastProgress}%` }}
+            />
+          </div>
         </div>
       )}
 
@@ -148,3 +181,4 @@ export default function ChallengesPage() {
     </div>
   );
 }
+
