@@ -1,16 +1,11 @@
 "use client";
 import Link from "next/link";
 
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import {
     Search,
-    ChevronDown,
     ArrowRight,
-    TrendingUp,
-    Clock,
-    DollarSign,
-    Eye,
     Bookmark,
 } from "lucide-react";
 import { getMarkets, type Market as ApiMarket } from "@/app/lib/markets-service/market";
@@ -30,15 +25,6 @@ interface MarketCardData {
     totalTraders: number;
     totalVolume: string;
 }
-
-type SortOption = "Recently Added" | "Trending" | "Price Markets" | "My Watchlists";
-
-const sortOptions: { label: SortOption; icon: ReactNode }[] = [
-    { label: "Recently Added", icon: <Clock className="w-4 h-4" /> },
-    { label: "Trending", icon: <TrendingUp className="w-4 h-4" /> },
-    { label: "Price Markets", icon: <DollarSign className="w-4 h-4" /> },
-    { label: "My Watchlists", icon: <Eye className="w-4 h-4" /> },
-];
 
 function formatCompactNumber(value: number) {
     return new Intl.NumberFormat("en-US", {
@@ -60,7 +46,14 @@ function mapMarketToCardData(
     market: ApiMarket,
     challenges: ChallengeListItem[]
 ): MarketCardData {
-    const totalTraders = challenges.reduce((sum, challenge) => {
+    const sortedChallenges = [...challenges].sort((a, b) => {
+        const bTime = parseDateValue(b.created_at) ?? 0;
+        const aTime = parseDateValue(a.created_at) ?? 0;
+        return bTime - aTime;
+    });
+    const latestChallenges = sortedChallenges.slice(0, 4);
+
+    const totalTraders = latestChallenges.reduce((sum, challenge) => {
         return sum + challenge.total_challengers + challenge.total_opponents;
     }, 0);
 
@@ -68,8 +61,8 @@ function mapMarketToCardData(
         id: market.id,
         name: market.name,
         icon: market.icon || market.image || "/scribbles/coins.png",
-        available: challenges.length,
-        challenges,
+        available: latestChallenges.length,
+        challenges: latestChallenges,
         totalTraders,
         totalVolume: formatCurrency(market.total_volume ?? 0),
     };
@@ -144,9 +137,6 @@ function getChallengeCtaConfig(challenge: ChallengeListItem, nowMs: number) {
 }
 
 export default function MarketsPage() {
-    const [currentPage, setCurrentPage] = useState(1);
-    const [sortBy, setSortBy] = useState<SortOption>("Recently Added");
-    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [bookmarkedMarkets, setBookmarkedMarkets] = useState<Set<string>>(new Set());
     const [searchTerm, setSearchTerm] = useState("");
     const [markets, setMarkets] = useState<MarketCardData[]>([]);
@@ -156,41 +146,10 @@ export default function MarketsPage() {
     const [currentTime, setCurrentTime] = useState(() => Date.now());
     const [selectedChallenge, setSelectedChallenge] = useState<ChallengeListItem | null>(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-    const dropdownRef = useRef<HTMLDivElement>(null);
-
-
     const handleCreateClick = () => {
         setShowDevnetNotice(true);
         setTimeout(() => setShowDevnetNotice(false), 3000);
     };
-
-    const reloadMarkets = async () => {
-        try {
-            setIsLoading(true);
-            setError(null);
-
-            const marketsResponse = await getMarkets({ parent_name: "Crypto" });
-            const marketCards = await Promise.all(
-                marketsResponse.markets.map(async (market) => {
-                    console.log("market", market);
-                    const challengesResponse = await getChallenges({ category: market.name });
-                    return mapMarketToCardData(market, challengesResponse.challenges);
-                })
-            );
-
-            setMarkets(marketCards);
-        } catch (fetchError) {
-            setError(
-                fetchError instanceof Error
-                    ? fetchError.message
-                    : "Something went wrong while loading markets."
-            );
-            setMarkets([]);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
 
     const toggleBookmark = (marketId: string) => {
         setBookmarkedMarkets((prev) => {
@@ -205,17 +164,6 @@ export default function MarketsPage() {
     };
 
     useEffect(() => {
-        function handleClickOutside(event: MouseEvent) {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-                setIsDropdownOpen(false);
-            }
-        }
-
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
-
-    useEffect(() => {
         const interval = window.setInterval(() => {
             setCurrentTime(Date.now());
         }, 60000);
@@ -227,19 +175,24 @@ export default function MarketsPage() {
         let isMounted = true;
 
         async function loadMarkets() {
-
-
             try {
                 setIsLoading(true);
                 setError(null);
 
                 const marketsResponse = await getMarkets({ parent_name: "Crypto" });
-                const marketCards = await Promise.all(
+
+                const cardsSettled = await Promise.allSettled(
                     marketsResponse.markets.map(async (market) => {
-                        console.log("market", market);
-                        const challengesResponse = await getChallenges({ category: market.name });
+                        const challengesResponse = await getChallenges({
+                            category: market.name,
+                            limit: 4,
+                        });
                         return mapMarketToCardData(market, challengesResponse.challenges);
                     })
+                );
+
+                const marketCards = cardsSettled.flatMap((result) =>
+                    result.status === "fulfilled" ? [result.value] : []
                 );
 
                 if (isMounted) {

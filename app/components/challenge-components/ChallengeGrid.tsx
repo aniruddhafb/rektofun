@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ChallengeCard } from "./ChallengeCard";
 import { getChallenges } from "../../lib/challenges-service/challenges";
 import { useSolanaWallet } from '@/app/lib/useSolanaWallet';
@@ -22,53 +22,94 @@ export function ChallengeGrid({
     onChallengesLoaded,
     refreshKey = 0,
 }: ChallengeGridProps) {
+    const PAGE_SIZE = 6;
     const [challenges, setChallenges] = useState<ChallengeListItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [retryNonce, setRetryNonce] = useState(0);
+    const [offset, setOffset] = useState(0);
+    const [hasMore, setHasMore] = useState(true);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const loadMoreRef = useRef<HTMLDivElement | null>(null);
+    const requestIdRef = useRef(0);
     const { publicKey } = useSolanaWallet();
 
     let ownerAddress = publicKey?.toString() || '';
 
-    useEffect(() => {
-        const controller = new AbortController();
-        let isMounted = true;
-
-        async function fetchChallenges() {
+    const fetchChallenges = useCallback(async (currentOffset: number, append: boolean) => {
+        const requestId = ++requestIdRef.current;
+        if (!append) {
             setIsLoading(true);
-            setLoadError(null);
-            try {
-                const response = await getChallenges(
-                    {},
-                    {
-                        signal: controller.signal,
-                        timeoutMs: 10000,
-                        retries: 2,
-                    },
-                );
-                // Map API response to unified ChallengeListItem type
-                if (!isMounted) return;
-                setChallenges(response.challenges ?? []);
-                onChallengesLoaded?.(response.challenges ?? []);
-            } catch (error) {
-                if (!isMounted || controller.signal.aborted) return;
-                console.error('Failed to fetch challenges:', error);
+        } else {
+            setIsLoadingMore(true);
+        }
+        setLoadError(null);
+
+        try {
+            const response = await getChallenges(
+                { limit: PAGE_SIZE, offset: currentOffset },
+                {
+                    timeoutMs: 10000,
+                    retries: 2,
+                },
+            );
+            if (requestId !== requestIdRef.current) return;
+            const nextChunk = response.challenges ?? [];
+            setChallenges((prev) => {
+                const merged = append ? [...prev, ...nextChunk] : nextChunk;
+                onChallengesLoaded?.(merged);
+                return merged;
+            });
+            setHasMore(nextChunk.length === PAGE_SIZE);
+            setOffset(currentOffset + nextChunk.length);
+        } catch (error) {
+            if (requestId !== requestIdRef.current) return;
+            console.error('Failed to fetch challenges:', error);
+            if (!append) {
                 setChallenges([]);
                 onChallengesLoaded?.([]);
-                setLoadError('Could not load challenges. Please try again.');
-            } finally {
-                if (!isMounted) return;
+            }
+            setLoadError('Could not load challenges. Please try again.');
+        } finally {
+            if (requestId !== requestIdRef.current) return;
+            if (!append) {
                 setIsLoading(false);
+            } else {
+                setIsLoadingMore(false);
             }
         }
+    }, [PAGE_SIZE, onChallengesLoaded]);
 
-        fetchChallenges();
+    useEffect(() => {
+        requestIdRef.current += 1;
+        setChallenges([]);
+        setOffset(0);
+        setHasMore(true);
+        fetchChallenges(0, false);
+    }, [fetchChallenges, refreshKey, retryNonce]);
 
-        return () => {
-            isMounted = false;
-            controller.abort();
-        };
-    }, [onChallengesLoaded, refreshKey, retryNonce]);
+    useEffect(() => {
+        if (!hasMore || isLoading || isLoadingMore) return;
+
+        const node = loadMoreRef.current;
+        if (!node) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                const first = entries[0];
+                if (!first?.isIntersecting) return;
+                fetchChallenges(offset, true);
+            },
+            {
+                root: null,
+                rootMargin: '200px',
+                threshold: 0.1,
+            },
+        );
+
+        observer.observe(node);
+        return () => observer.disconnect();
+    }, [fetchChallenges, hasMore, isLoading, isLoadingMore, offset]);
 
     if (isLoading) {
         return (
@@ -131,6 +172,15 @@ export function ChallengeGrid({
                     />
                 ))}
             </div>
+            {hasMore && (
+                <div ref={loadMoreRef} className="flex justify-center py-8">
+                    {isLoadingMore ? (
+                        <span className="text-sm text-gray-600">Loading more challenges...</span>
+                    ) : (
+                        <span className="text-sm text-gray-400">Scroll to load more</span>
+                    )}
+                </div>
+            )}
         </div>
     );
 }

@@ -5,12 +5,10 @@ import Image from "next/image";
 import { DatePickerModal } from "./DatePickerModal";
 import { DurationPickerModal } from "./DurationPickerModal";
 import { useSolanaWallet } from "@/app/lib/useSolanaWallet";
-import { Connection } from "@solana/web3.js";
 import {
     buildCreateChallengeTx,
     deriveChallengePDA,
     deriveCreatorCounter,
-    RPC_ENDPOINT,
 } from "@/app/lib/rektofun-program";
 import { createChallenge } from "@/app/lib/challenges-service/challenges";
 import { getMarkets, Market } from "@/app/lib/markets-service/market";
@@ -225,7 +223,6 @@ export function CreateChallengeModal({
 
         try {
             const creatorPubkey = publicKey;
-            const connection = new Connection(RPC_ENDPOINT, "confirmed");
 
             // Calculate timestamps
             const nowSec = Math.floor(Date.now() / 1000);
@@ -251,13 +248,6 @@ export function CreateChallengeModal({
             const signature = await sendTransaction(tx);
             setTxSignature(signature);
             setTxStatus("confirming");
-
-            // Wait for confirmation
-            const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
-            await connection.confirmTransaction(
-                { signature, blockhash, lastValidBlockHeight },
-                "confirmed"
-            );
 
             // Derive challenge PDA to get challenge_id for backend
             const [counterPDA] = deriveCreatorCounter(creatorPubkey);

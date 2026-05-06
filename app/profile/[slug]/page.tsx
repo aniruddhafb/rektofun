@@ -12,7 +12,10 @@ import {
 import { LoadingPage } from "@/app/components/LoadingPage";
 import { getUserByWallet, User } from "@/app/lib/users-service/users";
 import { useSolanaWallet } from "@/app/lib/useSolanaWallet";
-import { ChallengeListItem } from "@/app/lib/challenges-service/challenges";
+import {
+    ChallengeListItem,
+    getChallenges,
+} from "@/app/lib/challenges-service/challenges";
 
 // Activity item interface
 interface ActivityItem {
@@ -126,14 +129,17 @@ export default function ProfilePage() {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [userChallenges, setUserChallenges] = useState<ChallengeListItem[]>([]);
+    const [challengesLoading, setChallengesLoading] = useState(false);
+
+    const walletFromSlug = decodeURIComponent(slug || "");
 
     // Fetch user data by wallet address (slug)
     useEffect(() => {
         async function fetchUser() {
             try {
                 setLoading(true);
-                const userData = await getUserByWallet(slug);
-                console.log("Fetched user data:", userData);
+                const userData = await getUserByWallet(walletFromSlug);
                 setUser(userData);
                 setError(null);
             } catch (err) {
@@ -144,10 +150,37 @@ export default function ProfilePage() {
             }
         }
 
-        if (slug) {
+        if (walletFromSlug) {
             fetchUser();
         }
-    }, [slug]);
+    }, [walletFromSlug]);
+
+    // Fetch challenges created by this user id
+    useEffect(() => {
+        async function fetchUserChallenges() {
+            if (!user?.id) {
+                setUserChallenges([]);
+                return;
+            }
+
+            try {
+                setChallengesLoading(true);
+                const challengeData = await getChallenges({
+                    created_by: user.id,
+                    limit: 100,
+                    offset: 0,
+                });
+                setUserChallenges(challengeData.challenges || []);
+            } catch (challengeError) {
+                console.error("Failed to fetch user challenges:", challengeError);
+                setUserChallenges([]);
+            } finally {
+                setChallengesLoading(false);
+            }
+        }
+
+        fetchUserChallenges();
+    }, [user?.id]);
 
     // Handle challenge card click
     const handleChallengeClick = (challenge: ChallengeListItem) => {
@@ -222,9 +255,9 @@ export default function ProfilePage() {
                                 usdcUsd: usdcBalance ?? 0, // USDC is 1:1 with USD
                             }}
                             stats={{
-                                wins: 0, // These would come from challenges data
+                                wins: userChallenges.filter((c) => c.status === "resolved").length,
                                 rekts: 0,
-                                totalChallenges: 0,
+                                totalChallenges: userChallenges.length,
                                 winRatio: 0,
                             }}
                         />
@@ -233,9 +266,13 @@ export default function ProfilePage() {
                         <ProfileTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
                         {/* Challenges Tab Content */}
-                        {/* {activeTab === "challenges" && (
-                            <ProfileChallenges onChallengeClick={handleChallengeClick} />
-                        )} */}
+                        {activeTab === "challenges" && (
+                            <ProfileChallenges
+                                challenges={userChallenges}
+                                loading={challengesLoading}
+                                onChallengeClick={handleChallengeClick}
+                            />
+                        )}
 
                         {/* Activity Tab Content */}
                         {activeTab === "activity" && (

@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { useWallets } from "@privy-io/react-auth/solana";
-import { PublicKey, Transaction, Connection } from "@solana/web3.js";
-import { getRektoProgram, RPC_ENDPOINT } from "./rektofun-program";
+import { PublicKey, Transaction } from "@solana/web3.js";
+import { getRektoProgram, getReadonlyConnection } from "./rektofun-program";
 import type { Program } from "@anchor-lang/core";
 
 // USDC mint address on Solana devnet
@@ -109,7 +109,7 @@ export function useSolanaWallet() {
 
         const fetchBalances = async () => {
             try {
-                const connection = new Connection(RPC_ENDPOINT, "confirmed");
+                const connection = getReadonlyConnection();
                 
                 // Fetch USDC balance
                 const tokenAccounts = await connection.getParsedTokenAccountsByOwner(
@@ -167,7 +167,7 @@ export function useSolanaWallet() {
      */
     async function sendTransaction(tx: Transaction): Promise<string> {
         if (!adapter || !solanaWallet) throw new Error("Wallet not connected");
-        const connection = new Connection(RPC_ENDPOINT, "confirmed");
+        const connection = getReadonlyConnection();
 
         // ── Balance guard ────────────────────────────────────────────────────────
         // Check before signing so the user gets a clear error instead of a cryptic
