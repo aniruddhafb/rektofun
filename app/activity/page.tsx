@@ -14,6 +14,7 @@ type ActivityType = "all";
 const filterTabs: { label: string; value: ActivityType; count?: number }[] = [
     { label: "All Activity", value: "all" }
 ];
+const SKELETON_CARDS_COUNT = 5;
 
 function formatTimeAgo(dateString: string): string {
     const dateMs = new Date(dateString).getTime();
@@ -146,9 +147,30 @@ export default function ActivityPage() {
             <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
                 <div className="space-y-3">
                     {isLoading && (
-                        <div className="bg-[#f8ede7] rounded-2xl p-6 border border-[#e8d5c8] text-[#5c4a42]">
-                            Loading activity...
-                        </div>
+                        Array.from({ length: SKELETON_CARDS_COUNT }).map((_, index) => (
+                            <div
+                                key={`activity-skeleton-${index}`}
+                                className="bg-[#f8ede7] rounded-2xl p-4 border border-[#e8d5c8] animate-pulse"
+                                aria-hidden="true"
+                            >
+                                <div className="flex items-start gap-4">
+                                    <div className="w-12 h-12 rounded-full bg-[#e8d5c8] flex-shrink-0" />
+
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <div className="h-4 w-24 rounded-full bg-[#e8d5c8]" />
+                                            <div className="h-4 w-10 rounded-full bg-[#e8d5c8]" />
+                                            <div className="h-4 w-14 rounded-full bg-[#e8d5c8]" />
+                                            <div className="h-4 w-8 rounded-full bg-[#e8d5c8]" />
+                                            <div className="h-4 w-40 rounded-full bg-[#e8d5c8]" />
+                                        </div>
+                                        <div className="mt-2 h-3 w-16 rounded-full bg-[#e8d5c8]" />
+                                    </div>
+
+                                    <div className="w-8 h-8 rounded-full bg-[#e8d5c8] flex-shrink-0" />
+                                </div>
+                            </div>
+                        ))
                     )}
 
                     {!isLoading && error && (

@@ -209,6 +209,11 @@ export function ChallengeCard({
     const [joinSide, setJoinSide] = React.useState<"challenger" | "opponent">("opponent");
     const [currentTime, setCurrentTime] = React.useState(() => Date.now());
     const [fallbackPoolAmount, setFallbackPoolAmount] = React.useState<number | null>(null);
+    const creator = challenge.creator ?? {
+        username: "",
+        profile_image: "",
+        wallet_address: "",
+    };
 
     React.useEffect(() => {
         const interval = window.setInterval(() => {
@@ -358,7 +363,7 @@ export function ChallengeCard({
 
             const challengePdaStr = onchainMeta?.challenge_pda;
             const creatorWalletStr =
-                onchainMeta?.creator_wallet ?? challenge.creator.wallet_address;
+                onchainMeta?.creator_wallet ?? creator.wallet_address;
 
             console.log({ onchainMeta });
 
@@ -366,6 +371,9 @@ export function ChallengeCard({
                 throw new Error(
                     "This challenge has no on-chain reference yet. It may have been created before the on-chain integration — please ask the creator to recreate it."
                 );
+            }
+            if (!creatorWalletStr) {
+                throw new Error("Creator wallet is missing for this challenge.");
             }
 
             const challengePDA = new PublicKey(challengePdaStr);
@@ -484,7 +492,7 @@ export function ChallengeCard({
         display: challenge.mode === "pool" ? "Pool Mode" : "PVP Mode",
     };
     const labelsMeta: LabelsMetadata = {
-        creator: challenge.creator.username,
+        creator: creator.username,
     };
     const resolvedPoolAmount = (() => {
         const totalPoolValue = Number(challenge.total_pool ?? 0);
@@ -520,10 +528,10 @@ export function ChallengeCard({
     const assetSymbol = assetMeta.symbol || challenge.market.name || "BTC";
     const assetIcon = assetMeta.icon || "/scribbles/btc.png";
     const assetName = assetMeta.name || assetSymbol;
-    const creatorName = labelsMeta.creator || challenge.creator.username || "Creator";
+    const creatorName = labelsMeta.creator || creator.username || "Creator";
     const creatorDisplayName = truncateProfileName(creatorName, 6);
-    const creatorWalletDisplay = formatWalletAddress(challenge.creator.wallet_address);
-    const creatorProfileImage = challenge.creator.profile_image || assetIcon;
+    const creatorWalletDisplay = formatWalletAddress(creator.wallet_address);
+    const creatorProfileImage = creator.profile_image || assetIcon;
     const opponentInfo = challenge.opponent_info ?? null;
     const hasOpponentInfo = Boolean(opponentInfo?.username || opponentInfo?.wallet_address);
     const opponentProfileImage = opponentInfo?.profile_image || assetIcon;
@@ -556,7 +564,7 @@ export function ChallengeCard({
     const challengeEndTimeText = formatUtcDateTime(resolveTimestamp);
     const endsByCountdown = formatEndsByCountdown(resolveTimestamp, currentTime);
     const exactCountdownDetails = formatExactCountdownDetails(resolveTimestamp, currentTime);
-    const isCreator = user?.wallet_address === challenge.creator.wallet_address;
+    const isCreator = user?.wallet_address === creator.wallet_address;
     const isPvpMode = challenge.mode !== "pool";
     const isPoolMode = challenge.mode === "pool";
     const totalOpponents = Number(challenge.total_opponents ?? 0);
@@ -758,7 +766,7 @@ export function ChallengeCard({
                     <div className="flex flex-row items-center justify-center gap-2 sm:gap-4">
                         {/* Challenger Profile */}
                         <div
-                            onClick={(e) => openProfile(e, challenge.creator.wallet_address)}
+                            onClick={(e) => openProfile(e, creator.wallet_address)}
                             className="relative group flex flex-col items-center cursor-pointer"
                         >
                             <div className={`w-[120px] h-[140px] flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-300 ${hasWon

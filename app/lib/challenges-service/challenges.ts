@@ -72,6 +72,8 @@ export interface GetChallengesParams {
   category?: string;
   ticker?: string;
   created_by?: string;
+  search?: string;
+  sort?: 'latest' | 'expiring_soon';
   limit?: number;
   offset?: number;
 }
@@ -195,6 +197,12 @@ export async function getChallenges(
   }
   if (params.created_by) {
     searchParams.set('created_by', params.created_by);
+  }
+  if (params.search) {
+    searchParams.set('search', params.search);
+  }
+  if (params.sort) {
+    searchParams.set('sort', params.sort);
   }
   if (params.limit !== undefined) {
     searchParams.set('limit', String(params.limit));

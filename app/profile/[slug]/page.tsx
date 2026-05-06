@@ -17,107 +17,9 @@ import {
     getChallenges,
 } from "@/app/lib/challenges-service/challenges";
 
-// Activity item interface
-interface ActivityItem {
-    id: string;
-    type: "bet" | "win" | "follow" | "buy";
-    user: {
-        name: string;
-        avatar: string;
-    };
-    action: string;
-    target?: string;
-    amount?: string;
-    details: string;
-    subAction?: {
-        user: string;
-        action: string;
-        icon?: string;
-        highlight?: string;
-    };
-    timestamp: string;
-}
-
 // Tab types
 type TabType = "challenges" | "activity";
 
-// Activity data matching the activity page style
-const activityData: ActivityItem[] = [
-    {
-        id: "1",
-        type: "win",
-        user: { name: "DegenLord", avatar: "/scribbles/pepe.png" },
-        action: "won",
-        amount: "+2.5 SOL",
-        target: "Bitcoin Above $95K",
-        details: "vs CryptoKing",
-        subAction: {
-            user: "BTC",
-            action: "bought",
-            highlight: "🎫",
-        },
-        timestamp: "2hr ago",
-    },
-    {
-        id: "2",
-        type: "bet",
-        user: { name: "DegenLord", avatar: "/scribbles/pepe.png" },
-        action: "got REKT",
-        amount: "-1.2 SOL",
-        target: "Ethereum Below $3,200",
-        details: "by BearWhale",
-        subAction: {
-            user: "ETH",
-            action: "bought",
-            highlight: "Down",
-        },
-        timestamp: "5hr ago",
-    },
-    {
-        id: "3",
-        type: "bet",
-        user: { name: "DegenLord", avatar: "/scribbles/pepe.png" },
-        action: "created challenge",
-        amount: "1.0 SOL",
-        target: "SOL Above $160",
-        details: "",
-        subAction: {
-            user: "SOL",
-            action: "bought",
-            highlight: "🎫",
-        },
-        timestamp: "1 day ago",
-    },
-    {
-        id: "4",
-        type: "follow",
-        user: { name: "DegenLord", avatar: "/scribbles/pepe.png" },
-        action: "joined",
-        target: "MoonBoy's challenge",
-        details: "x0.5 SOL bet",
-        subAction: {
-            user: "DOGE",
-            action: "bought",
-            highlight: "🥞",
-        },
-        timestamp: "2 days ago",
-    },
-    {
-        id: "5",
-        type: "win",
-        user: { name: "DegenLord", avatar: "/scribbles/pepe.png" },
-        action: "hit jackpot!",
-        amount: "+5.0 SOL",
-        target: "PEPE Above $0.000015",
-        details: "",
-        subAction: {
-            user: "PEPE",
-            action: "bought",
-            highlight: "Up x5",
-        },
-        timestamp: "3 days ago",
-    },
-];
 
 export default function ProfilePage() {
     const params = useParams();
@@ -276,7 +178,11 @@ export default function ProfilePage() {
 
                         {/* Activity Tab Content */}
                         {activeTab === "activity" && (
-                            <ProfileActivity activityData={activityData} />
+                            <ProfileActivity
+                                userId={user.id}
+                                username={user.username}
+                                avatar={user.profile_image || "/scribbles/pepe.png"}
+                            />
                         )}
                     </>
                 )}

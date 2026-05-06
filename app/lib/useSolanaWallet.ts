@@ -9,6 +9,20 @@ import type { Program } from "@anchor-lang/core";
 
 // USDC mint address on Solana devnet
 const USDC_MINT = new PublicKey("4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU");
+const BALANCE_CACHE_TTL_MS = 30_000;
+
+type SharedBalanceSnapshot = {
+    usdcBalance: number;
+    solBalance: number;
+};
+
+type SharedBalanceEntry = {
+    value?: SharedBalanceSnapshot;
+    fetchedAt?: number;
+    inFlight?: Promise<SharedBalanceSnapshot>;
+};
+
+const sharedBalanceCache = new Map<string, SharedBalanceEntry>();
 
 /**
  * Validates if a string is a valid base58 Solana address.
@@ -31,12 +45,8 @@ export function useSolanaWallet() {
     const [usdcBalance, setUsdcBalance] = useState<number | null>(null);
     const [solBalance, setSolBalance] = useState<number | null>(null);
 
-    console.log({ solanaWallets: wallets, ready });
-
     // Pick the first available Solana wallet
     const solanaWallet = wallets[0] ?? null;
-
-    console.log({ solanaWallet });
 
     // Use useMemo to create a stable adapter reference based on the wallet address.
     // This prevents the useEffect from re-running on every render.
@@ -107,42 +117,77 @@ export function useSolanaWallet() {
         let isStale = false;
         let timeoutId: ReturnType<typeof setTimeout>;
 
-        const fetchBalances = async () => {
-            try {
+        const fetchSharedBalances = async (walletAddress: string): Promise<SharedBalanceSnapshot> => {
+            const now = Date.now();
+            const cached = sharedBalanceCache.get(walletAddress);
+
+            if (cached?.value && cached.fetchedAt && now - cached.fetchedAt < BALANCE_CACHE_TTL_MS) {
+                return cached.value;
+            }
+
+            if (cached?.inFlight) {
+                return cached.inFlight;
+            }
+
+            const inFlight = (async () => {
                 const connection = getReadonlyConnection();
-                
-                // Fetch USDC balance
-                const tokenAccounts = await connection.getParsedTokenAccountsByOwner(
-                    new PublicKey(publicKeyBase58),
-                    { mint: USDC_MINT }
-                );
+                const walletPublicKey = new PublicKey(walletAddress);
 
-                // Ignore response if a newer fetch has started
-                if (isStale) return;
+                const [tokenAccounts, solLamports] = await Promise.all([
+                    connection.getParsedTokenAccountsByOwner(walletPublicKey, { mint: USDC_MINT }),
+                    connection.getBalance(walletPublicKey),
+                ]);
 
-                if (tokenAccounts.value.length > 0) {
-                    const usdcBal = tokenAccounts.value[0].account.data.parsed.info.tokenAmount.uiAmount;
-                    setUsdcBalance(usdcBal);
-                } else {
-                    setUsdcBalance(0);
+                const nextValue: SharedBalanceSnapshot = {
+                    usdcBalance:
+                        tokenAccounts.value.length > 0
+                            ? Number(tokenAccounts.value[0].account.data.parsed.info.tokenAmount.uiAmount ?? 0)
+                            : 0,
+                    solBalance: solLamports / 1e9,
+                };
+
+                sharedBalanceCache.set(walletAddress, {
+                    value: nextValue,
+                    fetchedAt: Date.now(),
+                });
+
+                return nextValue;
+            })();
+
+            sharedBalanceCache.set(walletAddress, {
+                ...cached,
+                inFlight,
+            });
+
+            try {
+                return await inFlight;
+            } finally {
+                const latest = sharedBalanceCache.get(walletAddress);
+                if (latest?.inFlight === inFlight) {
+                    sharedBalanceCache.set(walletAddress, {
+                        value: latest.value,
+                        fetchedAt: latest.fetchedAt,
+                    });
                 }
-
-                // Fetch SOL balance
-                const solBal = await connection.getBalance(new PublicKey(publicKeyBase58));
-                if (!isStale) {
-                    setSolBalance(solBal / 1e9); // Convert lamports to SOL
-                }
-            } catch (error) {
-                // Ignore errors from superseded requests
-                if (isStale) return;
-                console.error('[useSolanaWallet] Failed to fetch balances:', error);
             }
         };
 
-        // Debounce: wait 500ms before fetching to avoid rapid re-renders hitting rate limit
+        const run = async () => {
+            try {
+                const snapshot = await fetchSharedBalances(publicKeyBase58);
+                if (isStale) return;
+                setUsdcBalance(snapshot.usdcBalance);
+                setSolBalance(snapshot.solBalance);
+            } catch (error) {
+                if (isStale) return;
+                console.error("[useSolanaWallet] Failed to fetch balances:", error);
+            }
+        };
+
+        // Debounce + shared caching: avoid a burst of duplicate calls across mounted components.
         timeoutId = setTimeout(() => {
             isStale = false;
-            fetchBalances();
+            run();
         }, 500);
 
         return () => {

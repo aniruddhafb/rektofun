@@ -13,6 +13,9 @@ interface ChallengeGridProps {
     onChallengesLoaded?: (challenges: ChallengeListItem[]) => void;
     isLoading?: boolean;
     refreshKey?: number;
+    activeFilter: string;
+    activeAsset: string;
+    searchQuery: string;
 }
 
 export function ChallengeGrid({
@@ -21,6 +24,9 @@ export function ChallengeGrid({
     onOpenModal,
     onChallengesLoaded,
     refreshKey = 0,
+    activeFilter,
+    activeAsset,
+    searchQuery,
 }: ChallengeGridProps) {
     const PAGE_SIZE = 6;
     const LOADING_MESSAGES = [
@@ -39,22 +45,41 @@ export function ChallengeGrid({
     const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
     const loadMoreRef = useRef<HTMLDivElement | null>(null);
     const requestIdRef = useRef(0);
+    const isLoadingRef = useRef(false);
+    const isLoadingMoreRef = useRef(false);
     const { publicKey } = useSolanaWallet();
 
     let ownerAddress = publicKey?.toString() || '';
 
     const fetchChallenges = useCallback(async (currentOffset: number, append: boolean) => {
+        if (append && (isLoadingRef.current || isLoadingMoreRef.current)) {
+            return;
+        }
+
         const requestId = ++requestIdRef.current;
         if (!append) {
             setIsLoading(true);
+            isLoadingRef.current = true;
+            if (isLoadingMoreRef.current) {
+                setIsLoadingMore(false);
+                isLoadingMoreRef.current = false;
+            }
         } else {
             setIsLoadingMore(true);
+            isLoadingMoreRef.current = true;
         }
         setLoadError(null);
 
         try {
             const response = await getChallenges(
-                { limit: PAGE_SIZE, offset: currentOffset },
+                {
+                    limit: PAGE_SIZE,
+                    offset: currentOffset,
+                    category: activeAsset !== "All Markets" ? activeAsset : undefined,
+                    search: searchQuery.trim() || undefined,
+                    sort: activeFilter === "Expiring Soon" ? "expiring_soon" : "latest",
+                    created_by: activeFilter === "Created By Me" ? ownerAddress || undefined : undefined,
+                },
                 {
                     timeoutMs: 10000,
                     retries: 2,
@@ -63,12 +88,16 @@ export function ChallengeGrid({
                 },
             );
             if (requestId !== requestIdRef.current) return;
-            const nextChunk = response.challenges ?? [];
-            setChallenges((prev) => {
-                const merged = append ? [...prev, ...nextChunk] : nextChunk;
-                onChallengesLoaded?.(merged);
-                return merged;
-            });
+            let nextChunk = response.challenges ?? [];
+            if (activeFilter === "My Bets" && ownerAddress) {
+                nextChunk = nextChunk.filter((challenge) => {
+                    const creatorWallet = challenge.creator?.wallet_address?.toLowerCase();
+                    const opponentWallet = challenge.opponent_info?.wallet_address?.toLowerCase();
+                    const currentUser = ownerAddress.toLowerCase();
+                    return creatorWallet === currentUser || opponentWallet === currentUser;
+                });
+            }
+            setChallenges((prev) => (append ? [...prev, ...nextChunk] : nextChunk));
             setHasMore(nextChunk.length === PAGE_SIZE);
             setOffset(currentOffset + nextChunk.length);
         } catch (error) {
@@ -76,26 +105,30 @@ export function ChallengeGrid({
             console.error('Failed to fetch challenges:', error);
             if (!append) {
                 setChallenges([]);
-                onChallengesLoaded?.([]);
             }
             setLoadError('Could not load challenges. Please try again.');
         } finally {
             if (requestId !== requestIdRef.current) return;
             if (!append) {
                 setIsLoading(false);
+                isLoadingRef.current = false;
             } else {
                 setIsLoadingMore(false);
+                isLoadingMoreRef.current = false;
             }
         }
-    }, [PAGE_SIZE, onChallengesLoaded]);
+    }, [PAGE_SIZE, activeAsset, activeFilter, onChallengesLoaded, ownerAddress, searchQuery]);
 
     useEffect(() => {
         requestIdRef.current += 1;
+        isLoadingRef.current = false;
+        isLoadingMoreRef.current = false;
+        setIsLoadingMore(false);
         setChallenges([]);
         setOffset(0);
         setHasMore(true);
         fetchChallenges(0, false);
-    }, [fetchChallenges, refreshKey, retryNonce]);
+    }, [fetchChallenges, refreshKey, retryNonce, activeAsset, activeFilter, searchQuery]);
 
     useEffect(() => {
         if (!hasMore || isLoading || isLoadingMore) return;
@@ -127,6 +160,10 @@ export function ChallengeGrid({
         }, 1400);
         return () => window.clearInterval(timer);
     }, [isLoading]);
+
+    useEffect(() => {
+        onChallengesLoaded?.(challenges);
+    }, [challenges, onChallengesLoaded]);
 
     if (isLoading) {
         return (

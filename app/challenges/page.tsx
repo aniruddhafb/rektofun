@@ -10,10 +10,11 @@ import { CreateChallengeModal } from "../components/challenge-components/CreateC
 import { ChallengeListItem } from "../lib/challenges-service/challenges";
 import ChallengeDetailModal from "../components/challenge-components/ChallengeDetailModal";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { getMarkets } from "../lib/markets-service/market";
 
 export default function ChallengesPage() {
   const CREATE_TOAST_DURATION_MS = 3000;
-  const [activeFilter, setActiveFilter] = useState("Expiring Soon");
+  const [activeFilter, setActiveFilter] = useState("Latest");
   const [activeAsset, setActiveAsset] = useState("All Markets");
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -29,6 +30,7 @@ export default function ChallengesPage() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [showCreateSuccessToast, setShowCreateSuccessToast] = useState(false);
   const [createToastProgress, setCreateToastProgress] = useState(100);
+  const [marketOptions, setMarketOptions] = useState<string[]>(["All Markets"]);
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -97,6 +99,28 @@ export default function ChallengesPage() {
   };
 
   useEffect(() => {
+    let isMounted = true;
+    const loadMarketOptions = async () => {
+      try {
+        const response = await getMarkets({ is_active: true, limit: 100, offset: 0 });
+        if (!isMounted) return;
+        const names = response.markets
+          .map((market) => market.name)
+          .filter((name): name is string => Boolean(name))
+          .sort((a, b) => a.localeCompare(b));
+        setMarketOptions(["All Markets", ...names]);
+      } catch (error) {
+        console.error("Failed to load market options:", error);
+      }
+    };
+
+    loadMarketOptions();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
     if (!showCreateSuccessToast) return;
     const start = Date.now();
     const interval = window.setInterval(() => {
@@ -149,6 +173,7 @@ export default function ChallengesPage() {
         setActiveAsset={setActiveAsset}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
+        marketOptions={marketOptions}
       />
 
       <FeedbackBanner
@@ -163,6 +188,9 @@ export default function ChallengesPage() {
         onOpenModal={() => setIsCreateModalOpen(true)}
         onChallengesLoaded={handleChallengesLoaded}
         refreshKey={refreshKey}
+        activeFilter={activeFilter}
+        activeAsset={activeAsset}
+        searchQuery={searchQuery}
       />
 
       <RektLoadingOverlay isLoading={isRekting} />
