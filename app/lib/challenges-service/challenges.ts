@@ -50,6 +50,7 @@ export interface ChallengeListItem {
     name: string;
     image: string;
     icon: string;
+    description?: string | null;
     parent_id: string | null;
   };
   creator: {

@@ -245,13 +245,26 @@ export function ChallengeGrid({
                         ownerAddress={ownerAddress}
                     />
                 ))}
+                {isLoadingMore &&
+                    Array.from({ length: PAGE_SIZE }).map((_, index) => (
+                        <div
+                            key={`loading-more-skeleton-${index}`}
+                            className="h-[300px] rounded-2xl border border-white/60 bg-white/50 p-5 animate-pulse"
+                        >
+                            <div className="h-6 w-3/4 rounded bg-gray-200" />
+                            <div className="mt-3 h-4 w-1/2 rounded bg-gray-200" />
+                            <div className="mt-8 h-4 w-full rounded bg-gray-200" />
+                            <div className="mt-2 h-4 w-5/6 rounded bg-gray-200" />
+                            <div className="mt-10 h-10 w-full rounded-xl bg-gray-200" />
+                        </div>
+                    ))}
             </div>
             {hasMore && (
                 <div ref={loadMoreRef} className="flex justify-center py-8">
-                    {isLoadingMore ? (
-                        <span className="text-sm text-gray-600">Loading more challenges and warming local cache...</span>
-                    ) : (
+                    {!isLoadingMore ? (
                         <span className="text-sm text-gray-400">Scroll to load more</span>
+                    ) : (
+                        <span className="sr-only">Loading more challenges</span>
                     )}
                 </div>
             )}

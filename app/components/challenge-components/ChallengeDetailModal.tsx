@@ -177,11 +177,14 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
         if (!isOpen) return;
 
         let isMounted = true;
+        const marketDescription = encodeURIComponent(
+            challenge?.market?.description?.trim() || "Solana"
+        );
 
         const fetchSolPrice = async () => {
             try {
                 const response = await fetch(
-                    "https://api.diadata.org/v1/assetQuotation/Solana/0x0000000000000000000000000000000000000000",
+                    `https://api.diadata.org/v1/assetQuotation/${marketDescription}/0x0000000000000000000000000000000000000000`,
                     { cache: "no-store" },
                 );
                 if (!response.ok) return;
@@ -215,7 +218,7 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
             isMounted = false;
             window.clearInterval(interval);
         };
-    }, [isOpen]);
+    }, [isOpen, challenge?.market?.description]);
 
     useEffect(() => {
         if (!isBetFormOpen || !challenge) return;
@@ -250,14 +253,6 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
 
     if (!isOpen || !challenge) return null;
     const betCurrency = "USDC";
-
-    const hasWinnerData =
-        typeof challenge.result === "object" &&
-        challenge.result !== null &&
-        "winner" in challenge.result;
-    const winnerValue = hasWinnerData ? String((challenge.result as Record<string, unknown>).winner ?? "") : "";
-    const hasWon = challenge.status === "resolved" && winnerValue === "creator";
-    const hasLost = challenge.status === "resolved" && winnerValue !== "" && winnerValue !== "creator";
 
     const asset = challenge.market?.name || "Market";
     const assetLogo = challenge.market?.icon || "/scribbles/btc.png";
@@ -302,6 +297,16 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
     const targetPrice = challenge.target_price ?? challenge.total_pool ?? betAmount;
     const currentPrice = liveSolPrice ?? challenge.total_pool ?? 0;
     const priceChange = startPrice > 0 ? ((currentPrice - startPrice) / startPrice) * 100 : 0;
+    const titleLower = challenge.title.toLowerCase();
+    const isBelowChallenge = titleLower.includes("below");
+    const isAboveChallenge = titleLower.includes("above");
+    const isDirectionalBelow = isBelowChallenge && !isAboveChallenge;
+    const progressThemeClass = isDirectionalBelow
+        ? "from-red-500 to-red-300"
+        : "from-emerald-500 to-emerald-300";
+    const markerThemeClass = isDirectionalBelow ? "border-red-400" : "border-emerald-400";
+    const markerDotThemeClass = isDirectionalBelow ? "bg-red-500" : "bg-emerald-500";
+    const priceLabelThemeClass = isDirectionalBelow ? "text-red-300" : "text-emerald-300";
 
     // Calculate price bar position (0-100%)
     const getPriceBarPosition = () => {
@@ -315,6 +320,33 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
     const hasOpponents = Number(challenge.total_opponents ?? 0) > 0 || hasOpponentInfo;
     const isExpireTimeAchieved = Boolean(expiryTimestamp && expiryTimestamp <= currentTime);
     const isResolveTimeAchieved = Boolean(resolveTimestamp && resolveTimestamp <= currentTime);
+    const challengerConditionMet = isDirectionalBelow ? currentPrice < targetPrice : currentPrice > targetPrice;
+    const opponentConditionMet = isDirectionalBelow ? currentPrice > targetPrice : currentPrice < targetPrice;
+    const hasWon = hasOpponents && challengerConditionMet;
+    const hasLost = hasOpponents && opponentConditionMet;
+    const isFinalOutcome = hasOpponents && isResolveTimeAchieved;
+    const creatorOutcomeText = isFinalOutcome
+        ? hasWon
+            ? "Won the bet!"
+            : hasLost
+                ? "Lost the bet"
+                : "Tie at target"
+        : hasWon
+            ? "Leading now"
+            : hasLost
+                ? "Trailing now"
+                : "Neck and neck";
+    const opponentOutcomeText = isFinalOutcome
+        ? hasLost
+            ? "Won the bet!"
+            : hasWon
+                ? "Lost the bet"
+                : "Tie at target"
+        : hasLost
+            ? "Leading now"
+            : hasWon
+                ? "Trailing now"
+                : "Neck and neck";
     const challengeWithResolution = challenge as ChallengeListItem & {
         resolving_status?: string;
         resolution_status?: string;
@@ -575,6 +607,13 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
                         -ms-overflow-style: none;
                         scrollbar-width: none;
                     }
+                    @keyframes liveSweep {
+                        0% { transform: translateX(-100%); }
+                        100% { transform: translateX(220%); }
+                    }
+                    .price-live-sheen {
+                        animation: liveSweep 2.2s linear infinite;
+                    }
                 `}</style>
 
                 {/* Decorative Background Elements */}
@@ -731,28 +770,11 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
                         </div>
 
                         {/* Price Section */}
-                        <div className="flex items-center justify-between mb-3">
-                            {/* Start Price */}
-                            <div className="flex items-center gap-1.5">
-                                <div className="group relative">
-                                    <svg className="w-4 h-4 text-white/60 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    <div className="fixed p-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[9999] whitespace-nowrap shadow-xl"
-                                        style={{ pointerEvents: "none" }}>
-                                        Price when challenger posted the challenge
-                                    </div>
-                                </div>
-                                <div>
-                                    <p className="text-white/70 text-xs">Start</p>
-                                    <p className="font-bold">${startPrice.toLocaleString()}</p>
-                                </div>
-                            </div>
-
+                        <div className={`mb-3 flex items-center ${isBelowChallenge ? "justify-start" : isAboveChallenge ? "justify-end" : "justify-end"}`}>
                             {/* Target Price */}
                             <div className="flex items-center gap-1.5">
                                 <div>
-                                    <p className="text-white/70 text-xs text-right">Target</p>
+                                    <p className={`text-white/70 text-xs ${isBelowChallenge ? "text-left" : "text-right"}`}>Target</p>
                                     <p className="font-bold text-amber-300">${targetPrice.toLocaleString()}</p>
                                 </div>
                                 <div className="group relative">
@@ -770,31 +792,38 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
                         {/* Price Progress Bar */}
                         <div className="relative">
                             {/* Track */}
-                            <div className="h-3 bg-white/20 rounded-full overflow-hidden">
+                            <div className="relative h-3 bg-white/20 rounded-full overflow-hidden">
                                 {/* Progress fill */}
                                 <div
-                                    className="h-full bg-gradient-to-r from-emerald-400 to-emerald-300 rounded-full transition-all duration-500"
+                                    className={`absolute top-0 h-full rounded-full transition-all duration-500 bg-gradient-to-r ${progressThemeClass} ${isDirectionalBelow ? "right-0" : "left-0"}`}
                                     style={{ width: `${priceBarPosition}%` }}
                                 />
+                                {/* Live update sheen to simulate real-time movement */}
+                                <div className="price-live-sheen absolute top-0 h-full w-14 bg-gradient-to-r from-transparent via-white/35 to-transparent" />
                             </div>
 
                             {/* Current Price Marker */}
                             <div
-                                className="absolute top-1/2 -translate-y-1/2 w-5 h-5 bg-white rounded-full shadow-lg border-2 border-emerald-400 flex items-center justify-center"
-                                style={{ left: `calc(${priceBarPosition}% - 10px)` }}
+                                className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 bg-white rounded-full shadow-lg border-2 flex items-center justify-center ${markerThemeClass}`}
+                                style={
+                                    isDirectionalBelow
+                                        ? { right: `calc(${priceBarPosition}% - 10px)` }
+                                        : { left: `calc(${priceBarPosition}% - 10px)` }
+                                }
                             >
-                                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                                <div className={`w-2 h-2 rounded-full animate-pulse ${markerDotThemeClass}`} />
                             </div>
                         </div>
 
                         {/* Current Price Label */}
                         <div className="mt-3 text-center">
-                            <p className={`text-lg font-bold ${priceChange >= 0 ? "text-emerald-300" : "text-red-300"}`}>
+                            <p className={`text-lg font-bold ${priceLabelThemeClass}`}>
                                 ${currentPrice.toLocaleString()}
-                                <span className="text-xs ml-2 text-white/60">
+                                {/* <span className="text-xs ml-2 text-white/60">
                                     ({priceChange >= 0 ? "+" : ""}{priceChange.toFixed(2)}%)
-                                </span>
+                                </span> */}
                             </p>
+                            <p className="text-[11px] text-white/70 mt-1 animate-pulse">Live market sync</p>
                         </div>
                     </div>
 
@@ -814,11 +843,11 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
                                         : "bg-white/80 border-2 border-[#d4a574]/30"
                                     }`}>
                                     {/* Winner Crown */}
-                                    {hasWon && (
-                                        <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-3xl animate-bounce">
-                                            👑
-                                        </div>
-                                    )}
+                                        {isFinalOutcome && hasWon && (
+                                            <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-3xl animate-bounce">
+                                                👑
+                                            </div>
+                                        )}
 
                                     {/* Avatar */}
                                     <div className="relative flex flex-col items-center">
@@ -839,13 +868,13 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
                                     </div>
 
                                     {/* Info */}
-                                    <div className="text-center">
-                                        <p className="font-bold text-[#2d1f1a] text-xs">{creatorName}</p>
-                                        <p className="text-[10px] text-[#8b7355] mt-0.5">
-                                            {hasWon ? "Won the bet!" : hasLost ? "Lost the bet" : "Created challenge"}
-                                        </p>
+                                        <div className="text-center">
+                                            <p className="font-bold text-[#2d1f1a] text-xs">{creatorName}</p>
+                                            <p className="text-[10px] text-[#8b7355] mt-0.5">
+                                                {hasOpponents ? creatorOutcomeText : "Created challenge"}
+                                            </p>
+                                        </div>
                                     </div>
-                                </div>
                                 {!isExpireTimeAchieved && !isCreator && isPoolMode && (
                                     <button
                                         type="button"
@@ -882,7 +911,7 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
                                                 <span className="text-lg font-black text-[#f3e1d7]">VS</span>
                                             )}
                                         </div>
-                                        {hasWon || hasLost ? (
+                                        {isFinalOutcome && (hasWon || hasLost) ? (
                                             <div className="mt-1 text-center">
                                                 <p className={`text-lg font-black ${hasWon ? "text-amber-500" : "text-red-500"}`}>
                                                     {hasWon ? "+" : "-"}${betAmount}
@@ -912,7 +941,7 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
                                             : "bg-white/80 border-2 border-[#d4a574]/30"
                                         }`}>
                                         {/* Winner Crown */}
-                                        {hasLost && (
+                                        {isFinalOutcome && hasLost && (
                                             <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-3xl animate-bounce">
                                                 👑
                                             </div>
@@ -940,7 +969,7 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
                                         <div className="text-center">
                                             <p className="font-bold text-[#2d1f1a] text-xs">{opponentDisplayName}</p>
                                             <p className="text-[10px] text-[#8b7355] mt-0.5">
-                                                {hasLost ? "Won the bet!" : hasWon ? "Lost the bet" : "Opposing challenge"}
+                                                {hasOpponents ? opponentOutcomeText : "Opposing challenge"}
                                             </p>
                                         </div>
                                     </div>
@@ -1038,7 +1067,7 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
                                                     ? "This challenge has expired. No one joined before expiry."
                                                     : isExpireTimeAchieved && hasOpponents
                                                         ? "Expiry passed, but the challenge has opponents and is now in resolution timeline."
-                                                    : `This challenge will expire in ${expiresInText}. After that, no one can join.`}
+                                                        : `This challenge will expire in ${expiresInText}. After that, no one can join.`}
                                                 <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
                                             </div>
                                         </div>
