@@ -589,10 +589,10 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 overflow-hidden">
             <div
                 ref={modalRef}
-                className="relative w-full max-w-4xl max-h-[90vh] overflow-auto bg-gradient-to-br from-[#f8ede7] via-[#f3e1d7] to-[#e8d5c4] rounded-3xl shadow-2xl border border-[#d4a574]/30 animate-in zoom-in-95 duration-300"
+                className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto overflow-x-hidden bg-gradient-to-br from-[#f8ede7] via-[#f3e1d7] to-[#e8d5c4] rounded-3xl shadow-2xl border border-[#d4a574]/30 animate-in zoom-in-95 duration-300"
                 style={{
                     scrollbarWidth: "none",
                     msOverflowStyle: "none",
@@ -833,7 +833,7 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
                             Battle Matchup
                         </h3>
 
-                        <div className="flex flex-row items-center justify-center gap-2 sm:gap-4">
+                        <div className="flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-4">
                             {/* Challenger Profile */}
                             <div className="relative group flex flex-col items-center">
                                 <div className={`w-[138px] h-[168px] flex flex-col items-center justify-center text-center gap-2 p-4 rounded-xl transition-all duration-300 ${hasWon

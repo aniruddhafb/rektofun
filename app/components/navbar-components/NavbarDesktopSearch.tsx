@@ -22,6 +22,9 @@ type SearchClan = {
 type NavbarDesktopSearchProps = {
     searchQuery: string;
     onSearchQueryChange: (value: string) => void;
+    isModalOpen: boolean;
+    onOpenModal: () => void;
+    onCloseModal: () => void;
 };
 
 function formatPool(value: number | undefined) {
@@ -65,9 +68,11 @@ function getChallengeStatusMeta(status: ChallengeListItem["status"]) {
 export function NavbarDesktopSearch({
     searchQuery,
     onSearchQueryChange,
+    isModalOpen,
+    onOpenModal,
+    onCloseModal,
 }: NavbarDesktopSearchProps) {
     const router = useRouter();
-    const [isModalOpen, setIsModalOpen] = useState(false);
     const [query, setQuery] = useState(searchQuery);
     const [activeTab, setActiveTab] = useState<SearchTab>("all");
     const [isLoading, setIsLoading] = useState(false);
@@ -80,7 +85,7 @@ export function NavbarDesktopSearch({
 
     const hasQuery = query.trim().length > 0;
 
-    const closeModal = () => setIsModalOpen(false);
+    const closeModal = () => onCloseModal();
 
     const handleQueryChange = (value: string) => {
         setQuery(value);
@@ -230,39 +235,43 @@ export function NavbarDesktopSearch({
     const challengeSkeletons = Array.from({ length: 3 });
     const cardSkeletons = Array.from({ length: 5 });
 
-    return (
-        <div className="hidden md:flex items-center gap-6 flex-1 justify-center max-w-2xl mx-8">
-            <div className="relative flex-1 max-w-md">
-                <button
-                    type="button"
-                    onClick={() => {
-                        setQuery(searchQuery);
-                        setActiveTab("all");
-                        setIsModalOpen(true);
-                        loadInitialResults();
-                    }}
-                    className="w-full text-left px-4 py-2.5 pl-10 bg-white/50 border border-gray-300 rounded-full text-sm text-gray-700 hover:bg-white/70 focus:outline-none focus:ring-2 focus:ring-black/20 transition-all cursor-pointer"
-                >
-                    Search challenges, users, clans...
-                </button>
-                <svg
-                    className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-            </div>
+    useEffect(() => {
+        if (!isModalOpen) return;
+        setQuery(searchQuery);
+        setActiveTab("all");
+        void loadInitialResults();
+    }, [isModalOpen, searchQuery]);
 
-            <a
-                href="https://rektofun.gitbook.io/rektofun/introduction/how-it-works"
-                target="_blank"
-                rel="noreferrer"
-                className="text-sm font-medium text-gray-700 hover:text-black transition-colors whitespace-nowrap"
-            >
-                How it works?
-            </a>
+    return (
+        <>
+            <div className="hidden md:flex items-center gap-6 flex-1 justify-center max-w-2xl mx-8">
+                <div className="relative flex-1 max-w-md">
+                    <button
+                        type="button"
+                        onClick={onOpenModal}
+                        className="w-full text-left px-4 py-2.5 pl-10 bg-white/50 border border-gray-300 rounded-full text-sm text-gray-700 hover:bg-white/70 focus:outline-none focus:ring-2 focus:ring-black/20 transition-all cursor-pointer"
+                    >
+                        Search challenges, users, clans...
+                    </button>
+                    <svg
+                        className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+
+                <a
+                    href="https://rektofun.gitbook.io/rektofun/introduction/how-it-works"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-sm font-medium text-gray-700 hover:text-black transition-colors whitespace-nowrap"
+                >
+                    How it works?
+                </a>
+            </div>
 
             {isModalOpen && (
                 <div className="fixed inset-0 z-[180]">
@@ -272,9 +281,9 @@ export function NavbarDesktopSearch({
                         className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
                     />
 
-                    <div className="relative z-10 mx-auto mt-20 w-[82vw] max-w-4xl rounded-[20px] border border-[#f1c7a7] bg-[#fff8f4] shadow-[0_20px_52px_rgba(0,0,0,0.28)] overflow-hidden">
-                        <div className="p-5 border-b border-[#f0dfd2]">
-                            <div className="flex items-center gap-4">
+                    <div className="relative z-10 mx-2 mt-16 md:mx-auto md:mt-20 w-auto md:w-[82vw] max-w-4xl h-[calc(100vh-9rem)] md:h-auto rounded-[16px] md:rounded-[20px] border border-[#f1c7a7] bg-[#fff8f4] shadow-[0_20px_52px_rgba(0,0,0,0.28)] overflow-hidden flex flex-col">
+                        <div className="p-3 md:p-5 border-b border-[#f0dfd2]">
+                            <div className="flex items-center gap-2 md:gap-4">
                                 <div className="relative flex-1">
                                     <input
                                         autoFocus
@@ -282,17 +291,17 @@ export function NavbarDesktopSearch({
                                         placeholder="Search challenges, users, clans..."
                                         value={query}
                                         onChange={(event) => handleQueryChange(event.target.value)}
-                                        className="w-full rounded-[14px] border border-[#e8ddd3] bg-white px-10 py-2.5 text-[18px] leading-none text-[#1e293b] placeholder:text-[#94a3b8] focus:outline-none focus:ring-2 focus:ring-[#f59e0b]/20"
+                                        className="w-full rounded-[12px] md:rounded-[14px] border border-[#e8ddd3] bg-white px-9 md:px-10 py-2.5 text-base md:text-[18px] leading-none text-[#1e293b] placeholder:text-[#94a3b8] focus:outline-none focus:ring-2 focus:ring-[#f59e0b]/20"
                                     />
                                     <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-[#94a3b8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                     </svg>
                                 </div>
-                                <span className="rounded-lg border border-[#e8ddd3] bg-white px-2.5 py-1 text-[11px] font-semibold text-[#64748b]">ESC</span>
-                                <button type="button" onClick={closeModal} className="text-[#64748b] hover:text-[#334155] text-3xl leading-none px-2">×</button>
+                                <span className="hidden md:inline-block rounded-lg border border-[#e8ddd3] bg-white px-2.5 py-1 text-[11px] font-semibold text-[#64748b]">ESC</span>
+                                <button type="button" onClick={closeModal} className="text-[#64748b] hover:text-[#334155] text-2xl md:text-3xl leading-none px-2">×</button>
                             </div>
 
-                            <div className="mt-5 flex items-center gap-2.5">
+                            <div className="mt-4 md:mt-5 flex items-center gap-2 overflow-x-auto pb-1">
                                 {tabs.map((tab) => {
                                     const selected = activeTab === tab.key || (activeTab === "all" && tab.key === "challenges");
                                     return (
@@ -300,7 +309,7 @@ export function NavbarDesktopSearch({
                                             key={tab.key}
                                             type="button"
                                             onClick={() => setActiveTab(tab.key)}
-                                            className={`rounded-2xl border px-4 py-1.5 text-sm transition ${selected ? "border-[#f6c9a7] bg-white text-[#f97316]" : "border-[#e8ddd3] bg-white/70 text-[#475569] hover:bg-white"}`}
+                                            className={`whitespace-nowrap rounded-2xl border px-3 md:px-4 py-1.5 text-xs md:text-sm transition ${selected ? "border-[#f6c9a7] bg-white text-[#f97316]" : "border-[#e8ddd3] bg-white/70 text-[#475569] hover:bg-white"}`}
                                         >
                                             {tab.label}
                                         </button>
@@ -309,11 +318,11 @@ export function NavbarDesktopSearch({
                             </div>
                         </div>
 
-                        <div className="max-h-[54vh] overflow-y-auto bg-[#fffaf7]">
+                        <div className="flex-1 overflow-y-auto bg-[#fffaf7]">
                             {isLoading && (
                                 <>
                                     {showChallenges && (
-                                        <section className="px-6 py-4 border-b border-[#f0dfd2] animate-pulse">
+                                        <section className="px-4 md:px-6 py-4 border-b border-[#f0dfd2] animate-pulse">
                                             <div className="mb-4 h-7 w-36 rounded bg-[#efe4db]" />
                                             <div className="rounded-2xl border border-[#eadfd6] bg-white overflow-hidden">
                                                 {challengeSkeletons.map((_, index) => (
@@ -338,7 +347,7 @@ export function NavbarDesktopSearch({
                                     )}
 
                                     {showUsers && (
-                                        <section className="px-6 py-4 border-b border-[#f0dfd2] animate-pulse">
+                                        <section className="px-4 md:px-6 py-4 border-b border-[#f0dfd2] animate-pulse">
                                             <div className="mb-4 h-7 w-20 rounded bg-[#efe4db]" />
                                             <div className="grid grid-cols-1 lg:grid-cols-5 gap-2.5">
                                                 {cardSkeletons.map((_, index) => (
@@ -357,7 +366,7 @@ export function NavbarDesktopSearch({
                                     )}
 
                                     {showClans && (
-                                        <section className="px-6 py-4 animate-pulse">
+                                        <section className="px-4 md:px-6 py-4 animate-pulse">
                                             <div className="mb-4 h-7 w-20 rounded bg-[#efe4db]" />
                                             <div className="grid grid-cols-1 lg:grid-cols-5 gap-2.5">
                                                 {cardSkeletons.map((_, index) => (
@@ -378,7 +387,7 @@ export function NavbarDesktopSearch({
                                 </>
                             )}
                             {error && (
-                                <div className="px-8 pt-6">
+                                <div className="px-4 md:px-8 pt-6">
                                     <p className="text-sm text-red-600">{error}</p>
                                     <button
                                         type="button"
@@ -390,7 +399,7 @@ export function NavbarDesktopSearch({
                                 </div>
                             )}
                             {emptyState && (
-                                <div className="px-6 py-12">
+                                <div className="px-4 md:px-6 py-10 md:py-12">
                                     <div className="mx-auto max-w-md rounded-2xl border border-[#f0dfd2] bg-white/80 px-6 py-10 text-center">
                                         <p className="text-base font-semibold text-[#334155]">No results found</p>
                                         <p className="mt-2 text-sm text-[#64748b]">
@@ -401,10 +410,10 @@ export function NavbarDesktopSearch({
                             )}
 
                             {showChallenges && challengeResults.length > 0 && (
-                                <section className="px-6 py-4 border-b border-[#f0dfd2]">
+                                <section className="px-4 md:px-6 py-4 border-b border-[#f0dfd2]">
                                     <div className="mb-4 flex items-center justify-between">
-                                        <h3 className="text-xl font-semibold text-[#1e293b]">Challenges</h3>
-                                        <Link href="/challenges" onClick={closeModal} className="text-[#f97316] text-sm font-medium">View all challenges →</Link>
+                                        <h3 className="text-lg md:text-xl font-semibold text-[#1e293b]">Challenges</h3>
+                                        <Link href="/challenges" onClick={closeModal} className="text-[#f97316] text-xs md:text-sm font-medium">View all challenges →</Link>
                                     </div>
 
                                     <div className="rounded-2xl border border-[#eadfd6] bg-white overflow-hidden">
@@ -418,24 +427,24 @@ export function NavbarDesktopSearch({
                                                     closeModal();
                                                     router.push(`/challenges?challengeId=${encodeURIComponent(challenge.id)}`);
                                                 }}
-                                                className="cursor-pointer w-full flex items-center gap-3 px-3.5 py-3 text-left border-b border-[#f3e8df] last:border-b-0 hover:bg-[#fffbf8]"
+                                                className="cursor-pointer w-full flex flex-col md:flex-row md:items-center gap-3 px-3.5 py-3 text-left border-b border-[#f3e8df] last:border-b-0 hover:bg-[#fffbf8]"
                                             >
                                                 <div className="h-12 w-20 rounded-lg bg-[#f3f4f6] overflow-hidden flex-shrink-0">
                                                     {challenge.market?.image ? (
                                                         <img src={challenge.market.image} alt={challenge.title} className="h-full w-full object-cover" />
                                                     ) : null}
                                                 </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="truncate text-base font-semibold text-[#111827]">{challenge.title} In Next <span className="ml-1 text-[#166534]">{formatEndsAt(challenge.resolve_time || challenge.expire_time)}</span></p>
+                                                <div className="w-full md:flex-1 min-w-0">
+                                                    <p className="truncate text-sm md:text-base font-semibold text-[#111827]">{challenge.title} In Next <span className="ml-1 text-[#166534]">{formatEndsAt(challenge.resolve_time || challenge.expire_time)}</span></p>
                                                     <p className="text-xs text-[#64748b]">
                                                         {(challenge.market?.name ?? "General")} • {challenge.mode}
                                                     </p>
                                                 </div>
-                                                <div className="text-right pr-4 border-l border-[#f0dfd2] pl-5">
-                                                    <p className="text-xl font-semibold text-[#111827]">{formatPool((challenge.total_pool ?? 0) > 0 ? challenge.total_pool : challenge.initial_bet)}</p>
-                                                    <p className="text-sm text-[#64748b]">Total Pool</p>
+                                                <div className="w-full md:w-auto text-left md:text-right md:pr-4 md:border-l md:border-[#f0dfd2] md:pl-5">
+                                                    <p className="text-base md:text-xl font-semibold text-[#111827]">{formatPool((challenge.total_pool ?? 0) > 0 ? challenge.total_pool : challenge.initial_bet)}</p>
+                                                    <p className="text-xs md:text-sm text-[#64748b]">Total Pool</p>
                                                 </div>
-                                                <span className={`rounded-full px-3 py-1 text-xs font-medium ${statusMeta.className}`}>
+                                                <span className={`self-start md:self-auto rounded-full px-3 py-1 text-xs font-medium ${statusMeta.className}`}>
                                                     {statusMeta.label}
                                                 </span>
                                             </button>
@@ -446,10 +455,10 @@ export function NavbarDesktopSearch({
                             )}
 
                             {showUsers && userResults.length > 0 && (
-                                <section className="px-6 py-4 border-b border-[#f0dfd2]">
+                                <section className="px-4 md:px-6 py-4 border-b border-[#f0dfd2]">
                                     <div className="mb-4 flex items-center justify-between">
-                                        <h3 className="text-xl font-semibold text-[#1e293b]">Users</h3>
-                                        <Link href="/leaderboard" onClick={closeModal} className="text-[#f97316] text-sm font-medium">View all users →</Link>
+                                        <h3 className="text-lg md:text-xl font-semibold text-[#1e293b]">Users</h3>
+                                        <Link href="/leaderboard" onClick={closeModal} className="text-[#f97316] text-xs md:text-sm font-medium">View all users →</Link>
                                     </div>
                                     <div className="grid grid-cols-1 lg:grid-cols-5 gap-2.5">
                                         {userResults.map((user) => (
@@ -477,10 +486,10 @@ export function NavbarDesktopSearch({
                             )}
 
                             {showClans && clanResults.length > 0 && (
-                                <section className="px-6 py-4">
+                                <section className="px-4 md:px-6 py-4">
                                     <div className="mb-4 flex items-center justify-between">
-                                        <h3 className="text-xl font-semibold text-[#1e293b]">Clans</h3>
-                                        <Link href="/clans" onClick={closeModal} className="text-[#f97316] text-sm font-medium">View all clans →</Link>
+                                        <h3 className="text-lg md:text-xl font-semibold text-[#1e293b]">Clans</h3>
+                                        <Link href="/clans" onClick={closeModal} className="text-[#f97316] text-xs md:text-sm font-medium">View all clans →</Link>
                                     </div>
                                     <div className="grid grid-cols-1 lg:grid-cols-5 gap-2.5">
                                         {clanResults.map((clan) => (
@@ -509,6 +518,6 @@ export function NavbarDesktopSearch({
                     </div>
                 </div>
             )}
-        </div>
+        </>
     );
 }

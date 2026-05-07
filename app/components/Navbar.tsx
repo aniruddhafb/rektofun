@@ -16,6 +16,7 @@ export default function Navbar() {
     const { publicKey, usdcBalance } = useSolanaWallet();
     const walletAddress = publicKey?.toBase58() ?? null;
     const [searchQuery, setSearchQuery] = useState("");
+    const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -357,6 +358,9 @@ export default function Navbar() {
                         <components.NavbarDesktopSearch
                             searchQuery={searchQuery}
                             onSearchQueryChange={setSearchQuery}
+                            isModalOpen={isSearchModalOpen}
+                            onOpenModal={() => setIsSearchModalOpen(true)}
+                            onCloseModal={() => setIsSearchModalOpen(false)}
                         />
 
                         {/* Auth Section / Profile Dropdown */}
@@ -544,6 +548,7 @@ export default function Navbar() {
             <components.NavbarMobileBottomNav
                 isActive={isActive}
                 profileHref={profileHref}
+                onSearchClick={() => setIsSearchModalOpen(true)}
             />
         </>
     );
