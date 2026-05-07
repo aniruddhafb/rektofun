@@ -219,12 +219,6 @@ export function ChallengeCard({
     };
 
     React.useEffect(() => {
-        setModalMinAcceptBet(challenge.min_accept_bet);
-        setModalMaxAcceptBet(challenge.max_accept_bet);
-        setEscrowAddress(undefined);
-    }, [challenge.id, challenge.min_accept_bet, challenge.max_accept_bet]);
-
-    React.useEffect(() => {
         const interval = window.setInterval(() => {
             setCurrentTime(Date.now());
         }, 60000);
@@ -287,6 +281,9 @@ export function ChallengeCard({
         setBetInput(String(challenge.initial_bet ?? ""));
         setBetError("");
         setJoinSide(challenge.mode === "pool" ? "challenger" : "opponent");
+        setModalMinAcceptBet(challenge.min_accept_bet);
+        setModalMaxAcceptBet(challenge.max_accept_bet);
+        setEscrowAddress(undefined);
         setIsBetFormOpen(true);
     };
 
@@ -519,9 +516,11 @@ export function ChallengeCard({
     // ChallengeListItem doesn't have metadata or resolution_details in the same way as Challenge
     // We use the flattened properties provided by ChallengeListItem
     const uiMeta: UIMetadata = {};
+    const market = challenge.market ?? null;
     const assetMeta: AssetMetadata = {
-        name: challenge.market.name,
-        icon: challenge.market.icon,
+        symbol: market?.symbol,
+        name: market?.name,
+        icon: market?.icon,
     };
     const betMeta: BetMetadata = {
         amount: challenge.initial_bet,
@@ -565,7 +564,7 @@ export function ChallengeCard({
     const hasLost = challenge.status === "resolved" && challenge.result && (challenge.result as Record<string, unknown>).winner !== "current_user_id"; // Placeholder
 
     // Get asset info
-    const assetSymbol = assetMeta.symbol || challenge.market.name || "BTC";
+    const assetSymbol = assetMeta.symbol || assetMeta.name || "BTC";
     const assetIcon = assetMeta.icon || "/scribbles/btc.png";
     const assetName = assetMeta.name || assetSymbol;
     const creatorName = labelsMeta.creator || creator.username || "Creator";
@@ -626,18 +625,20 @@ export function ChallengeCard({
     let ctaLabel = "";
     let ctaDisabled = false;
     let ctaClassName = "";
+    const ctaBaseClassName =
+        "w-full h-11 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2";
     const activeCtaClassName =
-        "cursor-pointer w-full py-2.5 px-4 rounded-xl bg-[#246044] hover:bg-[#2b7351] text-white font-bold text-sm shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed";
+        `${ctaBaseClassName} cursor-pointer bg-[#246044] hover:bg-[#2b7351] text-white shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all disabled:opacity-70 disabled:cursor-not-allowed`;
     const activePvpCtaClassName =
-        "cursor-pointer w-full py-2.5 px-4 rounded-xl bg-[#0c9d63] hover:bg-[#0a7d4f] border border-gray-500 text-white font-bold text-base shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed";
+        `${ctaBaseClassName} cursor-pointer bg-[#0c9d63] hover:bg-[#0a7d4f] border border-gray-500 text-white shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all disabled:opacity-70 disabled:cursor-not-allowed`;
     const ongoingCtaClassName =
-        "cursor-not-allowed w-full py-2.5 px-4 rounded-xl bg-[#0c9d63] border border-gray-500 text-white font-bold text-sm shadow-lg";
+        `${ctaBaseClassName} cursor-not-allowed bg-[#09905a] border border-gray-500 text-white shadow-lg`;
     const expiredCtaClassName =
-        "w-full py-2.5 px-4 rounded-xl bg-red-100 border border-red-300 text-red-700 font-bold text-sm shadow-sm cursor-not-allowed";
+        `${ctaBaseClassName} bg-red-100 border border-red-300 text-red-700 shadow-sm cursor-not-allowed`;
     const resolvingCtaClassName =
-        "w-full py-2.5 px-4 rounded-xl bg-amber-100 border border-amber-300 text-amber-700 font-bold text-sm shadow-sm cursor-not-allowed";
+        `${ctaBaseClassName} bg-amber-100 border border-amber-300 text-amber-700 shadow-sm cursor-not-allowed`;
     const completedCtaClassName =
-        "w-full py-2.5 px-4 rounded-xl bg-gray-200 border border-gray-300 text-gray-700 font-bold text-sm shadow-sm cursor-not-allowed";
+        `${ctaBaseClassName} bg-gray-200 border border-gray-300 text-gray-700 shadow-sm cursor-not-allowed`;
 
     if (isPvpMode) {
         if (isResolveTimeAchieved && isResolutionResolved) {
@@ -657,7 +658,7 @@ export function ChallengeCard({
             ctaDisabled = true;
             ctaClassName = expiredCtaClassName;
         } else {
-            ctaLabel = "ACCEPT CHALLENGE";
+            ctaLabel = "ACCEPT CHALLENGE ⚔️";
             ctaDisabled = isLoading || isCreator;
             ctaClassName = activePvpCtaClassName;
         }
@@ -977,7 +978,6 @@ export function ChallengeCard({
                             className={ctaClassName}
                         >
                             {isLoading && isPoolMode ? "JOINING..." : ctaLabel}
-                            {!ctaDisabled && !isLoading && <span className="text-lg">⚔️</span>}
                         </button>
                         {showCreatorCtaHoverHint && (
                             <div className="pointer-events-none absolute left-1/2 bottom-full z-10 mb-1 -translate-x-1/2 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700 opacity-0 transition-opacity duration-200 group-hover:opacity-100">

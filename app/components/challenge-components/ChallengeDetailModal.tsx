@@ -5,6 +5,7 @@ import Image from "next/image";
 import { X, Clock, User, Calendar, AlertCircle } from "lucide-react";
 import { ChallengeListItem } from "@/app/lib/challenges-service/challenges";
 import { useRouter } from "next/navigation";
+import { useUserStore } from "@/app/store/useUserStore";
 
 
 interface ChallengeDetailModalProps {
@@ -16,8 +17,10 @@ interface ChallengeDetailModalProps {
 export default function ChallengeDetailModal({ challenge, isOpen, onClose }: ChallengeDetailModalProps) {
     const modalRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
+    const { user } = useUserStore();
     const [currentTime, setCurrentTime] = React.useState(() => Date.now());
     const [shareFeedback, setShareFeedback] = React.useState<string | null>(null);
+    const [liveSolPrice, setLiveSolPrice] = React.useState<number | null>(null);
 
     const formatEndsByCountdown = (timestamp: number | null, nowMs: number): string => {
         if (!timestamp) return "unknown";
@@ -150,6 +153,50 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
         return () => window.clearInterval(interval);
     }, []);
 
+    useEffect(() => {
+        if (!isOpen) return;
+
+        let isMounted = true;
+
+        const fetchSolPrice = async () => {
+            try {
+                const response = await fetch(
+                    "https://api.diadata.org/v1/assetQuotation/Solana/0x0000000000000000000000000000000000000000",
+                    { cache: "no-store" },
+                );
+                if (!response.ok) return;
+
+                const data = await response.json();
+                const rawPrice =
+                    data?.price ??
+                    data?.Price ??
+                    data?.quotation ??
+                    data?.value ??
+                    null;
+                const parsedPrice =
+                    typeof rawPrice === "number"
+                        ? rawPrice
+                        : typeof rawPrice === "string"
+                            ? Number(rawPrice)
+                            : NaN;
+
+                if (isMounted && Number.isFinite(parsedPrice) && parsedPrice > 0) {
+                    setLiveSolPrice(parsedPrice);
+                }
+            } catch {
+                // Keep previous value on transient network/API errors.
+            }
+        };
+
+        void fetchSolPrice();
+        const interval = window.setInterval(fetchSolPrice, 180000);
+
+        return () => {
+            isMounted = false;
+            window.clearInterval(interval);
+        };
+    }, [isOpen]);
+
     if (!isOpen || !challenge) return null;
 
     const hasWinnerData =
@@ -194,8 +241,8 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
         ? `${creatorWalletAddress.slice(0, 6)}...${creatorWalletAddress.slice(-4)}`
         : "Unknown wallet";
     const startPrice = betAmount;
-    const targetPrice = challenge.total_pool ?? betAmount;
-    const currentPrice = challenge.total_pool ?? 0;
+    const targetPrice = challenge.target_price ?? challenge.total_pool ?? betAmount;
+    const currentPrice = liveSolPrice ?? challenge.total_pool ?? 0;
     const priceChange = startPrice > 0 ? ((currentPrice - startPrice) / startPrice) * 100 : 0;
 
     // Calculate price bar position (0-100%)
@@ -206,6 +253,92 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
         return Math.max(0, Math.min(100, position));
     };
     const priceBarPosition = getPriceBarPosition();
+    const isCreator = user?.wallet_address === creatorWalletAddress;
+    const hasOpponents = Number(challenge.total_opponents ?? 0) > 0 || hasOpponentInfo;
+    const isExpireTimeAchieved = Boolean(expiryTimestamp && expiryTimestamp <= currentTime);
+    const isResolveTimeAchieved = Boolean(resolveTimestamp && resolveTimestamp <= currentTime);
+    const challengeWithResolution = challenge as ChallengeListItem & {
+        resolving_status?: string;
+        resolution_status?: string;
+    };
+    const resolutionStatusRaw = String(
+        challengeWithResolution.resolving_status ??
+        challengeWithResolution.resolution_status ??
+        ""
+    ).toLowerCase();
+    const isResolutionPending = resolutionStatusRaw === "pending";
+    const isResolutionResolved = resolutionStatusRaw === "resolved";
+
+    let ctaLabel = "";
+    let ctaDisabled = false;
+    let ctaClassName = "";
+    const ctaBaseClassName =
+        "w-full py-3.5 px-6 rounded-xl font-bold text-base flex items-center justify-center gap-2";
+    const activeCtaClassName =
+        `${ctaBaseClassName} cursor-pointer bg-[#246044] hover:bg-[#2b7351] text-white shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all disabled:opacity-70 disabled:cursor-not-allowed`;
+    const activePvpCtaClassName =
+        `${ctaBaseClassName} cursor-pointer bg-[#0c9d63] hover:bg-[#0a7d4f] border border-gray-500 text-white shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all disabled:opacity-70 disabled:cursor-not-allowed`;
+    const ongoingCtaClassName =
+        `${ctaBaseClassName} cursor-not-allowed bg-[#09905a] border border-gray-500 text-white shadow-lg`;
+    const expiredCtaClassName =
+        `${ctaBaseClassName} bg-red-100 border border-red-300 text-red-700 shadow-sm cursor-not-allowed`;
+    const resolvingCtaClassName =
+        `${ctaBaseClassName} bg-amber-100 border border-amber-300 text-amber-700 shadow-sm cursor-not-allowed`;
+    const completedCtaClassName =
+        `${ctaBaseClassName} bg-gray-200 border border-gray-300 text-gray-700 shadow-sm cursor-not-allowed`;
+
+    if (!isPoolMode) {
+        if (isResolveTimeAchieved && isResolutionResolved) {
+            ctaLabel = "COMPLETED ✅";
+            ctaDisabled = true;
+            ctaClassName = completedCtaClassName;
+        } else if (isResolveTimeAchieved && isResolutionPending) {
+            ctaLabel = "RESOLVING...";
+            ctaDisabled = true;
+            ctaClassName = resolvingCtaClassName;
+        } else if (!isResolveTimeAchieved && hasOpponents) {
+            ctaLabel = "ONGOING ⚔️";
+            ctaDisabled = true;
+            ctaClassName = ongoingCtaClassName;
+        } else if (isExpireTimeAchieved && !hasOpponents) {
+            ctaLabel = "EXPIRED!";
+            ctaDisabled = true;
+            ctaClassName = expiredCtaClassName;
+        } else {
+            ctaLabel = "ACCEPT CHALLENGE ⚔️";
+            ctaDisabled = isCreator;
+            ctaClassName = activePvpCtaClassName;
+        }
+    } else {
+        if (isResolveTimeAchieved && isResolutionResolved) {
+            ctaLabel = "COMPLETED";
+            ctaDisabled = true;
+            ctaClassName = completedCtaClassName;
+        } else if (isResolveTimeAchieved && isResolutionPending) {
+            ctaLabel = "RESOLVING...";
+            ctaDisabled = true;
+            ctaClassName = resolvingCtaClassName;
+        } else if (isExpireTimeAchieved && !hasOpponents) {
+            ctaLabel = "EXPIRED";
+            ctaDisabled = true;
+            ctaClassName = expiredCtaClassName;
+        } else if (!isExpireTimeAchieved) {
+            ctaLabel = "JOIN CHALLENGE";
+            ctaDisabled = false;
+            ctaClassName = activeCtaClassName;
+        } else {
+            ctaLabel = "ONGOING";
+            ctaDisabled = true;
+            ctaClassName = ongoingCtaClassName;
+        }
+    }
+    const showCreatorCtaHoverHint = isCreator && ctaLabel === "ACCEPT CHALLENGE ⚔️";
+
+    const handleCtaClick = () => {
+        if (ctaDisabled) return;
+        onClose();
+        router.push(`/challenges?challengeId=${encodeURIComponent(challenge.id)}`);
+    };
 
     const handleShareChallenge = async () => {
         if (!challenge) return;
@@ -378,7 +511,21 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
 
                         {/* Prize Pool - Top */}
                         <div className="text-center mb-6">
-                            <p className="text-white/80 text-sm font-medium mb-1">Prize Pool</p>
+                            <div className="flex items-center justify-center gap-1.5 mb-1">
+                                <p className="text-white/80 text-sm font-medium">Total Pool</p>
+                                <div className="group relative">
+                                    <svg className="w-4 h-4 text-white/70 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <div
+                                        className="absolute left-1/2 top-full z-50 mt-2 w-72 -translate-x-1/2 rounded-lg bg-gray-900 p-2 text-xs text-white opacity-0 invisible transition-all duration-200 group-hover:opacity-100 group-hover:visible shadow-xl"
+                                        style={{ pointerEvents: "none" }}
+                                    >
+                                        the total pool is the total money locked in the escrow smart contract which winner gets after winning
+                                        <span className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-full border-4 border-transparent border-b-gray-900"></span>
+                                    </div>
+                                </div>
+                            </div>
                             <p className="text-4xl font-black">
                                 ${betAmount}
                             </p>
@@ -661,10 +808,21 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
 
                     {/* Action Buttons */}
                     <div className="mt-8 flex flex-col sm:flex-row gap-3">
-                        <button className="flex-1 py-3.5 px-6 bg-[#246044] hover:bg-[#2d6f4a] rounded-xl text-white font-bold text-base shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer">
-                            Accept Challenge
-                            <span className="text-xl">⚔️</span>
-                        </button>
+                        <div className="group relative flex-1">
+                            <button
+                                type="button"
+                                disabled={ctaDisabled}
+                                onClick={handleCtaClick}
+                                className={ctaClassName}
+                            >
+                                {ctaLabel}
+                            </button>
+                            {showCreatorCtaHoverHint && (
+                                <div className="pointer-events-none absolute left-1/2 bottom-full z-10 mb-1 -translate-x-1/2 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                                    You created this challenge
+                                </div>
+                            )}
+                        </div>
                         <button
                             type="button"
                             onClick={handleShareChallenge}
