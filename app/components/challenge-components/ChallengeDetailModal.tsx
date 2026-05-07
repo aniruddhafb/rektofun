@@ -634,7 +634,7 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
                     <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 mb-6 sm:mb-8">
                         {/* Asset Image */}
                         <div className="relative flex-shrink-0 mx-auto sm:mx-0">
-                            <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-gradient-to-br from-[#2d1f1a] to-[#4a3830] p-1 shadow-xl">
+                            <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl border border-gray-300 p-1 shadow-xl">
                                 <div className="w-full h-full rounded-xl bg-[#f8ede7] flex items-center justify-center overflow-hidden">
                                     <Image
                                         src={assetLogo}
@@ -843,11 +843,11 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
                                         : "bg-white/80 border-2 border-[#d4a574]/30"
                                     }`}>
                                     {/* Winner Crown */}
-                                        {isFinalOutcome && hasWon && (
-                                            <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-3xl animate-bounce">
-                                                👑
-                                            </div>
-                                        )}
+                                    {isFinalOutcome && hasWon && (
+                                        <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-3xl animate-bounce">
+                                            👑
+                                        </div>
+                                    )}
 
                                     {/* Avatar */}
                                     <div className="relative flex flex-col items-center">
@@ -868,13 +868,13 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
                                     </div>
 
                                     {/* Info */}
-                                        <div className="text-center">
-                                            <p className="font-bold text-[#2d1f1a] text-xs">{creatorName}</p>
-                                            <p className="text-[10px] text-[#8b7355] mt-0.5">
-                                                {hasOpponents ? creatorOutcomeText : "Created challenge"}
-                                            </p>
-                                        </div>
+                                    <div className="text-center">
+                                        <p className="font-bold text-[#2d1f1a] text-xs">{creatorName}</p>
+                                        <p className="text-[10px] text-[#8b7355] mt-0.5">
+                                            {hasOpponents ? creatorOutcomeText : "Created challenge"}
+                                        </p>
                                     </div>
+                                </div>
                                 {!isExpireTimeAchieved && !isCreator && isPoolMode && (
                                     <button
                                         type="button"

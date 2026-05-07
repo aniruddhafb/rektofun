@@ -420,34 +420,34 @@ export function NavbarDesktopSearch({
                                         {challengeResults.map((challenge) => {
                                             const statusMeta = getChallengeStatusMeta(challenge.status);
                                             return (
-                                            <button
-                                                key={challenge.id}
-                                                type="button"
-                                                onClick={() => {
-                                                    closeModal();
-                                                    router.push(`/challenges?challengeId=${encodeURIComponent(challenge.id)}`);
-                                                }}
-                                                className="cursor-pointer w-full flex flex-col md:flex-row md:items-center gap-3 px-3.5 py-3 text-left border-b border-[#f3e8df] last:border-b-0 hover:bg-[#fffbf8]"
-                                            >
-                                                <div className="h-12 w-20 rounded-lg bg-[#f3f4f6] overflow-hidden flex-shrink-0">
-                                                    {challenge.market?.image ? (
-                                                        <img src={challenge.market.image} alt={challenge.title} className="h-full w-full object-cover" />
-                                                    ) : null}
-                                                </div>
-                                                <div className="w-full md:flex-1 min-w-0">
-                                                    <p className="truncate text-sm md:text-base font-semibold text-[#111827]">{challenge.title} In Next <span className="ml-1 text-[#166534]">{formatEndsAt(challenge.resolve_time || challenge.expire_time)}</span></p>
-                                                    <p className="text-xs text-[#64748b]">
-                                                        {(challenge.market?.name ?? "General")} • {challenge.mode}
-                                                    </p>
-                                                </div>
-                                                <div className="w-full md:w-auto text-left md:text-right md:pr-4 md:border-l md:border-[#f0dfd2] md:pl-5">
-                                                    <p className="text-base md:text-xl font-semibold text-[#111827]">{formatPool((challenge.total_pool ?? 0) > 0 ? challenge.total_pool : challenge.initial_bet)}</p>
-                                                    <p className="text-xs md:text-sm text-[#64748b]">Total Pool</p>
-                                                </div>
-                                                <span className={`self-start md:self-auto rounded-full px-3 py-1 text-xs font-medium ${statusMeta.className}`}>
-                                                    {statusMeta.label}
-                                                </span>
-                                            </button>
+                                                <button
+                                                    key={challenge.id}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        closeModal();
+                                                        router.push(`/challenges?challengeId=${encodeURIComponent(challenge.id)}`);
+                                                    }}
+                                                    className="cursor-pointer w-full flex flex-col md:flex-row md:items-center gap-3 px-3.5 py-3 text-left border-b border-[#f3e8df] last:border-b-0 hover:bg-[#fffbf8]"
+                                                >
+                                                    <div className="h-12 w-20 rounded-lg bg-[#f3f4f6] overflow-hidden flex-shrink-0">
+                                                        {challenge.market?.image ? (
+                                                            <img src={challenge.market.image} alt={challenge.title} className="h-full w-full object-cover" />
+                                                        ) : null}
+                                                    </div>
+                                                    <div className="w-full md:flex-1 min-w-0">
+                                                        <p className="truncate text-sm md:text-base font-semibold text-[#111827]">{challenge.title} In Next <span className="ml-1 text-[#166534]">{formatEndsAt(challenge.resolve_time || challenge.expire_time)}</span></p>
+                                                        <p className="text-xs text-[#64748b]">
+                                                            {(challenge.market?.name ?? "General")} • {challenge.mode}
+                                                        </p>
+                                                    </div>
+                                                    <div className="w-full md:w-auto text-left md:text-right md:pr-4 md:border-l md:border-[#f0dfd2] md:pl-5">
+                                                        <p className="text-base md:text-xl font-semibold text-[#111827]">{formatPool((challenge.total_pool ?? 0) > 0 ? challenge.total_pool : challenge.initial_bet)}</p>
+                                                        <p className="text-xs md:text-sm text-[#64748b]">Total Pool</p>
+                                                    </div>
+                                                    <span className={`self-start md:self-auto rounded-full px-3 py-1 text-xs font-medium ${statusMeta.className}`}>
+                                                        {statusMeta.label}
+                                                    </span>
+                                                </button>
                                             );
                                         })}
                                     </div>
@@ -470,7 +470,7 @@ export function NavbarDesktopSearch({
                                             >
                                                 <div className="flex items-center gap-3">
                                                     <img
-                                                        src={user.profile_image || "https://earningrecords.com/assets/profiles/1.svg"}
+                                                        src={user.profile_image || "https://earningrecords.com/assets/rektofun/profiles/1.svg"}
                                                         alt={user.username || "User"}
                                                         className="h-10 w-10 rounded-full object-cover"
                                                     />

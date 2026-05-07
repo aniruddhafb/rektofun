@@ -122,7 +122,7 @@ export default function SettingsPage() {
             await updateUser(existingUser.id, {
                 username: username,
                 description: description,
-                profile_image: `https://earningrecords.com/assets/profiles/${profileIndex}.svg`,
+                profile_image: `https://earningrecords.com/assets/rektofun/profiles/${profileIndex}.svg`,
             });
             console.log('[Settings] Profile saved successfully');
             setIsEditingProfile(false);

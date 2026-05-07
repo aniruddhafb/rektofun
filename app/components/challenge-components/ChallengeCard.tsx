@@ -22,6 +22,8 @@ interface ChallengeCardProps {
     challenge: ChallengeListItem;
     onClick?: (challenge: ChallengeListItem) => void;
     onRekt?: (challenge: ChallengeListItem) => void;
+    onToggleBookmark?: (challengeId: string) => void;
+    isBookmarked?: boolean;
     ownerAddress?: string;
 }
 
@@ -197,7 +199,9 @@ function formatExactCountdownDetails(timestamp: number | null, nowMs: number): {
 export function ChallengeCard({
     challenge,
     onClick,
-    onRekt
+    onRekt,
+    onToggleBookmark,
+    isBookmarked = false,
 }: ChallengeCardProps) {
     const router = useRouter();
     const { user } = useUserStore();
@@ -513,6 +517,12 @@ export function ChallengeCard({
         }
     };
 
+    const handleBookmarkClick = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onToggleBookmark?.(challenge.id);
+    };
+
     // ChallengeListItem doesn't have metadata or resolution_details in the same way as Challenge
     // We use the flattened properties provided by ChallengeListItem
     const uiMeta: UIMetadata = {};
@@ -728,15 +738,13 @@ export function ChallengeCard({
                 {/* Header */}
                 <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center overflow-hidden">
-                            <Image
-                                src={assetIcon}
-                                alt={assetName}
-                                width={32}
-                                height={32}
-                                className="w-8 h-8 object-contain"
-                            />
-                        </div>
+                        <Image
+                            src={assetIcon}
+                            alt={assetName}
+                            width={32}
+                            height={32}
+                            className="w-8 h-8 object-contain"
+                        />
                         <div>
                             <h3 className="text-gray-900 leading-tight">
                                 {isResolveTimeAchieved ? (
@@ -780,9 +788,16 @@ export function ChallengeCard({
                         </div>
                     </div>
                     {/* Watchlist Button */}
-                    <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                    <button
+                        type="button"
+                        onClick={handleBookmarkClick}
+                        aria-label={isBookmarked ? "Remove bookmark" : "Add bookmark"}
+                        title={isBookmarked ? "Remove bookmark" : "Add bookmark"}
+                        className="cursor-pointer p-2 bg-white/50 hover:bg-white/20 border border-gray-400 hover:text-gray-500 rounded-lg transition-colors"
+                    >
+                        <svg className="w-5 h-5 text-black rotate-45" stroke="currentColor" viewBox="0 0 24 24" fill={isBookmarked ? "currentColor" : "none"}>
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 17v4" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 3h8l-1 6 3 3H6l3-3-1-6z" />
                         </svg>
                     </button>
                 </div>
@@ -1012,7 +1027,7 @@ export function ChallengeCard({
                                             <p className="font-semibold text-[#8b7355] text-xs">No one yet!</p>
                                             <p className="text-[10px] text-[#8b7355] mt-0.5">Be the first to join!</p>
                                         </div>)}
-                                {!isExpireTimeAchieved && !isCreator && isPoolMode && (
+                                    {!isExpireTimeAchieved && !isCreator && isPoolMode && (
                                         <button
                                             type="button"
                                             onClick={(e) => openBetForm(e)}

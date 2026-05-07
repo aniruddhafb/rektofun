@@ -204,7 +204,7 @@ export default function Navbar() {
             const updatedData = {
                 username: editUsername,
                 description: editBio,
-                profile_image: `https://earningrecords.com/assets/profiles/${profileIndex}.svg`,
+                profile_image: `https://earningrecords.com/assets/rektofun/profiles/${profileIndex}.svg`,
             };
             await updateUser(existingUser.id, updatedData);
             updateStoreUser(updatedData);
@@ -445,7 +445,7 @@ export default function Navbar() {
                                     <div className="flex items-center gap-4">
                                         <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-white shadow-lg">
                                             <img
-                                                src={`https://earningrecords.com/assets/profiles/${editProfileIndex + 1}.svg`}
+                                                src={`https://earningrecords.com/assets/rektofun/profiles/${editProfileIndex + 1}.svg`}
                                                 alt="Profile"
                                                 className="w-full h-full object-cover"
                                             />
@@ -475,11 +475,10 @@ export default function Navbar() {
                                         maxLength={18}
                                         type="text"
                                         value={editUsername}
-                                        onChange={(e) =>
-                                            {
-                                                setEditUsername(e.target.value);
-                                                if (profileFormError) setProfileFormError(null);
-                                            }
+                                        onChange={(e) => {
+                                            setEditUsername(e.target.value);
+                                            if (profileFormError) setProfileFormError(null);
+                                        }
                                         }
                                         className="w-full px-4 py-2 bg-white/80 border border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent required"
                                         placeholder="Enter username"
@@ -494,11 +493,10 @@ export default function Navbar() {
                                         maxLength={100}
                                         required
                                         value={editBio}
-                                        onChange={(e) =>
-                                            {
-                                                setEditBio(e.target.value);
-                                                if (profileFormError) setProfileFormError(null);
-                                            }
+                                        onChange={(e) => {
+                                            setEditBio(e.target.value);
+                                            if (profileFormError) setProfileFormError(null);
+                                        }
                                         }
                                         className="w-full px-4 py-2 bg-white/80 border border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent required"
                                         placeholder="Write a short bio"

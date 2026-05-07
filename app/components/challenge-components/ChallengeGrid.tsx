@@ -9,6 +9,8 @@ import { ChallengeListItem } from '../../lib/challenges-service/challenges';
 interface ChallengeGridProps {
     onRekt: (challenge: ChallengeListItem) => void;
     onClick: (challenge: ChallengeListItem) => void;
+    onToggleBookmark: (challengeId: string) => void;
+    isBookmarked: (challengeId: string) => boolean;
     onOpenModal: () => void;
     onChallengesLoaded?: (challenges: ChallengeListItem[]) => void;
     isLoading?: boolean;
@@ -21,6 +23,8 @@ interface ChallengeGridProps {
 export function ChallengeGrid({
     onRekt,
     onClick,
+    onToggleBookmark,
+    isBookmarked,
     onOpenModal,
     onChallengesLoaded,
     refreshKey = 0,
@@ -71,10 +75,13 @@ export function ChallengeGrid({
         setLoadError(null);
 
         try {
+            const isBookmarkedFilter = activeFilter === "Bookmarked";
+            const requestLimit = isBookmarkedFilter ? 100 : PAGE_SIZE;
+            const requestOffset = isBookmarkedFilter ? 0 : currentOffset;
             const response = await getChallenges(
                 {
-                    limit: PAGE_SIZE,
-                    offset: currentOffset,
+                    limit: requestLimit,
+                    offset: requestOffset,
                     category: activeAsset !== "All Markets" ? activeAsset : undefined,
                     search: searchQuery.trim() || undefined,
                     sort: activeFilter === "Expiring Soon" ? "expiring_soon" : "latest",
@@ -89,6 +96,16 @@ export function ChallengeGrid({
             );
             if (requestId !== requestIdRef.current) return;
             let nextChunk = response.challenges ?? [];
+            if (isBookmarkedFilter) {
+                nextChunk = nextChunk.filter((challenge) => isBookmarked(challenge.id));
+            } else {
+                nextChunk = [...nextChunk].sort((a, b) => {
+                    const aBookmarked = isBookmarked(a.id);
+                    const bBookmarked = isBookmarked(b.id);
+                    if (aBookmarked === bBookmarked) return 0;
+                    return aBookmarked ? -1 : 1;
+                });
+            }
             if (activeFilter === "My Bets" && ownerAddress) {
                 nextChunk = nextChunk.filter((challenge) => {
                     const creatorWallet = challenge.creator?.wallet_address?.toLowerCase();
@@ -98,8 +115,8 @@ export function ChallengeGrid({
                 });
             }
             setChallenges((prev) => (append ? [...prev, ...nextChunk] : nextChunk));
-            setHasMore(nextChunk.length === PAGE_SIZE);
-            setOffset(currentOffset + nextChunk.length);
+            setHasMore(!isBookmarkedFilter && nextChunk.length === PAGE_SIZE);
+            setOffset(isBookmarkedFilter ? nextChunk.length : currentOffset + nextChunk.length);
         } catch (error) {
             if (requestId !== requestIdRef.current) return;
             console.error('Failed to fetch challenges:', error);
@@ -117,7 +134,7 @@ export function ChallengeGrid({
                 isLoadingMoreRef.current = false;
             }
         }
-    }, [PAGE_SIZE, activeAsset, activeFilter, onChallengesLoaded, ownerAddress, searchQuery]);
+    }, [PAGE_SIZE, activeAsset, activeFilter, isBookmarked, onChallengesLoaded, ownerAddress, searchQuery]);
 
     useEffect(() => {
         requestIdRef.current += 1;
@@ -242,6 +259,8 @@ export function ChallengeGrid({
                         challenge={challenge}
                         onRekt={onRekt}
                         onClick={onClick}
+                        onToggleBookmark={onToggleBookmark}
+                        isBookmarked={isBookmarked(challenge.id)}
                         ownerAddress={ownerAddress}
                     />
                 ))}
