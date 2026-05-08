@@ -212,7 +212,7 @@ const ClanChallenges = ({ clanId }: ClanChallengesProps) => {
     return (
         <>
             <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-white/70 shadow-sm p-5 flex flex-col max-h-[600px]">
-                <div className="flex items-center justify-between mb-4 flex-shrink-0">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 flex-shrink-0">
                     <h2 className="text-lg font-bold text-gray-900">
                         {activeTab === "friendly"
                             ? "Friendly Challenges"
@@ -220,16 +220,7 @@ const ClanChallenges = ({ clanId }: ClanChallengesProps) => {
                                 ? "Wager Challenges"
                                 : "Clan Wars"}
                     </h2>
-                    <div className="flex bg-gray-200/60 rounded-lg p-1">
-                        <button
-                            onClick={() => setActiveTab("friendly")}
-                            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${activeTab === "friendly"
-                                ? "bg-white text-gray-900 shadow-sm"
-                                : "text-gray-600 hover:text-gray-900"
-                                }`}
-                        >
-                            Friendly
-                        </button>
+                    <div className="grid grid-cols-3 gap-1 bg-gray-200/60 rounded-lg p-1 w-full sm:w-auto">
                         <button
                             onClick={() => setActiveTab("wager")}
                             className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${activeTab === "wager"
@@ -238,6 +229,15 @@ const ClanChallenges = ({ clanId }: ClanChallengesProps) => {
                                 }`}
                         >
                             Wager
+                        </button>
+                        <button
+                            onClick={() => setActiveTab("friendly")}
+                            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${activeTab === "friendly"
+                                ? "bg-white text-gray-900 shadow-sm"
+                                : "text-gray-600 hover:text-gray-900"
+                                }`}
+                        >
+                            Friendly
                         </button>
                         <button
                             onClick={() => setActiveTab("wars")}
@@ -292,7 +292,7 @@ const ClanChallenges = ({ clanId }: ClanChallengesProps) => {
                     {activeTab === "wager" ? (
                         loading ? (
                             <div className="flex flex-col items-center justify-center py-12 text-center">
-                                <p className="text-gray-600">Loading latest leader challenges...</p>
+                                <p className="text-gray-600">Loading latest wager challenges...</p>
                             </div>
                         ) : filteredAndSortedChallenges.length > 0 ? (
                             <div className="space-y-4">

@@ -161,8 +161,20 @@ async function transformClanResponseAsync(clan: Clan, index: number): Promise<Fr
     };
 }
 
-export async function getClans(limit: number = 10, offset: number = 0): Promise<PaginatedClansResponse> {
-    const response = await fetch(`${API_BASE_URL}/clans?limit=${limit}&offset=${offset}`, {
+export async function getClans(
+    limit: number = 10,
+    offset: number = 0,
+    leaderId?: string
+): Promise<PaginatedClansResponse> {
+    const params = new URLSearchParams({
+        limit: String(limit),
+        offset: String(offset),
+    });
+    if (leaderId) {
+        params.set("leader_id", leaderId);
+    }
+
+    const response = await fetch(`${API_BASE_URL}/clans?${params.toString()}`, {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
@@ -188,6 +200,11 @@ export async function getClans(limit: number = 10, offset: number = 0): Promise<
         limit,
         offset,
     };
+}
+
+export async function hasClanByLeader(leaderId: string): Promise<boolean> {
+    const result = await getClans(1, 0, leaderId);
+    return result.total > 0;
 }
 
 /**

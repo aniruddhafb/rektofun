@@ -11,6 +11,7 @@ interface ChallengeGridProps {
     onClick: (challenge: ChallengeListItem) => void;
     onToggleBookmark: (challengeId: string) => void;
     isBookmarked: (challengeId: string) => boolean;
+    bookmarkedChallengeIds: string[];
     onOpenModal: () => void;
     onChallengesLoaded?: (challenges: ChallengeListItem[]) => void;
     isLoading?: boolean;
@@ -25,6 +26,7 @@ export function ChallengeGrid({
     onClick,
     onToggleBookmark,
     isBookmarked,
+    bookmarkedChallengeIds,
     onOpenModal,
     onChallengesLoaded,
     refreshKey = 0,
@@ -75,9 +77,10 @@ export function ChallengeGrid({
         setLoadError(null);
 
         try {
-            const isBookmarkedFilter = activeFilter === "Bookmarked";
-            const requestLimit = isBookmarkedFilter ? 100 : PAGE_SIZE;
-            const requestOffset = isBookmarkedFilter ? 0 : currentOffset;
+            const isPinnedFilter = activeFilter === "Pinned";
+            const shouldFetchWiderForPinnedPriority = !isPinnedFilter && bookmarkedChallengeIds.length > 0;
+            const requestLimit = (isPinnedFilter || shouldFetchWiderForPinnedPriority) ? 100 : PAGE_SIZE;
+            const requestOffset = (isPinnedFilter || shouldFetchWiderForPinnedPriority) ? 0 : currentOffset;
             const response = await getChallenges(
                 {
                     limit: requestLimit,
@@ -96,7 +99,7 @@ export function ChallengeGrid({
             );
             if (requestId !== requestIdRef.current) return;
             let nextChunk = response.challenges ?? [];
-            if (isBookmarkedFilter) {
+            if (isPinnedFilter) {
                 nextChunk = nextChunk.filter((challenge) => isBookmarked(challenge.id));
             } else {
                 nextChunk = [...nextChunk].sort((a, b) => {
@@ -115,8 +118,8 @@ export function ChallengeGrid({
                 });
             }
             setChallenges((prev) => (append ? [...prev, ...nextChunk] : nextChunk));
-            setHasMore(!isBookmarkedFilter && nextChunk.length === PAGE_SIZE);
-            setOffset(isBookmarkedFilter ? nextChunk.length : currentOffset + nextChunk.length);
+            setHasMore(!isPinnedFilter && !shouldFetchWiderForPinnedPriority && nextChunk.length === PAGE_SIZE);
+            setOffset((isPinnedFilter || shouldFetchWiderForPinnedPriority) ? nextChunk.length : currentOffset + nextChunk.length);
         } catch (error) {
             if (requestId !== requestIdRef.current) return;
             console.error('Failed to fetch challenges:', error);
@@ -134,7 +137,7 @@ export function ChallengeGrid({
                 isLoadingMoreRef.current = false;
             }
         }
-    }, [PAGE_SIZE, activeAsset, activeFilter, isBookmarked, onChallengesLoaded, ownerAddress, searchQuery]);
+    }, [PAGE_SIZE, activeAsset, activeFilter, bookmarkedChallengeIds.length, isBookmarked, onChallengesLoaded, ownerAddress, searchQuery]);
 
     useEffect(() => {
         requestIdRef.current += 1;

@@ -31,6 +31,7 @@ export interface ChallengeListItem {
   id: string;
   title: string;
   mode: string;
+  resolution_source?: string | null;
   initial_bet: number;
   target_price?: number;
   min_accept_bet?: number;

@@ -34,6 +34,7 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
     const [modalMinAcceptBet, setModalMinAcceptBet] = React.useState<number | undefined>(undefined);
     const [modalMaxAcceptBet, setModalMaxAcceptBet] = React.useState<number | undefined>(undefined);
     const [escrowAddress, setEscrowAddress] = React.useState<string | undefined>(undefined);
+    const [isDescriptionExpanded, setIsDescriptionExpanded] = React.useState(false);
 
     const formatEndsByCountdown = (timestamp: number | null, nowMs: number): string => {
         if (!timestamp) return "unknown";
@@ -300,6 +301,14 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
     const titleLower = challenge.title.toLowerCase();
     const isBelowChallenge = titleLower.includes("below");
     const isAboveChallenge = titleLower.includes("above");
+    const isManualResolution = String(challenge.resolution_source ?? "").toLowerCase() === "manual";
+    const challengeTicker = challenge.market?.name?.trim().toLowerCase() || "this asset";
+    const challengeDescriptionText = `The challenger thinks ${challengeTicker} will ${isBelowChallenge ? "fall below" : isAboveChallenge ? "rise above" : "hit"} $${targetPrice.toLocaleString()} by the resolution time. If you think opposite you can counter it and win the total pool of $${betAmount} if you're right.`;
+    const challengeDescriptionWords = challengeDescriptionText.trim().split(/\s+/);
+    const isDescriptionTruncatable = challengeDescriptionWords.length > 8;
+    const challengeDescriptionPreviewText = isDescriptionTruncatable
+        ? `${challengeDescriptionWords.slice(0, 6).join(" ")}...`
+        : challengeDescriptionText;
     const isDirectionalBelow = isBelowChallenge && !isAboveChallenge;
     const progressThemeClass = isDirectionalBelow
         ? "from-red-500 to-red-300"
@@ -396,20 +405,20 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
             ctaLabel = "COMPLETED ✅";
             ctaDisabled = true;
             ctaClassName = completedCtaClassName;
+        } else if (isExpireTimeAchieved && !hasOpponents) {
+            ctaLabel = "EXPIRED!";
+            ctaDisabled = true;
+            ctaClassName = expiredCtaClassName;
         } else if (isResolveTimeAchieved && isResolutionPending) {
-            ctaLabel = "RESOLVING...";
+            ctaLabel = "RESOLVING ⌛";
             ctaDisabled = true;
             ctaClassName = resolvingCtaClassName;
         } else if (!isResolveTimeAchieved && hasOpponents) {
             ctaLabel = "ONGOING ⚔️";
             ctaDisabled = true;
             ctaClassName = ongoingCtaClassName;
-        } else if (isExpireTimeAchieved && !hasOpponents) {
-            ctaLabel = "EXPIRED!";
-            ctaDisabled = true;
-            ctaClassName = expiredCtaClassName;
         } else {
-            ctaLabel = "ACCEPT CHALLENGE ⚔️";
+            ctaLabel = "COUNTER ⚔️";
             ctaDisabled = isCreator;
             ctaClassName = activePvpCtaClassName;
         }
@@ -418,25 +427,25 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
             ctaLabel = "COMPLETED";
             ctaDisabled = true;
             ctaClassName = completedCtaClassName;
-        } else if (isResolveTimeAchieved && isResolutionPending) {
-            ctaLabel = "RESOLVING...";
-            ctaDisabled = true;
-            ctaClassName = resolvingCtaClassName;
         } else if (isExpireTimeAchieved && !hasOpponents) {
-            ctaLabel = "EXPIRED";
+            ctaLabel = "EXPIRED!";
             ctaDisabled = true;
             ctaClassName = expiredCtaClassName;
+        } else if (isResolveTimeAchieved && isResolutionPending) {
+            ctaLabel = "RESOLVING ⌛";
+            ctaDisabled = true;
+            ctaClassName = resolvingCtaClassName;
         } else if (!isExpireTimeAchieved) {
-            ctaLabel = "JOIN CHALLENGE";
+            ctaLabel = "JOIN CHALLENGE ⚔️";
             ctaDisabled = false;
             ctaClassName = activeCtaClassName;
         } else {
-            ctaLabel = "ONGOING";
+            ctaLabel = "ONGOING ⚔️";
             ctaDisabled = true;
             ctaClassName = ongoingCtaClassName;
         }
     }
-    const showCreatorCtaHoverHint = isCreator && ctaLabel === "ACCEPT CHALLENGE ⚔️";
+    const showCreatorCtaHoverHint = isCreator && ctaLabel === "COUNTER ⚔️";
     const isOngoingCta = ctaLabel.startsWith("ONGOING");
 
     const handleCtaClick = () => {
@@ -667,7 +676,16 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
 
                             {/* Title */}
                             <h2 className="mt-2 text-[#2d1f1a] leading-tight mb-3">
-                                {isResolveTimeAchieved ? (
+                                {isManualResolution ? (
+                                    <>
+                                        <span className="block sm:hidden text-[22px] font-bold tracking-tight break-words">
+                                            {challenge.title}
+                                        </span>
+                                        <span className="hidden sm:block sm:text-3xl sm:font-bold sm:tracking-tight sm:whitespace-nowrap">
+                                            {challenge.title}
+                                        </span>
+                                    </>
+                                ) : isResolveTimeAchieved ? (
                                     <>
                                         <span className="block sm:hidden text-[22px] font-bold tracking-tight break-words">
                                             {challenge.title} by {resolveDateByText}
@@ -715,6 +733,28 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
                                     </>
                                 )}
                             </h2>
+                            {!isManualResolution ? (
+                                <div className="mb-2 text-[16px] text-[#756d66] leading-relaxed flex gap-1">
+                                    <p>
+                                        {isDescriptionExpanded ? challengeDescriptionText : challengeDescriptionPreviewText}
+                                    </p>
+                                    {isDescriptionTruncatable && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsDescriptionExpanded((prev) => !prev)}
+                                            className="text-sm text-[#246044] hover:text-[#2d6f4a] transition-colors cursor-pointer"
+                                        >
+                                            {isDescriptionExpanded ? "" : "read more"}
+                                        </button>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="mb-2 text-[16px] text-[#756d66] leading-relaxed flex gap-1">
+                                    <p>
+                                        The challenger thinks {challenge?.title}. If you don't think so you can counter it and win ${betAmount} if you are right.
+                                    </p>
+                                </div>
+                            )}
 
                             {/* Created By */}
                             <button
@@ -743,92 +783,100 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
                     </div>
 
                     {/* Bet Amount - Highlighted */}
-                    <div className="relative mb-8 p-6 bg-gradient-to-r from-[#246044] to-[#2d6f4a] rounded-2xl text-white shadow-xl overflow-visible">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-white/10 to-transparent rounded-full translate-x-8 -translate-y-8" />
-                        <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-white/10 to-transparent rounded-full -translate-x-6 translate-y-6" />
+                    {!isManualResolution && (
+                        <div className="relative mb-8 p-6 bg-gradient-to-r from-[#246044] to-[#2d6f4a] rounded-2xl text-white shadow-xl overflow-visible">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-white/10 to-transparent rounded-full translate-x-8 -translate-y-8" />
+                            <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-white/10 to-transparent rounded-full -translate-x-6 translate-y-6" />
 
-                        {/* Prize Pool - Top */}
-                        <div className="text-center mb-6">
-                            <div className="flex items-center justify-center gap-1.5 mb-1">
-                                <p className="text-white/80 text-sm font-medium">Total Pool</p>
-                                <div className="group relative">
-                                    <svg className="w-4 h-4 text-white/70 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
+                            {/* Prize Pool - Top */}
+                            <div className="text-center mb-6">
+                                <div className="flex items-center justify-center gap-1.5 mb-1">
+                                    <p className="text-white/80 text-sm font-medium">Total Pool</p>
+                                    <div className="group relative">
+                                        <svg className="w-4 h-4 text-white/70 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <div
+                                            className="absolute left-1/2 top-full z-50 mt-2 w-72 -translate-x-1/2 rounded-lg bg-gray-900 p-2 text-xs text-white opacity-0 invisible transition-all duration-200 group-hover:opacity-100 group-hover:visible shadow-xl"
+                                            style={{ pointerEvents: "none" }}
+                                        >
+                                            the total pool is the total money locked in the escrow smart contract which winner gets after winning
+                                            <span className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-full border-4 border-transparent border-b-gray-900"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p className="text-4xl font-black">
+                                    ${betAmount}
+                                </p>
+                            </div>
+
+                            {/* Price Section */}
+                            <div className={`mb-3 flex items-center ${isBelowChallenge ? "justify-start" : isAboveChallenge ? "justify-end" : "justify-end"}`}>
+                                {/* Target Price */}
+                                <div className="flex items-center gap-1.5">
+                                    <div>
+                                        <p className={`text-white/70 text-xs ${isBelowChallenge ? "text-left" : "text-right"}`}>Target</p>
+                                        <p className="font-bold text-amber-300">${targetPrice.toLocaleString()}</p>
+                                    </div>
+                                    <div className="group relative">
+                                        <svg className="w-4 h-4 text-white/60 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <div className="fixed p-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[9999] whitespace-nowrap shadow-xl"
+                                            style={{ pointerEvents: "none" }}>
+                                            Hit price set by challenger
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Price Progress Bar */}
+                            <div className="relative">
+                                {/* Track */}
+                                <div className="relative h-3 bg-white/20 rounded-full overflow-hidden">
+                                    {/* Progress fill */}
                                     <div
-                                        className="absolute left-1/2 top-full z-50 mt-2 w-72 -translate-x-1/2 rounded-lg bg-gray-900 p-2 text-xs text-white opacity-0 invisible transition-all duration-200 group-hover:opacity-100 group-hover:visible shadow-xl"
-                                        style={{ pointerEvents: "none" }}
-                                    >
-                                        the total pool is the total money locked in the escrow smart contract which winner gets after winning
-                                        <span className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-full border-4 border-transparent border-b-gray-900"></span>
-                                    </div>
+                                        className={`absolute top-0 h-full rounded-full transition-all duration-500 bg-gradient-to-r ${progressThemeClass} ${isDirectionalBelow ? "right-0" : "left-0"}`}
+                                        style={{ width: `${priceBarPosition}%` }}
+                                    />
+                                    {/* Live update sheen to simulate real-time movement */}
+                                    <div className="price-live-sheen absolute top-0 h-full w-14 bg-gradient-to-r from-transparent via-white/35 to-transparent" />
                                 </div>
-                            </div>
-                            <p className="text-4xl font-black">
-                                ${betAmount}
-                            </p>
-                        </div>
 
-                        {/* Price Section */}
-                        <div className={`mb-3 flex items-center ${isBelowChallenge ? "justify-start" : isAboveChallenge ? "justify-end" : "justify-end"}`}>
-                            {/* Target Price */}
-                            <div className="flex items-center gap-1.5">
-                                <div>
-                                    <p className={`text-white/70 text-xs ${isBelowChallenge ? "text-left" : "text-right"}`}>Target</p>
-                                    <p className="font-bold text-amber-300">${targetPrice.toLocaleString()}</p>
-                                </div>
-                                <div className="group relative">
-                                    <svg className="w-4 h-4 text-white/60 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    <div className="fixed p-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[9999] whitespace-nowrap shadow-xl"
-                                        style={{ pointerEvents: "none" }}>
-                                        Hit price set by challenger
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Price Progress Bar */}
-                        <div className="relative">
-                            {/* Track */}
-                            <div className="relative h-3 bg-white/20 rounded-full overflow-hidden">
-                                {/* Progress fill */}
+                                {/* Current Price Marker */}
                                 <div
-                                    className={`absolute top-0 h-full rounded-full transition-all duration-500 bg-gradient-to-r ${progressThemeClass} ${isDirectionalBelow ? "right-0" : "left-0"}`}
-                                    style={{ width: `${priceBarPosition}%` }}
-                                />
-                                {/* Live update sheen to simulate real-time movement */}
-                                <div className="price-live-sheen absolute top-0 h-full w-14 bg-gradient-to-r from-transparent via-white/35 to-transparent" />
+                                    className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 bg-white rounded-full shadow-lg border-2 flex items-center justify-center ${markerThemeClass}`}
+                                    style={
+                                        isDirectionalBelow
+                                            ? { right: `calc(${priceBarPosition}% - 10px)` }
+                                            : { left: `calc(${priceBarPosition}% - 10px)` }
+                                    }
+                                >
+                                    <div className={`w-2 h-2 rounded-full animate-pulse ${markerDotThemeClass}`} />
+                                </div>
                             </div>
 
-                            {/* Current Price Marker */}
-                            <div
-                                className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 bg-white rounded-full shadow-lg border-2 flex items-center justify-center ${markerThemeClass}`}
-                                style={
-                                    isDirectionalBelow
-                                        ? { right: `calc(${priceBarPosition}% - 10px)` }
-                                        : { left: `calc(${priceBarPosition}% - 10px)` }
-                                }
-                            >
-                                <div className={`w-2 h-2 rounded-full animate-pulse ${markerDotThemeClass}`} />
-                            </div>
-                        </div>
-
-                        {/* Current Price Label */}
-                        <div className="mt-3 text-center">
-                            <p className={`text-lg font-bold ${priceLabelThemeClass}`}>
-                                ${currentPrice.toLocaleString()}
-                                {/* <span className="text-xs ml-2 text-white/60">
+                            {/* Current Price Label */}
+                            <div className="mt-3 text-center">
+                                <p className={`text-lg font-bold ${priceLabelThemeClass}`}>
+                                    ${currentPrice.toLocaleString()}
+                                    {/* <span className="text-xs ml-2 text-white/60">
                                     ({priceChange >= 0 ? "+" : ""}{priceChange.toFixed(2)}%)
                                 </span> */}
-                            </p>
-                            <p className="text-[11px] text-white/70 mt-1 animate-pulse">Live market sync</p>
+                                </p>
+                                <p className="text-[11px] text-white/70 mt-1 animate-pulse">Live market sync</p>
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* VS Section */}
                     <div className="mb-8">
+                        {isManualResolution && (
+                            <div className="mb-3 text-center">
+                                <p className="text-xs font-semibold uppercase tracking-wide text-[#8b7355]">Total Pool</p>
+                                <p className="text-2xl font-black text-[#2d1f1a]">${betAmount}</p>
+                            </div>
+                        )}
                         <h3 className="text-center text-sm font-bold text-[#8b7355] uppercase tracking-wider mb-4">
                             Battle Matchup
                         </h3>
@@ -885,8 +933,8 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
                                                 ? "border-red-300 bg-gradient-to-br from-red-100 to-rose-50 text-red-700 hover:from-red-200 hover:to-rose-100"
                                                 : "border-[#d4a574]/40 bg-white/90 text-[#2d1f1a] hover:bg-white"
                                             }`}
-                                        aria-label="Accept challenge"
-                                        title="Accept challenge"
+                                        aria-label="COUNTER"
+                                        title="COUNTER"
                                     >
                                         +
                                     </button>
@@ -925,7 +973,9 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
                                             <User className="w-6 h-6 text-white/50" />
                                         </div>
                                         <div className="mt-2 px-2.5 py-1 bg-[#8b7355]/20 rounded-full">
-                                            <p className="text-xs font-semibold text-[#8b7355]">Seeking Opponent</p>
+                                            <p className="text-xs font-semibold text-[#8b7355]">
+                                                {isExpireTimeAchieved && !hasOpponents ? "Expired" : "Seeking Opponent"}
+                                            </p>
                                         </div>
                                     </>
                                 )}
@@ -983,8 +1033,8 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
                                                     ? "border-red-300 bg-gradient-to-br from-red-100 to-rose-50 text-red-700 hover:from-red-200 hover:to-rose-100"
                                                     : "border-[#d4a574]/40 bg-white/90 text-[#2d1f1a] hover:bg-white"
                                                 }`}
-                                            aria-label="Accept challenge"
-                                            title="Accept challenge"
+                                            aria-label="COUNTER"
+                                            title="COUNTER"
                                         >
                                             +
                                         </button>
@@ -1010,8 +1060,8 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
                                             type="button"
                                             onClick={handleCtaClick}
                                             className="absolute -bottom-3.5 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-2 border-[#d4a574]/40 bg-white/90 text-[28px] font-black leading-none text-[#2d1f1a] shadow-md transition hover:scale-105 hover:bg-white"
-                                            aria-label="Accept challenge"
-                                            title="Accept challenge"
+                                            aria-label="COUNTER"
+                                            title="COUNTER"
                                         >
                                             +
                                         </button>
@@ -1078,16 +1128,30 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
 
                             {/* Resolves */}
                             {showResolvesBox && (
-                                <div className="relative z-10 p-4 bg-white/60 backdrop-blur-sm rounded-xl border border-[#d4a574]/20 hover:border-[#d4a574]/40 hover:shadow-lg transition-all duration-200 cursor-pointer overflow-visible">
-                                    <div className="flex items-center gap-3 mb-2">
-                                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                                            <AlertCircle className="w-4 h-4 text-blue-600" />
+                                <div>
+                                    {!isManualResolution ? (
+                                        <div className="relative z-10 p-4 bg-white/60 backdrop-blur-sm rounded-xl border border-[#d4a574]/20 hover:border-[#d4a574]/40 hover:shadow-lg transition-all duration-200 cursor-pointer overflow-visible">
+                                            <div className="flex items-center gap-3 mb-2">
+                                                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                                                    <AlertCircle className="w-4 h-4 text-blue-600" />
+                                                </div>
+                                                <span className="text-xs font-semibold text-[#8b7355] uppercase">Resolves In</span>
+                                            </div>
+                                            <p className="font-bold text-[#2d1f1a]">{resolvesInText}</p>
+                                            {resolvesInSubtext && (
+                                                <p className="text-xs text-[#8b7355] mt-1">{resolvesInSubtext}</p>
+                                            )}
                                         </div>
-                                        <span className="text-xs font-semibold text-[#8b7355] uppercase">Resolves In</span>
-                                    </div>
-                                    <p className="font-bold text-[#2d1f1a]">{resolvesInText}</p>
-                                    {resolvesInSubtext && (
-                                        <p className="text-xs text-[#8b7355] mt-1">{resolvesInSubtext}</p>
+                                    ) : (
+                                        <div className="relative z-10 p-4 bg-white/60 backdrop-blur-sm rounded-xl border border-[#d4a574]/20 hover:border-[#d4a574]/40 hover:shadow-lg transition-all duration-200 cursor-pointer overflow-visible">
+                                            <div className="flex items-center gap-3 mb-2">
+                                                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                                                    <AlertCircle className="w-4 h-4 text-blue-600" />
+                                                </div>
+                                                <span className="text-xs font-semibold text-[#8b7355] uppercase">Resolves On</span>
+                                            </div>
+                                            <p className="font-bold text-[#2d1f1a]">Match Day</p>
+                                        </div>
                                     )}
                                 </div>
                             )}
@@ -1136,6 +1200,7 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
                 escrowAddress={escrowAddress}
                 resolveCountdown={exactCountdownDetails.exactCountdown}
                 resolveLabel={exactCountdownDetails.dayLabel}
+                resolutionSource={challenge.resolution_source ?? undefined}
                 isPoolMode={isPoolMode}
                 joinSide={joinSide}
                 onClose={closeBetForm}

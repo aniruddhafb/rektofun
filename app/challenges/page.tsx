@@ -224,6 +224,7 @@ function ChallengesContent() {
         onClick={handleChallengeClick}
         onToggleBookmark={toggleBookmark}
         isBookmarked={isChallengeBookmarked}
+        bookmarkedChallengeIds={bookmarkedChallengeIds}
         onOpenModal={() => setIsCreateModalOpen(true)}
         onChallengesLoaded={handleChallengesLoaded}
         refreshKey={refreshKey}

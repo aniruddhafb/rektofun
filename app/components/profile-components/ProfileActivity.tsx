@@ -12,6 +12,7 @@ interface ProfileActivityProps {
     userId: string;
     username: string;
     avatar?: string;
+    isOwnProfile?: boolean;
 }
 
 const PAGE_SIZE = 10;
@@ -50,7 +51,7 @@ function formatResolveCountdown(resolveTime: string): string {
     return `in ${minutes}m`;
 }
 
-export function ProfileActivity({ userId, username, avatar }: ProfileActivityProps) {
+export function ProfileActivity({ userId, username, avatar, isOwnProfile = false }: ProfileActivityProps) {
     const [activities, setActivities] = useState<ChallengeListItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -174,7 +175,9 @@ export function ProfileActivity({ userId, username, avatar }: ProfileActivityPro
                             <div className="flex-1 min-w-0">
                                 {/* Main Activity Line */}
                                 <div className="flex flex-wrap items-center gap-x-1.5 text-sm sm:text-base leading-relaxed">
-                                    <span className="font-bold text-[#2d1f1a] hover:text-[#5c4a42] transition-colors">You</span>
+                                    <span className="font-bold text-[#2d1f1a] hover:text-[#5c4a42] transition-colors">
+                                        {isOwnProfile ? "you" : username}
+                                    </span>
                                     <span className="text-[#5c4a42]">created</span>
                                     <span className="font-bold text-[#2d1f1a]">${item.initial_bet ?? 0}</span>
                                     <span className="text-[#5c4a42]">challenge for</span>

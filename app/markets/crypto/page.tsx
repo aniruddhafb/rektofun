@@ -14,6 +14,7 @@ import {
     type ChallengeListItem,
 } from "@/app/lib/challenges-service/challenges";
 import ChallengeDetailModal from "@/app/components/challenge-components/ChallengeDetailModal";
+import AutoDismissErrorToast from "@/app/components/message-components/AutoDismissErrorToast";
 
 interface MarketCardData {
     id: string;
@@ -136,25 +137,17 @@ function getChallengeCtaConfig(challenge: ChallengeListItem, nowMs: number) {
 }
 
 export default function MarketsPage() {
-    const LOADING_MESSAGES = [
-        "Syncing crypto markets...",
-        "Loading active challenges...",
-        "Building your market cards...",
-        "Almost ready...",
-    ];
     const [bookmarkedMarkets, setBookmarkedMarkets] = useState<Set<string>>(new Set());
     const [searchTerm, setSearchTerm] = useState("");
     const [markets, setMarkets] = useState<MarketCardData[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [showDevnetNotice, setShowDevnetNotice] = useState(false);
+    const [showDevnetErrorToast, setShowDevnetErrorToast] = useState(false);
     const [currentTime, setCurrentTime] = useState(() => Date.now());
     const [selectedChallenge, setSelectedChallenge] = useState<ChallengeListItem | null>(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-    const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
     const handleCreateClick = () => {
-        setShowDevnetNotice(true);
-        setTimeout(() => setShowDevnetNotice(false), 3000);
+        setShowDevnetErrorToast(true);
     };
 
     const toggleBookmark = (marketId: string) => {
@@ -238,14 +231,6 @@ export default function MarketsPage() {
         };
     }, []);
 
-    useEffect(() => {
-        if (!isLoading) return;
-        const timer = window.setInterval(() => {
-            setLoadingMessageIndex((prev) => (prev + 1) % LOADING_MESSAGES.length);
-        }, 1300);
-        return () => window.clearInterval(timer);
-    }, [isLoading]);
-
     const filteredMarkets = markets.filter((market) => {
         const normalizedSearch = searchTerm.trim().toLowerCase();
 
@@ -273,6 +258,13 @@ export default function MarketsPage() {
 
     return (
         <div className="min-h-screen bg-[#f3e1d7]">
+            <AutoDismissErrorToast
+                isOpen={showDevnetErrorToast}
+                onClose={() => setShowDevnetErrorToast(false)}
+                title="Creating markets is disabled on devnet"
+                theme="yellow"
+            />
+
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 sm:mb-8">
                     <div>
@@ -294,11 +286,6 @@ export default function MarketsPage() {
                             </svg>
                             Create Market
                         </button>
-                        {showDevnetNotice && (
-                            <div className="absolute top-full mt-2 right-0 bg-yellow-50 border border-yellow-300 text-yellow-800 text-sm px-4 py-2 rounded-xl shadow-lg whitespace-nowrap z-10">
-                                ⚠️ Creating challenge markets is disabled on devnet
-                            </div>
-                        )}
                     </div>
                 </div>
 

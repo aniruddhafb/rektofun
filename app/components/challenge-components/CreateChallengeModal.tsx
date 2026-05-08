@@ -57,6 +57,7 @@ export function CreateChallengeModal({
     const [transformValid, setTransformValid] = useState(true);
     const [isValidateLoading, setIsValidateLoading] = useState(false);
     const [transformError, setTransformError] = useState<string | null>(null);
+    const [selectedValidationSuggestion, setSelectedValidationSuggestion] = useState<string | null>(null);
     const [sportsResolutionConsent, setSportsResolutionConsent] = useState(false);
     const [sportsResolutionConsentError, setSportsResolutionConsentError] = useState<string | null>(null);
 
@@ -218,6 +219,7 @@ export function CreateChallengeModal({
             setTransformValid(true);
             setIsValidateLoading(false);
             setTransformError(null);
+            setSelectedValidationSuggestion(null);
             return;
         }
 
@@ -225,11 +227,13 @@ export function CreateChallengeModal({
             setValidateSuggestions([]);
             setTransformValid(true);
             setTransformError(null);
+            setSelectedValidationSuggestion(null);
         } else {
             // When switching to sports, disable create button until validated
             setTransformValid(false);
             setValidateSuggestions([]);
             setTransformError(null);
+            setSelectedValidationSuggestion(null);
         }
     }, [isOpen, selectedMarket, selectedChildMarket, isSportsSelected]);
 
@@ -249,6 +253,8 @@ export function CreateChallengeModal({
 
         setChallengeStatementError(null);
         setTransformError(null);
+        setSelectedValidationSuggestion(null);
+        setTransformValid(false);
         setIsValidateLoading(true);
 
         try {
@@ -256,13 +262,14 @@ export function CreateChallengeModal({
             const response = await transform({ category, statement: challengeStatement });
 
             setValidateSuggestions(response.statements || []);
-            setTransformValid(response.valid);
-            if (!response.valid) {
-                setTransformError("The statement could not be validated. Please revise or choose a suggestion.");
+            setTransformValid(false);
+            if (!response.valid || !response.statements?.length) {
+                setTransformError("The statement could not be validated. Please rewrite the statement properly.");
             }
         } catch (error) {
             console.error("Validate transform error:", error);
-            setTransformError("Unable to validate right now. Please try again.");
+            const errMessage = error instanceof Error ? error.message : "";
+            setTransformError(errMessage || "Unable to validate right now. Please try again.");
             setTransformValid(false);
             setValidateSuggestions([]);
         } finally {
@@ -311,6 +318,10 @@ export function CreateChallengeModal({
             if (!challengeStatement.trim()) {
                 setChallengeStatementError("Please enter a challenge statement.");
                 setTxError("Please enter a challenge statement.");
+                return;
+            }
+            if (!selectedValidationSuggestion) {
+                setTxError("Please validate and select one suggested statement before creating the challenge.");
                 return;
             }
             setChallengeStatementError(null);
@@ -396,10 +407,11 @@ export function CreateChallengeModal({
                     category: selectedChildMarket?.name || "",
                     event_type: "binary",
                     ticker: selectedChildMarket?.symbol || "",
-                    asset_name: selectedChildMarket?.description ||  "",
+                    asset_name: selectedChildMarket?.description || "",
                     created_by: user?.id || "",
                     mode: challengeMode,
                     initial_bet: betAmount,
+                    min_accept_bet: betAmount,
                     target_price: isSportsSelected ? undefined : Number(predictionPrice),
                     bet_unit: 1,
                     resolution_source: isSportsSelected ? "manual" : "price_feed",
@@ -435,6 +447,9 @@ export function CreateChallengeModal({
     };
 
     const isLoading = txStatus === "building" || txStatus === "signing" || txStatus === "confirming";
+    const hasChallengeStatement = challengeStatement.trim().length > 0;
+    const hasValidationSuggestions = validateSuggestions.length > 0;
+    const isSportsSelectionComplete = Boolean(selectedValidationSuggestion);
 
     const getButtonLabel = () => {
         if (!authenticated) return "Connect Wallet to Create";
@@ -449,7 +464,7 @@ export function CreateChallengeModal({
 
     const getButtonStyle = () => {
         if (!authenticated) return "cursor-pointer w-full py-4 bg-gray-900 hover:bg-gray-700 text-white rounded-full font-bold text-lg transition-colors";
-        if (isLoading || (isSportsSelected && !transformValid)) return "cursor-pointer w-full py-4 bg-gray-400 text-white rounded-full font-bold text-lg cursor-not-allowed";
+        if (isLoading || (isSportsSelected && (!transformValid || !isSportsSelectionComplete))) return "cursor-pointer w-full py-4 bg-gray-400 text-white rounded-full font-bold text-lg cursor-not-allowed";
         if (txStatus === "success") return "cursor-pointer w-full py-4 bg-green-500 text-white rounded-full font-bold text-lg cursor-not-allowed";
         if (txStatus === "error") return "cursor-pointer w-full py-4 bg-red-500 hover:bg-red-600 text-white rounded-full font-bold text-lg transition-colors";
         return "cursor-pointer w-full py-4 bg-gray-900 hover:bg-gray-700 text-white rounded-full font-bold text-lg transition-colors";
@@ -626,7 +641,7 @@ export function CreateChallengeModal({
 
                     {/* challenge statement (for sports market) */}
                     {isSportsSelected && (
-                        <div className="space-y-2">
+                        <div className="space-y-3">
                             <div className="flex items-center gap-2">
                                 <label className="text-sm font-medium text-gray-700">Challenge Statement</label>
                                 <span className="relative group/info">
@@ -638,64 +653,106 @@ export function CreateChallengeModal({
                                     </span>
                                 </span>
                             </div>
-                            <input
-                                required
-                                type="text"
-                                value={challengeStatement}
-                                onChange={(e) => {
-                                    setChallengeStatement(e.target.value);
-                                    setValidateSuggestions([]);
-                                    if (challengeStatementError) setChallengeStatementError(null);
-                                    if (txError) setTxError(null);
-                                    // For sports, require re-validation when statement changes
-                                    if (isSportsSelected) {
-                                        setTransformValid(false);
-                                    } else {
-                                        setTransformValid(true);
+                            <div className="relative">
+                                <input
+                                    required
+                                    type="text"
+                                    value={challengeStatement}
+                                    onChange={(e) => {
+                                        setChallengeStatement(e.target.value);
+                                        setValidateSuggestions([]);
+                                        setSelectedValidationSuggestion(null);
+                                        if (challengeStatementError) setChallengeStatementError(null);
+                                        if (txError) setTxError(null);
+                                        // For sports, require re-validation when statement changes
+                                        if (isSportsSelected) {
+                                            setTransformValid(false);
+                                        } else {
+                                            setTransformValid(true);
+                                        }
+                                        if (transformError) setTransformError(null);
+                                    }}
+                                    placeholder={
+                                        selectedChildMarket?.symbol?.toLowerCase() === 'cricket'
+                                            ? "e.g. rohit sharma will hit a six in todays MI vs RCB IPL match"
+                                            : selectedChildMarket?.symbol?.toLowerCase() === 'football'
+                                                ? "e.g. real madrid will win fifa 2026"
+                                                : "Enter your challenge statement..."
                                     }
-                                    if (transformError) setTransformError(null);
-                                }}
-                                placeholder={
-                                    selectedChildMarket?.symbol?.toLowerCase() === 'cricket'
-                                        ? "e.g. rohit sharma will hit a six in todays MI vs RCB IPL match"
-                                        : selectedChildMarket?.symbol?.toLowerCase() === 'football'
-                                            ? "e.g. real madrid will win fifa 2026"
-                                            : "Enter your challenge statement..."
-                                }
-                                className="w-full px-4 py-3 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl text-lg text-gray-900 focus:outline-none focus:border-[#d4b8a8] placeholder:text-gray-400 placeholder:text-sm"
-                            />
-                            <button
-                                type="button"
-                                className="mt-2 inline-flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full font-semibold text-sm transition-colors disabled:bg-gray-400"
-                                onClick={handleValidateChallengeStatement}
-                                disabled={isValidateLoading}
-                            >
-                                {isValidateLoading ? "Validating..." : "Validate"}
-                            </button>
-                            {validateSuggestions.length > 0 && (
-                                <div className="space-y-2 mt-3">
-                                    <p className="text-sm font-medium text-gray-700">Suggested validations</p>
-                                    <div className="space-y-2">
-                                        {validateSuggestions.map((suggestion, index) => (
-                                            <button
-                                                key={`${suggestion}-${index}`}
-                                                type="button"
-                                                className="w-full text-left px-4 py-3 bg-white border border-[#e8d5c8] rounded-2xl hover:bg-[#f3e1d7] transition-colors text-sm text-gray-900"
-                                                onClick={() => {
-                                                    setChallengeStatement(suggestion);
-                                                    setValidateSuggestions([]);
-                                                    setTransformValid(true);
-                                                    setTransformError(null);
-                                                }}
-                                            >
-                                                {suggestion}
-                                            </button>
-                                        ))}
-                                    </div>
+                                    disabled={Boolean(selectedValidationSuggestion)}
+                                    className={`w-full border border-[#e8d5c8] rounded-xl text-lg text-gray-900 placeholder:text-gray-400 placeholder:text-sm ${selectedValidationSuggestion ? "bg-gray-100 cursor-not-allowed px-4 py-3 pr-20" : "bg-[#faf0eb] focus:outline-none focus:border-[#d4b8a8] px-4 py-3"}`}
+                                />
+                                {selectedValidationSuggestion && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setChallengeStatement("");
+                                            setSelectedValidationSuggestion(null);
+                                            setValidateSuggestions([]);
+                                            setTransformValid(false);
+                                            setTransformError(null);
+                                            setChallengeStatementError(null);
+                                            if (txError) setTxError(null);
+                                        }}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-blue-700 hover:text-blue-800 underline"
+                                    >
+                                        Reset
+                                    </button>
+                                )}
+                            </div>
+                            {hasChallengeStatement && !selectedValidationSuggestion && (
+                                <div className="space-y-3">
+                                    <button
+                                        type="button"
+                                        className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full font-semibold text-sm transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                        onClick={handleValidateChallengeStatement}
+                                        disabled={isValidateLoading}
+                                    >
+                                        {isValidateLoading && (
+                                            <svg className="animate-spin w-4 h-4 text-white" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                                            </svg>
+                                        )}
+                                        <span>{isValidateLoading ? "Validating statement..." : "Validate Statement"}</span>
+                                    </button>
+
+                                    {hasValidationSuggestions && (
+                                        <div className="rounded-2xl border border-[#e8d5c8] bg-white p-4 space-y-3">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-sm font-semibold text-gray-800">Suggested Valid Statements</span>
+                                                <span className="text-xs text-gray-500">Pick one to use</span>
+                                            </div>
+                                            <div className="space-y-2">
+                                                {validateSuggestions.map((suggestion, index) => (
+                                                    <button
+                                                        key={`${suggestion}-${index}`}
+                                                        type="button"
+                                                        className="cursor-pointer w-full text-left px-4 py-3 bg-[#fff9f5] border border-[#ead8cc] rounded-xl hover:bg-[#f7e8de] transition-colors text-sm text-gray-900"
+                                                        onClick={() => {
+                                                            setChallengeStatement(suggestion);
+                                                            setSelectedValidationSuggestion(suggestion);
+                                                            setTransformValid(true);
+                                                            setTransformError(null);
+                                                        }}
+                                                    >
+                                                        {suggestion}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                            {transformValid && isSportsSelectionComplete && !isValidateLoading && (
+                                <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-green-700">
+                                    Your statement has been validated. Use Reset to edit again or proceed to create the challenge.
                                 </div>
                             )}
                             {transformError && (
-                                <p className="text-red-500 text-sm mt-1">{transformError}</p>
+                                <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
+                                    {transformError}
+                                </div>
                             )}
                             {challengeStatementError && (
                                 <p className="text-red-500 text-sm mt-1">{challengeStatementError}</p>
@@ -854,7 +911,7 @@ export function CreateChallengeModal({
 
                     <button
                         onClick={handleCreateChallenge}
-                        disabled={isLoading || txStatus === "success" || (isSportsSelected && !transformValid)}
+                        disabled={isLoading || txStatus === "success" || (isSportsSelected && (!transformValid || !isSportsSelectionComplete))}
                         className={getButtonStyle()}
                     >
                         {getButtonLabel()}
@@ -867,3 +924,4 @@ export function CreateChallengeModal({
         </div>
     );
 }
+
