@@ -261,7 +261,7 @@ const ClanHeader = ({ clanData, onClanMembershipChange, onClanDataUpdate, onMemb
                                 title: `Join ${clanData.name}`,
                                 text: `Check out ${clanData.name} on RektoFun!`,
                                 url: shareUrl,
-                            }).catch(() => console.log('Error sharing'));
+                            }).catch(() => undefined);
                         } else {
                             navigator.clipboard.writeText(shareUrl);
                             alert('Clan link copied to clipboard!');

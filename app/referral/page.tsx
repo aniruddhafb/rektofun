@@ -23,7 +23,7 @@ export default function ReferralPage() {
         referred_by: string | null;
         referrals: string[];
     } | null>(null);
-    const [referralLink, setReferralLink] = useState<string>("https://rektofun.io/");
+    const [referralLink, setReferralLink] = useState<string>("https://rekto.fun/");
 
     const walletAddress = publicKey?.toBase58() ?? null;
 
@@ -31,7 +31,7 @@ export default function ReferralPage() {
         const fetchUserData = async () => {
             if (!authenticated || !walletAddress) {
                 setUserData(null);
-                setReferralLink("https://rektofun.io/");
+                setReferralLink("https://rekto.fun/");
                 return;
             }
 
@@ -42,11 +42,11 @@ export default function ReferralPage() {
                     referred_by: user.referred_by || null,
                     referrals: user.referrals || [],
                 });
-                setReferralLink(`https://rektofun.io/?ref=${user.referral_code}`);
+                setReferralLink(`https://rekto.fun/?ref=${user.referral_code}`);
             } catch (error) {
                 console.error("Failed to fetch user data:", error);
                 setUserData(null);
-                setReferralLink("https://rektofun.io/");
+                setReferralLink("https://rekto.fun/");
             }
         };
 

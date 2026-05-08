@@ -27,7 +27,6 @@ const ClanMembers = ({ clanId, maxMembers, refreshKey }: ClanMembersProps) => {
                 setLoading(true);
                 setError(null);
                 const response = await getClanMembers(clanId);
-                console.log("Fetched members:", response);
                 setMembers(response.members);
             } catch (err) {
                 setError(err instanceof Error ? err.message : "Failed to fetch members");

@@ -598,10 +598,10 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 overflow-hidden">
             <div
                 ref={modalRef}
-                className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto overflow-x-hidden bg-gradient-to-br from-[#f8ede7] via-[#f3e1d7] to-[#e8d5c4] rounded-3xl shadow-2xl border border-[#d4a574]/30 animate-in zoom-in-95 duration-300"
+                className="relative w-full max-w-4xl max-h-[94vh] overflow-y-auto overflow-x-hidden bg-gradient-to-br from-[#f8ede7] via-[#f3e1d7] to-[#e8d5c4] rounded-2xl sm:rounded-3xl shadow-2xl border border-[#d4a574]/30 animate-in zoom-in-95 duration-300"
                 style={{
                     scrollbarWidth: "none",
                     msOverflowStyle: "none",
@@ -632,13 +632,13 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
                 {/* Close Button */}
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-white transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-110 active:scale-95 cursor-pointer"
+                    className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-white transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-110 active:scale-95 cursor-pointer"
                 >
                     <X className="w-5 h-5" />
                 </button>
 
                 {/* Main Content */}
-                <div className="relative p-6 sm:p-8">
+                <div className="relative p-4 sm:p-8">
                     {/* Header Section */}
                     <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 mb-6 sm:mb-8">
                         {/* Asset Image */}
@@ -784,7 +784,7 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
 
                     {/* Bet Amount - Highlighted */}
                     {!isManualResolution && (
-                        <div className="relative mb-8 p-6 bg-gradient-to-r from-[#246044] to-[#2d6f4a] rounded-2xl text-white shadow-xl overflow-visible">
+                        <div className="relative mb-8 p-4 sm:p-6 bg-gradient-to-r from-[#246044] to-[#2d6f4a] rounded-2xl text-white shadow-xl overflow-visible">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-white/10 to-transparent rounded-full translate-x-8 -translate-y-8" />
                             <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-white/10 to-transparent rounded-full -translate-x-6 translate-y-6" />
 
@@ -884,7 +884,7 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
                         <div className="flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-4">
                             {/* Challenger Profile */}
                             <div className="relative group flex flex-col items-center">
-                                <div className={`w-[138px] h-[168px] flex flex-col items-center justify-center text-center gap-2 p-4 rounded-xl transition-all duration-300 ${hasWon
+                            <div className={`w-full max-w-[138px] min-h-[168px] flex flex-col items-center justify-center text-center gap-2 p-4 rounded-xl transition-all duration-300 ${hasWon
                                     ? "bg-gradient-to-br from-amber-100 to-yellow-50 border-2 border-amber-400 shadow-lg shadow-amber-200"
                                     : hasLost
                                         ? "bg-gradient-to-br from-red-100 to-rose-50 border-2 border-red-300"
@@ -984,7 +984,7 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
                             {/* Opponent Profile */}
                             {hasOpponentInfo ? (
                                 <div className="relative group flex flex-col items-center">
-                                    <div className={`w-[138px] h-[168px] flex flex-col items-center justify-center text-center gap-2 p-4 rounded-xl transition-all duration-300 ${hasLost
+                                    <div className={`w-full max-w-[138px] min-h-[168px] flex flex-col items-center justify-center text-center gap-2 p-4 rounded-xl transition-all duration-300 ${hasLost
                                         ? "bg-gradient-to-br from-amber-100 to-yellow-50 border-2 border-amber-400 shadow-lg shadow-amber-200"
                                         : hasWon
                                             ? "bg-gradient-to-br from-red-100 to-rose-50 border-2 border-red-300"
@@ -1043,7 +1043,7 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
                             ) : (
 
                                 <div className="relative flex flex-col items-center">
-                                    <div className="w-[138px] h-[168px] flex flex-col items-center justify-center text-center gap-2 p-4 rounded-xl bg-white/40 border-2 border-dashed border-[#d4a574]/30">
+                                    <div className="w-full max-w-[138px] min-h-[168px] flex flex-col items-center justify-center text-center gap-2 p-4 rounded-xl bg-white/40 border-2 border-dashed border-[#d4a574]/30">
                                         <div className="w-16 h-16 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center border-2 border-[#d4a574]/50">
                                             <span className="text-xl">❓</span>
                                         </div>
@@ -1178,7 +1178,7 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
                         <button
                             type="button"
                             onClick={handleShareChallenge}
-                            className="flex-1 py-3.5 px-6 bg-white/80 hover:bg-white rounded-xl text-[#2d1f1a] font-semibold text-base border border-[#d4a574]/30 hover:border-[#d4a574] transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
+                            className="flex-1 py-3.5 px-4 sm:px-6 bg-white/80 hover:bg-white rounded-xl text-[#2d1f1a] font-semibold text-base border border-[#d4a574]/30 hover:border-[#d4a574] transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
                         >
                             {shareFeedback ?? "Share"}
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

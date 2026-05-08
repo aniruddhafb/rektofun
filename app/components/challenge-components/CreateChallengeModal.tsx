@@ -508,31 +508,31 @@ export function CreateChallengeModal({
     };
 
     const getButtonStyle = () => {
-        if (!authenticated) return "cursor-pointer w-full py-4 bg-gray-900 hover:bg-gray-700 text-white rounded-full font-bold text-lg transition-colors";
-        if (isLoading || (isSportsSelected && (!transformValid || !isSportsSelectionComplete))) return "cursor-pointer w-full py-4 bg-gray-400 text-white rounded-full font-bold text-lg cursor-not-allowed";
-        if (txStatus === "success") return "cursor-pointer w-full py-4 bg-green-500 text-white rounded-full font-bold text-lg cursor-not-allowed";
-        if (txStatus === "error") return "cursor-pointer w-full py-4 bg-red-500 hover:bg-red-600 text-white rounded-full font-bold text-lg transition-colors";
-        return "cursor-pointer w-full py-4 bg-gray-900 hover:bg-gray-700 text-white rounded-full font-bold text-lg transition-colors";
+        if (!authenticated) return "cursor-pointer w-full py-3 sm:py-4 bg-gray-900 hover:bg-gray-700 text-white rounded-full font-bold text-base sm:text-lg transition-colors";
+        if (isLoading || (isSportsSelected && (!transformValid || !isSportsSelectionComplete))) return "cursor-pointer w-full py-3 sm:py-4 bg-gray-400 text-white rounded-full font-bold text-base sm:text-lg cursor-not-allowed";
+        if (txStatus === "success") return "cursor-pointer w-full py-3 sm:py-4 bg-green-500 text-white rounded-full font-bold text-base sm:text-lg cursor-not-allowed";
+        if (txStatus === "error") return "cursor-pointer w-full py-3 sm:py-4 bg-red-500 hover:bg-red-600 text-white rounded-full font-bold text-base sm:text-lg transition-colors";
+        return "cursor-pointer w-full py-3 sm:py-4 bg-gray-900 hover:bg-gray-700 text-white rounded-full font-bold text-base sm:text-lg transition-colors";
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
             <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
-            <div className="relative bg-[#f3e1d7] rounded-3xl w-full max-w-md md:max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col">
-                <div className="bg-[#f3e1d7] rounded-t-3xl px-6 pt-6 pb-4 border-b border-[#e8d5c8]">
+            <div className="relative bg-[#f3e1d7] rounded-2xl sm:rounded-3xl w-full max-w-md md:max-w-2xl max-h-[94vh] sm:max-h-[90vh] overflow-hidden shadow-2xl flex flex-col">
+                <div className="bg-[#f3e1d7] rounded-t-2xl sm:rounded-t-3xl px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b border-[#e8d5c8]">
                     <div className="flex items-center justify-between">
                         <div className="w-8" />
-                        <h2 className="text-xl md:text-2xl font-bold text-gray-900 text-center">Create Challenge</h2>
+                        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 text-center">Create Challenge</h2>
                         <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-[#e8d5c8] hover:bg-[#dcc9bc] transition-colors">
                             <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                             </svg>
                         </button>
                     </div>
-                    <p className="text-center text-gray-600 text-sm mt-2">Set your terms and invite degenerates to challenge you.</p>
+                    <p className="text-center text-gray-600 text-xs sm:text-sm mt-2">Set your terms and invite degenerates to challenge you.</p>
                 </div>
 
-                <div className="px-6 py-4 space-y-4 overflow-y-auto">
+                <div className="px-4 sm:px-6 py-3 sm:py-4 space-y-4 overflow-y-auto">
 
                     {/* challenge market  */}
                     <div className="space-y-2">
@@ -773,7 +773,7 @@ export function CreateChallengeModal({
                                                 : "Enter your challenge statement..."
                                     }
                                     disabled={Boolean(selectedValidationSuggestion)}
-                                    className={`w-full border border-[#e8d5c8] rounded-xl text-lg text-gray-900 placeholder:text-gray-400 placeholder:text-sm ${selectedValidationSuggestion ? "bg-gray-100 cursor-not-allowed px-4 py-3 pr-20" : "bg-[#faf0eb] focus:outline-none focus:border-[#d4b8a8] px-4 py-3"}`}
+                                    className={`w-full border border-[#e8d5c8] rounded-xl text-base sm:text-lg text-gray-900 placeholder:text-gray-400 placeholder:text-xs sm:placeholder:text-sm ${selectedValidationSuggestion ? "bg-gray-100 cursor-not-allowed px-3 sm:px-4 py-3 pr-16 sm:pr-20" : "bg-[#faf0eb] focus:outline-none focus:border-[#d4b8a8] px-3 sm:px-4 py-3"}`}
                                 />
                                 {selectedValidationSuggestion && (
                                     <button
@@ -857,10 +857,10 @@ export function CreateChallengeModal({
                     {!isSportsSelected && (
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-gray-700">Predict Price Movement</label>
-                            <div className="flex gap-2">
+                            <div className="flex flex-col min-[380px]:flex-row gap-2">
                                 <div className="relative flex-1" ref={directionDropdownRef}>
-                                    <button onClick={() => { closeAllDropdowns(); setIsDirectionDropdownOpen(!isDirectionDropdownOpen); }} className="w-full flex items-center justify-between px-4 py-3 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl hover:border-[#d4b8a8] transition-colors">
-                                        <span className="font-semibold text-gray-900">{selectedChildMarket?.name} {predictionDirection}</span>
+                                    <button onClick={() => { closeAllDropdowns(); setIsDirectionDropdownOpen(!isDirectionDropdownOpen); }} className="w-full flex items-center justify-between px-3 sm:px-4 py-3 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl hover:border-[#d4b8a8] transition-colors">
+                                        <span className="font-semibold text-sm sm:text-base text-gray-900 truncate pr-2">{selectedChildMarket?.name} {predictionDirection}</span>
                                         <svg className={`w-5 h-5 text-gray-500 transition-transform ${isDirectionDropdownOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                                         </svg>
@@ -875,9 +875,9 @@ export function CreateChallengeModal({
                                         </div>
                                     )}
                                 </div>
-                                <div className="relative w-32">
-                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg">$</span>
-                                    <input type="number" value={predictionPrice} onChange={(e) => setPredictionPrice(e.target.value)} className="w-full pl-8 pr-4 py-3 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl text-lg font-semibold text-gray-900 focus:outline-none focus:border-[#d4b8a8]" placeholder="66500" />
+                                <div className="relative w-full min-[380px]:w-32">
+                                    <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-500 text-base sm:text-lg">$</span>
+                                    <input type="number" value={predictionPrice} onChange={(e) => setPredictionPrice(e.target.value)} className="w-full pl-7 sm:pl-8 pr-3 sm:pr-4 py-3 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl text-base sm:text-lg font-semibold text-gray-900 focus:outline-none focus:border-[#d4b8a8]" placeholder="66500" />
                                 </div>
                             </div>
                         </div>
@@ -896,8 +896,8 @@ export function CreateChallengeModal({
                                 </span>
                             </span>
                         </div>
-                        <button onClick={() => setIsDurationPickerOpen(true)} className="w-full flex items-center justify-between px-4 py-3 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl hover:border-[#d4b8a8] transition-colors">
-                            <span className="font-medium text-gray-900">{formatDuration(duration)}</span>
+                        <button onClick={() => setIsDurationPickerOpen(true)} className="w-full flex items-center justify-between px-3 sm:px-4 py-3 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl hover:border-[#d4b8a8] transition-colors">
+                            <span className="font-medium text-sm sm:text-base text-gray-900 pr-2 break-words">{formatDuration(duration)}</span>
                             <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                             </svg>
@@ -918,8 +918,8 @@ export function CreateChallengeModal({
                                     </span>
                                 </span>
                             </div>
-                            <button onClick={() => setIsDatePickerOpen(true)} className="w-full flex items-center justify-between px-4 py-3 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl hover:border-[#d4b8a8] transition-colors">
-                                <span className="font-medium text-gray-900">{formatDate(selectedDate)}</span>
+                            <button onClick={() => setIsDatePickerOpen(true)} className="w-full flex items-center justify-between px-3 sm:px-4 py-3 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl hover:border-[#d4b8a8] transition-colors gap-2">
+                                <span className="font-medium text-sm sm:text-base text-gray-900 break-words text-left">{formatDate(selectedDate)}</span>
                                 <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                 </svg>
@@ -952,13 +952,13 @@ export function CreateChallengeModal({
                     )}
 
                     {/* summary section - adapts to sports vs non-sports */}
-                    <div className="text-center py-2">
+                    <div className="text-center py-2 px-1 sm:px-2">
                         {isSportsSelected ? (
-                            <p className="text-gray-700">
+                            <p className="text-sm sm:text-base text-gray-700 break-words">
                                 You win <span className="font-bold text-gray-900">${(betAmount * 2 * 0.975).toFixed(4)}</span> if your statement is correct
                             </p>
                         ) : (
-                            <p className="text-gray-700">
+                            <p className="text-sm sm:text-base text-gray-700 break-words">
                                 You win <span className="font-bold text-gray-900">${(betAmount * 2 * 0.975).toFixed(4)}</span> if ${selectedChildMarket?.symbol} closes {predictionDirection.toLowerCase()} ${Number(predictionPrice).toLocaleString()} in {formatDuration(duration)}
                             </p>
                         )}

@@ -20,6 +20,7 @@ export default function Navbar() {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+    const [isMobileViewport, setIsMobileViewport] = useState(false);
     const [editUsername, setEditUsername] = useState("");
     const [editBio, setEditBio] = useState("");
     const [editProfileIndex, setEditProfileIndex] = useState(0);
@@ -44,12 +45,10 @@ export default function Navbar() {
     }, [setCurrentUser, setUser, setUserProfileData]);
 
     const handleAuth = () => {
-        console.log('[Navbar] handleAuth called - login() invoked');
         login();
     };
 
     const handleLogout = () => {
-        console.log('[Navbar] handleLogout called - logout() invoked');
         setHasCalledCreateUser(false);
         latestFetchedWalletRef.current = null;
         setCurrentUser(null);
@@ -101,7 +100,7 @@ export default function Navbar() {
             applyUserToNavbarState(userData);
             return userData;
         } catch (error) {
-            console.log('[Navbar] Could not fetch user profile data:', error);
+            console.error('[Navbar] Could not fetch user profile data:', error);
             setCurrentUser(null);
             setUserProfileData(null);
             return null;
@@ -208,13 +207,11 @@ export default function Navbar() {
             };
             await updateUser(existingUser.id, updatedData);
             updateStoreUser(updatedData);
-            console.log('[Navbar] Profile updated successfully');
 
             // Handle referral if there's an invite code
             if (referralCode) {
                 try {
                     await acceptReferral(publicKey.toBase58(), referralCode);
-                    console.log('[Navbar] Referral accepted successfully');
                 } catch (referralError) {
                     console.error('[Navbar] Failed to accept referral:', referralError);
                 }
@@ -244,7 +241,7 @@ export default function Navbar() {
                     setEditBio(existingUser.description || "");
                     setEditProfileIndex(existingUser.profile_image ? parseInt(existingUser.profile_image.match(/profiles\/(\d+)\.svg/)?.[1] || '1') - 1 : 0);
                 } catch (error) {
-                    console.log('[Navbar] Could not fetch existing user data:', error);
+                    console.error('[Navbar] Could not fetch existing user data:', error);
                     setEditUsername(username || "");
                 }
                 // Pre-fill invite code from URL if available
@@ -260,22 +257,13 @@ export default function Navbar() {
         const handleEnsureUser = async () => {
             // Wait forPrivy to be ready, user to be authenticated, and wallet to be connected
             if (!ready || !authenticated || !publicKey || hasCalledCreateUser) {
-                console.log('[Navbar] ensureUser skipped:', {
-                    ready,
-                    authenticated,
-                    hasUser: !!publicKey,
-                    hasCalledCreateUser
-                });
                 return;
             }
 
             const currentWalletAddress = publicKey?.toBase58();
             if (!currentWalletAddress) {
-                console.log('[Navbar] ensureUser skipped - no wallet address');
                 return;
             }
-
-            console.log('[Navbar] Calling ensureUser for wallet:', currentWalletAddress);
 
             try {
                 const userData = await ensureUserByWallet(currentWalletAddress, {
@@ -283,7 +271,6 @@ export default function Navbar() {
                     username: `user-${currentWalletAddress.slice(0, 8)}`,
                     login_type: user?.email ? 'email' : 'wallet',
                 });
-                console.log('[Navbar] ensureUser success:', userData);
 
                 latestFetchedWalletRef.current = currentWalletAddress;
                 applyUserToNavbarState(userData);
@@ -295,8 +282,6 @@ export default function Navbar() {
                 if (isNewUserCreated) {
                     // New user - show profile modal immediately
                     setIsProfileModalOpen(true);
-                } else {
-                    console.log('[Navbar] Returning user detected, profile modal not shown');
                 }
             } catch (error) {
                 console.error('[Navbar] ensureUser error:', error);
@@ -307,6 +292,15 @@ export default function Navbar() {
 
         handleEnsureUser();
     }, [ready, authenticated, user, hasCalledCreateUser, publicKey, applyUserToNavbarState]);
+
+    useEffect(() => {
+        const mediaQuery = window.matchMedia("(max-width: 767px)");
+        const syncViewport = () => setIsMobileViewport(mediaQuery.matches);
+        syncViewport();
+
+        mediaQuery.addEventListener("change", syncViewport);
+        return () => mediaQuery.removeEventListener("change", syncViewport);
+    }, []);
 
     // Helper function to check if link is active
     const isActive = (href: string) => {
@@ -323,7 +317,7 @@ export default function Navbar() {
     return (
         <>
             {/* Development Mode Banner */}
-            <div className="fixed top-0 left-0 right-0 z-[60] bg-amber-100 border-b border-amber-300">
+            <div className="fixed top-0 left-0 right-0 z-[30] bg-amber-100 border-b border-amber-300">
                 <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-center gap-2">
                     <svg
                         className="w-4 h-4 text-amber-700 flex-shrink-0"
@@ -348,7 +342,7 @@ export default function Navbar() {
             </div>
 
             {/* Main Navbar - Sticky at top */}
-            <nav className="fixed top-0 left-0 right-0 z-50 bg-[#f3e1d7] border-b border-white-100 pt-8">
+            <nav className="fixed top-8 left-0 right-0 z-[40] bg-[#f3e1d7] border-b border-white-100">
                 <div className="max-w-7xl mx-auto px-6 lg:px-8">
                     <div className="flex items-center justify-between h-20">
                         {/* Brand / Logo */}
@@ -376,8 +370,10 @@ export default function Navbar() {
                             onLogout={handleLogout}
                             onMouseEnterDropdown={() => setIsDropdownOpen(true)}
                             onMouseLeaveDropdown={() => setIsDropdownOpen(false)}
+                            onToggleDropdown={() => setIsDropdownOpen((prev) => !prev)}
                             onOpenDeposit={() => setIsDepositModalOpen(true)}
                             profileHref={profileHref}
+                            isMobileViewport={isMobileViewport}
                         />
                     </div>
                 </div>
@@ -392,7 +388,7 @@ export default function Navbar() {
             {/* Click outside to close dropdown */}
             {isDropdownOpen && (
                 <div
-                    className="fixed inset-0 z-40"
+                    className="fixed inset-0 z-[35]"
                     onClick={() => setIsDropdownOpen(false)}
                 />
             )}
