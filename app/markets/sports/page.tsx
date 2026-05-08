@@ -58,7 +58,8 @@ export default function SportsPage() {
                 {/* Cards */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 max-w-5xl mx-auto">
                     {sports.map((sport) => (
-                        <div
+                        <Link
+                            href={`/markets/sports/${sport.slug}`}
                             key={sport.id}
                             className="bg-[#f8ede7] rounded-2xl p-5 shadow-sm border border-gray-400 hover:shadow-lg transition-all duration-300"
                         >
@@ -144,16 +145,14 @@ export default function SportsPage() {
                                         available
                                     </span>
                                 </div>
-                                <Link href={`/markets/sports/${sport.slug}`}>
                                 <button
-                                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#246044] hover:bg-[#2b7351] text-white font-bold text-sm shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all"
+                                    className="cursor-pointer inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#246044] hover:bg-[#2b7351] text-white font-bold text-sm shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all"
                                 >
                                     <span>Explore Markets</span>
                                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                                 </button>
-                                </Link>
                             </div>
-                        </div>
+                        </Link>
                     ))}
                 </div>
             </div>
