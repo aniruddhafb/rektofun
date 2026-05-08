@@ -21,26 +21,7 @@ interface MarketCardData {
     id: string;
     name: string;
     icon: string;
-    available: number;
     challenges: ChallengeListItem[];
-    totalTraders: number;
-    totalVolume: string;
-}
-
-function formatCompactNumber(value: number) {
-    return new Intl.NumberFormat("en-US", {
-        notation: "compact",
-        maximumFractionDigits: 1,
-    }).format(value);
-}
-
-function formatCurrency(value: number) {
-    return new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-        notation: "compact",
-        maximumFractionDigits: 1,
-    }).format(value);
 }
 
 function mapMarketToCardData(
@@ -54,18 +35,11 @@ function mapMarketToCardData(
     });
     const latestChallenges = sortedChallenges.slice(0, 4);
 
-    const totalTraders = latestChallenges.reduce((sum, challenge) => {
-        return sum + challenge.total_challengers + challenge.total_opponents;
-    }, 0);
-
     return {
         id: market.id,
         name: market.name,
         icon: market.icon || market.image || "/scribbles/coins.png",
-        available: latestChallenges.length,
         challenges: latestChallenges,
-        totalTraders,
-        totalVolume: formatCurrency(market.total_volume ?? 0),
     };
 }
 
@@ -438,35 +412,9 @@ export default function MarketsPage() {
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center justify-between text-xs text-gray-600 border-t border-white/30 pt-3">
-                                        <div className="flex flex-col">
-                                            <span className="font-semibold text-gray-900">
-                                                {market.available}
-                                            </span>
-                                            <span>Challenges</span>
-                                        </div>
-                                        <div className="flex flex-col items-center">
-                                            <span className="font-semibold text-gray-900">
-                                                {formatCompactNumber(market.totalTraders)}
-                                            </span>
-                                            <span>Traders</span>
-                                        </div>
-                                        <div className="flex flex-col items-end">
-                                            <span className="font-semibold text-gray-900">
-                                                {market.totalVolume}
-                                            </span>
-                                            <span>24H Volume</span>
-                                        </div>
-                                        <div className="flex flex-col items-end">
-                                            <span className="font-semibold text-gray-900">
-                                                {market.totalVolume}
-                                            </span>
-                                            <span>7D Volume</span>
-                                        </div>
-                                    </div>
                                 </div>
 
-                                <Link href={`/markets/crypto/${market.name}`}>
+                                <Link href={`/markets/sports/${slug}/${market.name}`}>
                                     <button className="cursor-pointer w-full py-2.5 sm:py-3 bg-[#0d9b62] hover:bg-[#11a76b] border border-gray-700 text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-2 group text-sm sm:text-base">
                                         View Challenges
                                         <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
