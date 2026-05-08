@@ -82,6 +82,7 @@ export function NavbarDesktopSearch({
     const [clanResults, setClanResults] = useState<SearchClan[]>([]);
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const requestIdRef = useRef(0);
+    const hasInitializedOpenStateRef = useRef(false);
 
     const hasQuery = query.trim().length > 0;
 
@@ -118,16 +119,20 @@ export function NavbarDesktopSearch({
 
         try {
             const [challengesRes, usersRes, clans] = await Promise.all([
-                getChallenges({ limit: 3, sort: "latest" }),
-                getLeaderboard(5, 0),
-                fetchClans(),
+                getChallenges({ limit: 3, sort: "latest" }).catch(() => null),
+                getLeaderboard(5, 0).catch(() => null),
+                fetchClans().catch(() => null),
             ]);
 
             if (requestIdRef.current !== reqId) return;
 
-            setChallengeResults((challengesRes.challenges ?? []).slice(0, 3));
-            setUserResults((usersRes.users ?? []).slice(0, 5));
-            setClanResults(clans.slice(0, 5));
+            setChallengeResults((challengesRes?.challenges ?? []).slice(0, 3));
+            setUserResults((usersRes?.users ?? []).slice(0, 5));
+            setClanResults((clans ?? []).slice(0, 5));
+
+            if (!challengesRes && !usersRes && !clans) {
+                setError("Could not load search results.");
+            }
         } catch {
             if (requestIdRef.current !== reqId) return;
             setError("Could not load search results.");
@@ -153,20 +158,24 @@ export function NavbarDesktopSearch({
 
         try {
             const [challengesRes, usersRes, clans] = await Promise.all([
-                getChallenges({ search: nextQuery, limit: 3, sort: "latest" }),
-                getLeaderboard(5, 0, nextQuery),
-                fetchClans(),
+                getChallenges({ search: nextQuery, limit: 3, sort: "latest" }).catch(() => null),
+                getLeaderboard(5, 0, nextQuery).catch(() => null),
+                fetchClans().catch(() => null),
             ]);
 
             if (requestIdRef.current !== reqId) return;
 
-            const filteredClans = clans
+            const filteredClans = (clans ?? [])
                 .filter((clan) => clan.clan_name.toLowerCase().includes(nextQuery.toLowerCase()))
                 .slice(0, 5);
 
-            setChallengeResults((challengesRes.challenges ?? []).slice(0, 3));
-            setUserResults((usersRes.users ?? []).slice(0, 5));
+            setChallengeResults((challengesRes?.challenges ?? []).slice(0, 3));
+            setUserResults((usersRes?.users ?? []).slice(0, 5));
             setClanResults(filteredClans);
+
+            if (!challengesRes && !usersRes && !clans) {
+                setError("Could not fetch search results. Please try again.");
+            }
         } catch {
             if (requestIdRef.current !== reqId) return;
             setError("Could not fetch search results. Please try again.");
@@ -236,7 +245,14 @@ export function NavbarDesktopSearch({
     const cardSkeletons = Array.from({ length: 5 });
 
     useEffect(() => {
-        if (!isModalOpen) return;
+        if (!isModalOpen) {
+            hasInitializedOpenStateRef.current = false;
+            return;
+        }
+
+        if (hasInitializedOpenStateRef.current) return;
+
+        hasInitializedOpenStateRef.current = true;
         setQuery(searchQuery);
         setActiveTab("all");
         void loadInitialResults();
@@ -386,7 +402,7 @@ export function NavbarDesktopSearch({
                                     )}
                                 </>
                             )}
-                            {error && (
+                            {!isLoading && error && (
                                 <div className="px-4 md:px-8 pt-6">
                                     <p className="text-sm text-red-600">{error}</p>
                                     <button
@@ -398,7 +414,7 @@ export function NavbarDesktopSearch({
                                     </button>
                                 </div>
                             )}
-                            {emptyState && (
+                            {!isLoading && emptyState && (
                                 <div className="px-4 md:px-6 py-10 md:py-12">
                                     <div className="mx-auto max-w-md rounded-2xl border border-[#f0dfd2] bg-white/80 px-6 py-10 text-center">
                                         <p className="text-base font-semibold text-[#334155]">No results found</p>
@@ -409,7 +425,7 @@ export function NavbarDesktopSearch({
                                 </div>
                             )}
 
-                            {showChallenges && challengeResults.length > 0 && (
+                            {!isLoading && showChallenges && challengeResults.length > 0 && (
                                 <section className="px-4 md:px-6 py-4 border-b border-[#f0dfd2]">
                                     <div className="mb-4 flex items-center justify-between">
                                         <h3 className="text-lg md:text-xl font-semibold text-[#1e293b]">Challenges</h3>
@@ -454,7 +470,7 @@ export function NavbarDesktopSearch({
                                 </section>
                             )}
 
-                            {showUsers && userResults.length > 0 && (
+                            {!isLoading && showUsers && userResults.length > 0 && (
                                 <section className="px-4 md:px-6 py-4 border-b border-[#f0dfd2]">
                                     <div className="mb-4 flex items-center justify-between">
                                         <h3 className="text-lg md:text-xl font-semibold text-[#1e293b]">Users</h3>
@@ -485,7 +501,7 @@ export function NavbarDesktopSearch({
                                 </section>
                             )}
 
-                            {showClans && clanResults.length > 0 && (
+                            {!isLoading && showClans && clanResults.length > 0 && (
                                 <section className="px-4 md:px-6 py-4">
                                     <div className="mb-4 flex items-center justify-between">
                                         <h3 className="text-lg md:text-xl font-semibold text-[#1e293b]">Clans</h3>
@@ -505,7 +521,7 @@ export function NavbarDesktopSearch({
                                                     </div>
                                                     <div className="min-w-0">
                                                         <p className="truncate text-sm font-semibold text-[#0f172a]">{clan.clan_name}</p>
-                                                        <p className="text-sm text-[#64748b]">Members {(clan.clan_members?.length ?? 0)}</p>
+                                                        <p className="text-sm text-[#64748b]">Members: {(clan.clan_members?.length ?? 0)}</p>
                                                         <p className="text-xs text-[#64748b]">{clan.clan_status === "public" ? "Open" : "Invite Only"}</p>
                                                     </div>
                                                 </div>

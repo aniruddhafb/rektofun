@@ -11,12 +11,13 @@ interface CreateClanModalProps {
     onClose: () => void;
     onClanCreated?: () => void;
     userId?: string;
+    hasCreatedClan?: boolean;
 }
 
 // Clan logo options from earningrecords.com
 const CLAN_LOGOS = Array.from({ length: 14 }, (_, i) => `https://earningrecords.com/assets/rektofun/clans/${i + 1}.webp`);
 
-export function CreateClanModal({ isOpen, onClose, onClanCreated, userId }: CreateClanModalProps) {
+export function CreateClanModal({ isOpen, onClose, onClanCreated, userId, hasCreatedClan = false }: CreateClanModalProps) {
     const [clanName, setClanName] = useState("");
     const [clanDescription, setClanDescription] = useState("");
     const [maxMembers, setMaxMembers] = useState(10);
@@ -34,6 +35,10 @@ export function CreateClanModal({ isOpen, onClose, onClanCreated, userId }: Crea
         e.preventDefault();
         if (!userId) {
             setSubmitError("Please log in to create a clan");
+            return;
+        }
+        if (hasCreatedClan) {
+            setSubmitError("You already have created one clan");
             return;
         }
         if (hasBlockedContent(clanName)) {

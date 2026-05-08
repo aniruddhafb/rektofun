@@ -14,6 +14,7 @@ interface AcceptChallengeModalProps {
     escrowAddress?: string;
     resolveCountdown: string;
     resolveLabel: string;
+    resolutionSource?: string;
     isPoolMode: boolean;
     joinSide: "challenger" | "opponent";
     onClose: () => void;
@@ -36,6 +37,7 @@ export function AcceptChallengeModal({
     escrowAddress,
     resolveCountdown,
     resolveLabel,
+    resolutionSource,
     isPoolMode,
     joinSide,
     onClose,
@@ -44,6 +46,7 @@ export function AcceptChallengeModal({
     onJoinSideChange,
 }: AcceptChallengeModalProps) {
     if (!isOpen) return null;
+    const isPriceFeedResolution = String(resolutionSource ?? "").toLowerCase() === "price_feed";
 
     const parsedBet = Number(betInput);
     const isValidNumber = Number.isFinite(parsedBet) && parsedBet > 0;
@@ -132,7 +135,7 @@ export function AcceptChallengeModal({
                                 />
                             </div>
                             <div>
-                                <h3 className="mt-2 text-2xl font-black leading-tight text-[#171411] sm:mt-3 sm:text-3xl">Accept Challenge</h3>
+                                <h3 className="mt-2 text-2xl font-black leading-tight text-[#171411] sm:mt-3 sm:text-3xl">Counter This Challenge</h3>
                                 <p className="mt-1.5 text-sm text-[#6f6a63] sm:mt-2">Confirm your bet to join this prediction battle.</p>
                                 {isPoolMode ? (
                                     <div className="mt-3 space-y-2 sm:mt-4">
@@ -198,9 +201,15 @@ export function AcceptChallengeModal({
                         <div className="flex items-center gap-3">
                             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 text-lg">⏱️</div>
                             <div>
-                                <p className="text-xs font-medium text-gray-900">Challenge resolves in</p>
-                                <p className="text-2xl font-bold text-[#1f1b16]">{resolveCountdown}</p>
-                                <p className="text-xs text-gray-900">{resolveLabel}</p>
+                                <p className="text-xs font-medium text-gray-900">
+                                    {isPriceFeedResolution ? "Challenge resolves in" : "Challenge resolves on"}
+                                </p>
+                                <p className="text-2xl font-bold text-[#1f1b16]">
+                                    {isPriceFeedResolution ? resolveCountdown : "Match day"}
+                                </p>
+                                <p className="text-xs text-gray-900">
+                                    {isPriceFeedResolution ? resolveLabel : "community resolves this after match ends"}
+                                </p>
                             </div>
                         </div>
                         <div className="flex items-center gap-3 border-t border-[#eee2d8] pt-3 md:border-l md:border-t-0 md:pl-4 md:pt-0">

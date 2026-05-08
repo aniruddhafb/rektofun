@@ -31,6 +31,7 @@ export interface ChallengeListItem {
   id: string;
   title: string;
   mode: string;
+  resolution_source?: string | null;
   initial_bet: number;
   target_price?: number;
   min_accept_bet?: number;
@@ -248,6 +249,7 @@ export interface CreateChallengeParams {
   category: string;
   event_type: string;
   ticker: string;
+  asset_name: string;
   created_by: string;
   mode: string;
   initial_bet: number;

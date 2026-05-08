@@ -142,7 +142,7 @@ function truncateProfileName(name: string | null | undefined, maxLen = 6): strin
 
 function formatWalletAddress(address: string | null | undefined): string {
     const safeAddress = (address || "").trim();
-    if (!safeAddress) return "Wallet unavailable";
+    if (!safeAddress) return "";
     if (safeAddress.length <= 12) return safeAddress;
     return `${safeAddress.slice(0, 4)}...${safeAddress.slice(-4)}`;
 }
@@ -623,6 +623,7 @@ export function ChallengeCard({
     const isCreator = user?.wallet_address === creator.wallet_address;
     const isPvpMode = challenge.mode !== "pool";
     const isPoolMode = challenge.mode === "pool";
+    const isManualResolution = String(challenge.resolution_source ?? "").toLowerCase() === "manual";
     const totalOpponents = Number(challenge.total_opponents ?? 0);
     const hasOpponents = totalOpponents > 0;
     const isExpireTimeAchieved = Boolean(expiryTimestamp && expiryTimestamp <= currentTime);
@@ -648,9 +649,9 @@ export function ChallengeCard({
     const activeCtaClassName =
         `${ctaBaseClassName} cursor-pointer bg-[#246044] hover:bg-[#2b7351] text-white shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all disabled:opacity-70 disabled:cursor-not-allowed`;
     const activePvpCtaClassName =
-        `${ctaBaseClassName} cursor-pointer bg-[#0c9d63] hover:bg-[#0a7d4f] border border-gray-500 text-white shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all disabled:opacity-70 disabled:cursor-not-allowed`;
+        `${ctaBaseClassName} cursor-pointer bg-[#0c9d63] opacity-80 hover:bg-[#0a7d4f] border border-gray-500 text-white shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all disabled:opacity-70 disabled:cursor-not-allowed`;
     const ongoingCtaClassName =
-        `${ctaBaseClassName} cursor-not-allowed bg-[#09905a] border border-gray-500 text-white shadow-lg`;
+        `${ctaBaseClassName} cursor-not-allowed bg-[#008080] opacity-70 border border-gray-500 text-white shadow-lg`;
     const expiredCtaClassName =
         `${ctaBaseClassName} bg-red-100 border border-red-300 text-red-700 shadow-sm cursor-not-allowed`;
     const resolvingCtaClassName =
@@ -676,7 +677,7 @@ export function ChallengeCard({
             ctaDisabled = true;
             ctaClassName = expiredCtaClassName;
         } else {
-            ctaLabel = "ACCEPT CHALLENGE ⚔️";
+            ctaLabel = "COUNTER ⚔️";
             ctaDisabled = isLoading || isCreator;
             ctaClassName = activePvpCtaClassName;
         }
@@ -704,7 +705,7 @@ export function ChallengeCard({
         }
     }
     const isOngoingCta = ctaLabel.startsWith("ONGOING");
-    const showCreatorCtaHoverHint = isCreator && ctaLabel === "ACCEPT CHALLENGE";
+    const showCreatorCtaHoverHint = isCreator && ctaLabel === "COUNTER";
     const isBattleOnState = !isResolveTimeAchieved && hasOpponents;
     const isChallengeExpiredState = isExpireTimeAchieved && !hasOpponents;
     const isResolvingState = isResolveTimeAchieved && hasOpponents && isResolutionPending;
@@ -721,14 +722,14 @@ export function ChallengeCard({
                     ? "Challenge expired"
                     : "Challenge expires in";
     const expiryTooltipText = isCompletedState
-        ? "This challenge has been resolved and marked completed."
+        ? "this challenge has been resolved and marked completed."
         : isResolvingState
-            ? "Resolve time has been reached and this challenge is currently resolving."
+            ? "resolve time has been reached and this challenge is currently resolving."
             : isBattleOnState
-                ? `Opponents have joined and the battle is live. It resolves in ${endsByCountdown}.`
+                ? `max opponents have joined and the battle is live. It resolves in ${endsByCountdown}.`
                 : isChallengeExpiredState
-                    ? "Expire time was reached before anyone joined, so this challenge is expired."
-                    : `No opponents yet. This challenge will expire in ${timeRemaining} if nobody joins.`;
+                    ? "expire time was reached before anyone joined, so this challenge is expired."
+                    : `no opponents yet. This challenge will expire in ${timeRemaining} if nobody joins.`;
 
     return (
         <>
@@ -747,7 +748,14 @@ export function ChallengeCard({
                         />
                         <div>
                             <h3 className="text-gray-900 leading-tight">
-                                {isResolveTimeAchieved ? (
+                                {isManualResolution ? (
+                                    <span
+                                        onClick={handleClick}
+                                        className="block text-[16px] font-bold tracking-tight cursor-pointer"
+                                    >
+                                        {title}
+                                    </span>
+                                ) : isResolveTimeAchieved ? (
                                     <span
                                         onClick={handleClick}
                                         className="block text-[16px] font-bold tracking-tight cursor-pointer"
@@ -791,8 +799,8 @@ export function ChallengeCard({
                     <button
                         type="button"
                         onClick={handleBookmarkClick}
-                        aria-label={isBookmarked ? "Remove bookmark" : "Add bookmark"}
-                        title={isBookmarked ? "Remove bookmark" : "Add bookmark"}
+                        aria-label={isBookmarked ? "Remove Pin" : "Pin this"}
+                        title={isBookmarked ? "Remove pin" : "Pin this"}
                         className="cursor-pointer p-2 bg-white/50 hover:bg-white/20 border border-gray-400 hover:text-gray-500 rounded-lg transition-colors"
                     >
                         <svg className="w-5 h-5 text-black rotate-45" stroke="currentColor" viewBox="0 0 24 24" fill={isBookmarked ? "currentColor" : "none"}>
@@ -891,8 +899,8 @@ export function ChallengeCard({
                                             ? "border-red-300 bg-gradient-to-br from-red-100 to-rose-50 text-red-700 hover:from-red-200 hover:to-rose-100"
                                             : "border-[#d4a574]/40 bg-white/90 text-[#2d1f1a] hover:bg-white"
                                         }`}
-                                    aria-label="Accept challenge"
-                                    title="Accept challenge"
+                                    aria-label="counter"
+                                    title="counter"
                                 >
                                     +
                                 </button>
@@ -932,13 +940,6 @@ export function ChallengeCard({
                                     </div>
                                     <p className="text-sm font-bold text-emerald-600">{poolDisplay}</p>
                                 </div>
-                                {hasWon || hasLost ? (
-                                    <div className="mt-1 text-center">
-                                        <p className={`text-lg font-black ${hasWon ? "text-amber-500" : "text-red-500"}`}>
-                                            {hasWon ? "+" : "-"}{betAmount} {betCurrency}
-                                        </p>
-                                    </div>
-                                ) : null}
                             </>
                         </div>
 
@@ -1001,8 +1002,8 @@ export function ChallengeCard({
                                                 ? "border-red-300 bg-gradient-to-br from-red-100 to-rose-50 text-red-700 hover:from-red-200 hover:to-rose-100"
                                                 : "border-[#d4a574]/40 bg-white/90 text-[#2d1f1a] hover:bg-white"
                                             }`}
-                                        aria-label="Accept challenge"
-                                        title="Accept challenge"
+                                        aria-label="counter"
+                                        title="counter"
                                     >
                                         +
                                     </button>
@@ -1037,8 +1038,8 @@ export function ChallengeCard({
                                                     ? "border-red-300 bg-gradient-to-br from-red-100 to-rose-50 text-red-700 hover:from-red-200 hover:to-rose-100"
                                                     : "border-[#d4a574]/40 bg-white/90 text-[#2d1f1a] hover:bg-white"
                                                 }`}
-                                            aria-label="Accept challenge"
-                                            title="Accept challenge"
+                                            aria-label="counter"
+                                            title="counter"
                                         >
                                             +
                                         </button>
@@ -1083,6 +1084,7 @@ export function ChallengeCard({
                     escrowAddress={escrowAddress}
                     resolveCountdown={exactCountdownDetails.exactCountdown}
                     resolveLabel={exactCountdownDetails.dayLabel}
+                    resolutionSource={challenge.resolution_source ?? undefined}
                     isPoolMode={isPoolMode}
                     joinSide={joinSide}
                     onClose={() => closeBetForm()}
@@ -1112,7 +1114,7 @@ export function ChallengeCard({
                                 : isResolvingState
                                     ? "text-amber-700"
                                     : isBattleOnState
-                                        ? "text-emerald-700"
+                                        ? "text-[#008080]"
                                         : "text-red-600"
                                 }`}
                         >
