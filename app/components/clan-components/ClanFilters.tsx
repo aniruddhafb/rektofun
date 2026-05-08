@@ -54,36 +54,36 @@ export function ClanFilters({
 
     return (
         <div className="max-w-7xl mx-auto pb-8">
-            <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center">
+            <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 items-stretch lg:items-center">
                 {/* Search Input */}
                 <div className="relative w-full lg:flex-1 lg:max-w-md">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <input
                         type="text"
                         placeholder="Search clans..."
                         value={search}
                         onChange={(e) => onSearchChange(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 bg-white/50 rounded-full text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                        className="w-full pl-10 pr-4 py-3 sm:py-2.5 bg-white/60 rounded-2xl sm:rounded-full text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
                     />
                 </div>
 
-                {/* Dropdowns - Side by side on all screen sizes */}
-                <div className="flex flex-row gap-3 items-center">
+                {/* Dropdowns */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-stretch w-full lg:w-auto">
                     {/* Type Dropdown */}
-                    <div className="relative" ref={filterDropdownRef}>
+                    <div className="relative w-full min-w-0" ref={filterDropdownRef}>
                         <button
                             onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
-                            className="cursor-pointer flex items-center gap-2 px-3 py-2 bg-white/50 rounded-full text-sm text-gray-700 hover:bg-white/70 transition-colors justify-between flex-1"
+                            className="w-full cursor-pointer flex items-center gap-2 px-4 py-3 sm:py-2.5 bg-white/60 rounded-2xl sm:rounded-full text-sm text-gray-700 hover:bg-white/80 transition-colors justify-between border border-gray-300"
                         >
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 min-w-0">
                                 <span>{typeOptions.find((o) => o.label === filterType)?.icon}</span>
-                                <span>{filterType}</span>
+                                <span className="truncate">{filterType}</span>
                             </div>
-                            <ChevronDown className={`w-4 h-4 transition-transform ${isFilterDropdownOpen ? "rotate-180" : ""}`} />
+                            <ChevronDown className={`w-4 h-4 shrink-0 transition-transform ${isFilterDropdownOpen ? "rotate-180" : ""}`} />
                         </button>
 
                         {isFilterDropdownOpen && (
-                            <div className="absolute left-0 sm:right-0 top-full mt-2 w-full sm:w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-10">
+                            <div className="absolute left-0 top-full mt-2 w-full sm:min-w-[14rem] sm:w-auto bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-20 max-h-64 overflow-y-auto">
                                 {typeOptions.map((option) => (
                                     <button
                                         key={option.label}
@@ -91,13 +91,13 @@ export function ClanFilters({
                                             onFilterTypeChange(option.label);
                                             setIsFilterDropdownOpen(false);
                                         }}
-                                        className={`w-full cursor-pointer flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors ${filterType === option.label
+                                        className={`w-full cursor-pointer flex items-center gap-3 px-4 py-3 text-sm text-left transition-colors ${filterType === option.label
                                             ? "text-black font-semibold"
                                             : "text-gray-700 hover:bg-gray-50"
                                             }`}
                                     >
                                         {option.icon}
-                                        {option.label}
+                                        <span className="truncate">{option.label}</span>
                                     </button>
                                 ))}
                             </div>
@@ -105,20 +105,20 @@ export function ClanFilters({
                     </div>
 
                     {/* Sort Dropdown */}
-                    <div className="relative" ref={sortDropdownRef}>
+                    <div className="relative w-full min-w-0" ref={sortDropdownRef}>
                         <button
                             onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
-                            className="cursor-pointer flex items-center gap-2 px-3 py-2 bg-white/50 rounded-full text-sm text-gray-700 hover:bg-white/70 transition-colors justify-between flex-1"
+                            className="w-full cursor-pointer flex items-center gap-2 px-4 py-3 sm:py-2.5 bg-white/60 rounded-2xl sm:rounded-full text-sm text-gray-700 hover:bg-white/80 transition-colors justify-between border border-gray-300"
                         >
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 min-w-0">
                                 <span>{sortOptions.find((o) => o.label === sortBy)?.icon}</span>
-                                <span>Sort: {sortBy}</span>
+                                <span className="truncate">Sort: {sortBy}</span>
                             </div>
-                            <ChevronDown className={`w-4 h-4 transition-transform ${isSortDropdownOpen ? "rotate-180" : ""}`} />
+                            <ChevronDown className={`w-4 h-4 shrink-0 transition-transform ${isSortDropdownOpen ? "rotate-180" : ""}`} />
                         </button>
 
                         {isSortDropdownOpen && (
-                            <div className="absolute left-0 sm:right-0 top-full mt-2 w-full sm:w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-10">
+                            <div className="absolute left-0 top-full mt-2 w-full sm:min-w-[14rem] sm:w-auto bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-20 max-h-64 overflow-y-auto">
                                 {sortOptions.map((option) => (
                                     <button
                                         key={option.label}
@@ -126,13 +126,13 @@ export function ClanFilters({
                                             onSortByChange(option.label);
                                             setIsSortDropdownOpen(false);
                                         }}
-                                        className={`w-full cursor-pointer flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors ${sortBy === option.label
+                                        className={`w-full cursor-pointer flex items-center gap-3 px-4 py-3 text-sm text-left transition-colors ${sortBy === option.label
                                             ? "text-black font-semibold"
                                             : "text-gray-700 hover:bg-gray-50"
                                             }`}
                                     >
                                         {option.icon}
-                                        {option.label}
+                                        <span className="truncate">{option.label}</span>
                                     </button>
                                 ))}
                             </div>

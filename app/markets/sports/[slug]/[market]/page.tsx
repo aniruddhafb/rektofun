@@ -2,13 +2,12 @@
 
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
-import { CreateChallengeModal } from "../../../components/challenge-components/CreateChallengeModal";
-import { MarketHeader } from "../../../components/market-slug-components/MarketHeader";
-import { ChartSection } from "../../../components/market-slug-components/ChartSection";
-import { TopTradersSection } from "../../../components/market-slug-components/TopTradersSection";
-import { FilterBar } from "../../../components/market-slug-components/FilterBar";
-import { LoadingPage } from "../../../components/LoadingPage";
-import { MarketChallengesGrid } from "../../../components/market-slug-components/MarketChallengesGrid";
+import { CreateChallengeModal } from "../../../../components/challenge-components/CreateChallengeModal";
+import { MarketHeader } from "../../../../components/market-slug-components/MarketHeader";
+import { ChartSection } from "../../../../components/market-slug-components/ChartSection";
+import { FilterBar } from "../../../../components/market-slug-components/FilterBar";
+import { LoadingPage } from "../../../../components/LoadingPage";
+import { MarketChallengesGrid } from "../../../../components/market-slug-components/MarketChallengesGrid";
 import ChallengeDetailModal from "@/app/components/challenge-components/ChallengeDetailModal";
 import {
     getChallenges,
@@ -27,13 +26,17 @@ function formatMarketDescription(name: string) {
     return `${name}`;
 }
 
-export default function MarketPage() {
+export default function SportsMarketDetailPage() {
     const CREATE_TOAST_DURATION_MS = 3000;
     const BOOKMARKS_STORAGE_KEY = "rektofun:challenge-bookmarks";
-    const params = useParams<{ slug: string }>();
-    const slugName = useMemo(() => decodeURIComponent(params.slug ?? ""), [params.slug]);
+    const params = useParams<{ slug: string; market: string }>();
+    const sportSlug = useMemo(() => decodeURIComponent(params.slug ?? ""), [params.slug]);
+    const marketSlug = useMemo(
+        () => decodeURIComponent(params.market ?? ""),
+        [params.market]
+    );
+
     const [showChart, setShowChart] = useState(false);
-    const [showTopTraders, setShowTopTraders] = useState(false);
     const [statusOpen, setStatusOpen] = useState(false);
     const [modeOpen, setModeOpen] = useState(false);
     const [selectedStatus, setSelectedStatus] = useState("Latest");
@@ -83,7 +86,7 @@ export default function MarketPage() {
     );
 
     const loadMarketChallenges = async (isMountedCheck?: () => boolean) => {
-        if (!slugName) {
+        if (!sportSlug || !marketSlug) {
             if (!isMountedCheck || isMountedCheck()) {
                 setMarket(null);
                 setChallenges([]);
@@ -98,13 +101,13 @@ export default function MarketPage() {
             setError(null);
 
             const [marketsResponse, challengesResponse] = await Promise.all([
-                getMarkets({ parent_name: "Crypto" }),
-                getChallenges({ category: slugName }),
+                getMarkets({ parent_name: sportSlug.toUpperCase() }),
+                getChallenges({ category: marketSlug }),
             ]);
 
             const matchedMarket =
                 marketsResponse.markets.find(
-                    (item) => item.name.toLowerCase() === slugName.toLowerCase()
+                    (item) => item.name.toLowerCase() === marketSlug.toLowerCase()
                 ) ?? null;
 
             if (!isMountedCheck || isMountedCheck()) {
@@ -136,7 +139,7 @@ export default function MarketPage() {
         return () => {
             isMounted = false;
         };
-    }, [slugName]);
+    }, [sportSlug, marketSlug]);
 
     useEffect(() => {
         if (!showCreateSuccessToast) return;
@@ -157,22 +160,19 @@ export default function MarketPage() {
         };
     }, [showCreateSuccessToast]);
 
-    const marketName = market?.name || slugName || "Market";
-    const marketDescription =
-        market?.description || formatMarketDescription(marketName);
+    const marketName = market?.name || marketSlug || "Market";
+    const marketDescription = market?.description || formatMarketDescription(marketName);
     const marketLogo = market?.icon || market?.image || "/scribbles/coins.png";
 
-    // Filter challenges based on selected status and mode
     const filteredChallenges = useMemo(() => {
         let result = challenges;
 
-        // Filter by status
         if (selectedStatus !== "Latest") {
             const statusMap: Record<string, string> = {
-                "Expired": "cancelled",
+                Expired: "cancelled",
                 "Expiring Soon": "locked",
-                "Ongoing": "open",
-                "Completed": "resolved",
+                Ongoing: "open",
+                Completed: "resolved",
             };
             const mappedStatus = statusMap[selectedStatus];
             if (mappedStatus) {
@@ -180,7 +180,6 @@ export default function MarketPage() {
             }
         }
 
-        // Filter by mode
         if (selectedMode !== "All Modes") {
             const modeValue = selectedMode === "PVP" ? "pvp" : "multi";
             result = result.filter((c) => c.mode?.toLowerCase() === modeValue);
@@ -232,7 +231,6 @@ export default function MarketPage() {
             )}
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
-                {/* header section  */}
                 <MarketHeader
                     marketName={formatMarketTitle(marketName)}
                     marketDescription={marketDescription}
@@ -240,19 +238,8 @@ export default function MarketPage() {
                     onCreateChallenge={() => setIsCreateChallengeOpen(true)}
                 />
 
-                {/* main section  */}
                 <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
                     <div className="flex-1 min-w-0">
-                        <ChartSection
-                            slugName={slugName}
-                            showChart={showChart}
-                            onToggleChart={() => setShowChart(!showChart)}
-                        />
-
-                        {/* <TopTradersSection
-                            showTopTraders={showTopTraders}
-                            onToggleTopTraders={() => setShowTopTraders(!showTopTraders)}
-                        /> */}
 
                         <FilterBar
                             selectedStatus={selectedStatus}

@@ -14,9 +14,11 @@ type NavbarProfileDropdownProps = {
     onClose: () => void;
     onMouseEnter: () => void;
     onMouseLeave: () => void;
+    onToggle: () => void;
     onLogout: () => void;
     onOpenDeposit: () => void;
     profileHref: string;
+    isMobileViewport: boolean;
 };
 
 type MenuActionProps = {
@@ -72,9 +74,11 @@ export function NavbarProfileDropdown({
     onClose,
     onMouseEnter,
     onMouseLeave,
+    onToggle,
     onLogout,
     onOpenDeposit,
     profileHref,
+    isMobileViewport,
 }: NavbarProfileDropdownProps) {
     const balanceDisplay = usdcBalance !== null
         ? `$${usdcBalance.toFixed(2)}`
@@ -82,12 +86,13 @@ export function NavbarProfileDropdown({
     return (
         <div
             className="relative"
-            onMouseEnter={onMouseEnter}
-            onMouseLeave={onMouseLeave}
+            onMouseEnter={isMobileViewport ? undefined : onMouseEnter}
+            onMouseLeave={isMobileViewport ? undefined : onMouseLeave}
         >
             {/* profile display btn  */}
             <button
                 type="button"
+                onClick={isMobileViewport ? onToggle : undefined}
                 className="flex items-center gap-2 p-1 pr-3 rounded-full bg-white/50 border border-gray-400 hover:bg-white/80 transition-all cursor-pointer"
             >
                 {displayProfileImage ? (

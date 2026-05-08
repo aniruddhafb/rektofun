@@ -186,17 +186,17 @@ export default function CategoryPage() {
                             <div className="grid grid-cols-4 divide-x divide-[#e8c8a0]/45">
                                 <div className="flex flex-col items-center gap-0.5 px-1">
                                     <span className="text-[#d4a050]"><BarChartIcon /></span>
-                                    <span className="text-sm sm:text-base font-black text-[#1a1a1a]">124</span>
+                                    <span className="text-sm sm:text-base font-black text-[#1a1a1a]">3</span>
                                     <span className="text-[9px] text-[#8f7e6e] font-semibold uppercase tracking-wide">Markets</span>
                                 </div>
                                 <div className="flex flex-col items-center gap-0.5 px-1">
                                     <span className="text-[#d4a050]"><UsersIcon /></span>
-                                    <span className="text-sm sm:text-base font-black text-[#1a1a1a]">12.5K</span>
+                                    <span className="text-sm sm:text-base font-black text-[#1a1a1a]">15</span>
                                     <span className="text-[9px] text-[#8f7e6e] font-semibold uppercase tracking-wide">Traders</span>
                                 </div>
                                 <div className="flex flex-col items-center gap-0.5 px-1">
                                     <span className="text-[#d4a050]"><CoinsIcon /></span>
-                                    <span className="text-sm sm:text-base font-black text-[#1a1a1a]">$12.4M</span>
+                                    <span className="text-sm sm:text-base font-black text-[#1a1a1a]">$344</span>
                                     <span className="text-[9px] text-[#8f7e6e] font-semibold uppercase tracking-wide">24H Vol</span>
                                 </div>
                                 <div className="flex flex-col items-center gap-0.5 px-1">
@@ -324,17 +324,17 @@ export default function CategoryPage() {
                             <div className="grid grid-cols-4 divide-x divide-[#bfd0c3]/60">
                                 <div className="flex flex-col items-center gap-0.5 px-1">
                                     <span className="text-[#5d7766]"><TrophyIcon /></span>
-                                    <span className="text-sm sm:text-base font-black text-[#1a1a1a]">98</span>
+                                    <span className="text-sm sm:text-base font-black text-[#1a1a1a]">2</span>
                                     <span className="text-[9px] text-[#8f7e6e] font-semibold uppercase tracking-wide">Markets</span>
                                 </div>
                                 <div className="flex flex-col items-center gap-0.5 px-1">
                                     <span className="text-[#5d7766]"><UsersIcon /></span>
-                                    <span className="text-sm sm:text-base font-black text-[#1a1a1a]">8.7K</span>
+                                    <span className="text-sm sm:text-base font-black text-[#1a1a1a]">31</span>
                                     <span className="text-[9px] text-[#8f7e6e] font-semibold uppercase tracking-wide">Traders</span>
                                 </div>
                                 <div className="flex flex-col items-center gap-0.5 px-1">
                                     <span className="text-[#5d7766]"><CoinsIcon /></span>
-                                    <span className="text-sm sm:text-base font-black text-[#1a1a1a]">$8.3M</span>
+                                    <span className="text-sm sm:text-base font-black text-[#1a1a1a]">$211</span>
                                     <span className="text-[9px] text-[#8f7e6e] font-semibold uppercase tracking-wide">24H Vol</span>
                                 </div>
                                 <div className="flex flex-col items-center gap-0.5 px-1">

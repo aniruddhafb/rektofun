@@ -63,18 +63,14 @@ export function ProfileHeader({
         ? `${walletAddress.slice(0, 8)}...${walletAddress.slice(-8)}`
         : walletAddress;
 
-    const truncatedUsername = username.length > 18
-        ? `${username.slice(0, 8)}...`
-        : username;
-
     return (
-        <div className="flex flex-col lg:flex-row lg:items-stretch gap-6 p-6 bg-white/40 backdrop-blur-xl rounded-3xl border border-gray-400 shadow-lg">
+        <div className="flex flex-col lg:flex-row lg:items-stretch gap-4 sm:gap-6 lg:gap-8 p-4 sm:p-6 bg-white/40 backdrop-blur-xl rounded-2xl sm:rounded-3xl border border-gray-400 shadow-lg items-start">
             {/* Left: Avatar and Info */}
-            <div className="flex flex-col sm:flex-row gap-5 sm:gap-6 flex-1">
+            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 lg:gap-8 flex-1 min-w-0">
                 {/* Avatar with glow effect */}
-                <div className="relative flex-shrink-0">
+                <div className="relative flex-shrink-0 mx-auto sm:mx-0">
                     <div className="absolute inset-0 rounded-full blur-xl"></div>
-                    <div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-full ring-4 ring-orange-200 overflow-hidden">
+                    <div className="relative w-24 h-24 sm:w-32 sm:h-32 rounded-full ring-4 ring-orange-200 overflow-hidden">
                         <Image
                             src={avatar}
                             alt={username}
@@ -86,19 +82,19 @@ export function ProfileHeader({
                 </div>
 
                 {/* User Info */}
-                <div className="flex flex-col gap-3 justify-center">
+                <div className="flex flex-col gap-3 justify-center min-w-0">
                     {/* Username with gradient */}
-                    <div className="flex items-center gap-2">
-                        <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-                            {truncatedUsername}
+                    <div className="flex items-center gap-2 min-w-0">
+                        <h1 className="text-xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent break-words sm:break-normal">
+                            {username}
                         </h1>
                     </div>
 
                     {/* Wallet Address - Improved with copy feedback */}
-                    <div className="group flex items-center gap-2">
-                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100/80 rounded-lg border border-gray-200/50">
+                    <div className="group flex flex-wrap items-center gap-2 min-w-0">
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100/80 rounded-lg border border-gray-200/50 min-w-0">
                             <span className="text-sm">🌙</span>
-                            <span className="text-sm text-gray-600 font-mono">{truncatedAddress}</span>
+                            <span className="text-xs sm:text-sm text-gray-600 font-mono break-all sm:break-normal sm:whitespace-nowrap">{truncatedAddress}</span>
                         </div>
                         <button
                             className="p-1.5 rounded-lg bg-gray-100/80 border border-gray-200/50 text-gray-500 hover:text-orange-600 hover:bg-orange-50 hover:border-orange-200 transition-all duration-200 active:scale-95"
@@ -118,14 +114,14 @@ export function ProfileHeader({
                     </div>
 
                     {/* Bio */}
-                    <p className="text-sm text-gray-500 max-w-md leading-relaxed">
+                    <p className="text-sm text-gray-500 max-w-md leading-relaxed break-words">
                         {bio}
                     </p>
 
                     {/* Action Buttons - Redesigned */}
-                    <div className="flex flex-wrap items-center gap-3 mt-1">
+                    <div className="flex flex-wrap items-stretch gap-2 sm:gap-3 mt-1">
                         {/* Joined Badge */}
-                        <div className="px-4 py-2 bg-gradient-to-r from-orange-100 to-amber-100 rounded-xl text-sm font-medium text-orange-700 border border-orange-200/50 flex items-center gap-2">
+                        <div className="w-full sm:w-auto px-3 sm:px-4 py-2 bg-gradient-to-r from-orange-100 to-amber-100 rounded-xl text-xs sm:text-sm font-medium text-orange-700 border border-orange-200/50 flex items-center justify-center sm:justify-start gap-2">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
@@ -134,7 +130,7 @@ export function ProfileHeader({
 
                         {/* Share Button */}
                         <button
-                            className="cursor-pointer group px-4 py-2 bg-orange-400 rounded-xl text-sm font-semibold text-white shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 flex items-center gap-2"
+                            className="w-full sm:w-auto cursor-pointer group px-3 sm:px-4 py-2 bg-orange-400 rounded-xl text-xs sm:text-sm font-semibold text-white shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 flex items-center justify-center gap-2"
                             onClick={shareProfile}
                         >
                             {profileCopied ? (
@@ -158,50 +154,50 @@ export function ProfileHeader({
             </div>
 
             {/* Right: Balance & Stats Card */}
-            <div className="flex flex-col bg-white/20 backdrop-blur-lg rounded-2xl p-5 border border-gray-200/40 shadow-lg gap-4 lg:min-w-[480px]">
+            <div className="flex flex-col bg-white/20 backdrop-blur-lg rounded-2xl p-3 sm:p-5 border border-gray-200/40 shadow-lg gap-3 sm:gap-4 w-full lg:w-[480px]">
                 {/* Balance Section */}
-                <div className="flex items-center justify-between gap-4 p-3 bg-gradient-to-r from-gray-50 to-gray-100/50 rounded-xl">
+                <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] items-stretch sm:items-center gap-2 sm:gap-4 p-3 bg-gradient-to-r from-gray-50 to-gray-100/50 rounded-xl">
                     {/* SOL Balance */}
-                    <div className="flex items-center gap-3 flex-1">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
                         <Image
                             src="/scribbles/solbal.png"
                             alt="SOL"
                             width={48}
                             height={48}
-                            className=" object-contain"
+                            className="w-9 h-9 sm:w-12 sm:h-12 object-contain"
                         />
                         <div className="flex flex-col">
                             <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">SOL</span>
                             <div className="flex items-baseline gap-1.5">
-                                <span className="text-2xl font-bold text-gray-900">{balance.sol.toFixed(2)}</span>
+                                <span className="text-xl sm:text-2xl font-bold text-gray-900 break-all sm:break-normal">{balance.sol.toFixed(2)}</span>
                             </div>
                         </div>
                     </div>
 
-                    <div className="w-px h-10 bg-gray-200/60"></div>
+                    <div className="hidden sm:block w-px h-10 bg-gray-200/60"></div>
 
                     {/* USDC Balance */}
-                    <div className="flex items-center gap-2 flex-1">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
                         <Image
                             src="/scribbles/dollar.png"
                             alt="USDC"
                             width={36}
                             height={36}
-                            className=" object-contain"
+                            className="w-8 h-8 sm:w-9 sm:h-9 object-contain"
                         />
                         <div className="flex flex-col">
                             <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">USDC</span>
                             <div className="flex items-baseline gap-1.5">
-                                <span className="text-2xl font-bold text-gray-900">{balance.usdc.toFixed(2)}</span>
+                                <span className="text-xl sm:text-2xl font-bold text-gray-900 break-all sm:break-normal">{balance.usdc.toFixed(2)}</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 {/* Stats Row - Cleaner design */}
-                <div className="flex items-center justify-between p-3 bg-gradient-to-r from-orange-50/50 to-amber-50/50 rounded-xl border border-orange-100/30">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 p-3 bg-gradient-to-r from-orange-50/50 to-amber-50/50 rounded-xl border border-orange-100/30">
                     {/* Wins */}
-                    <div className="flex items-center gap-2 px-3 py-1">
+                    <div className="flex items-center gap-2 px-2 sm:px-3 py-1 min-w-0">
                         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-500 flex items-center justify-center shadow-sm">
                             <span className="text-white text-sm">🏆</span>
                         </div>
@@ -212,7 +208,7 @@ export function ProfileHeader({
                     </div>
 
                     {/* Rekts */}
-                    <div className="flex items-center gap-2 px-3 py-1">
+                    <div className="flex items-center gap-2 px-2 sm:px-3 py-1 min-w-0">
                         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-red-400 to-red-500 flex items-center justify-center shadow-sm">
                             <span className="text-white text-sm">💀</span>
                         </div>
@@ -223,7 +219,7 @@ export function ProfileHeader({
                     </div>
 
                     {/* Win Rate */}
-                    <div className="flex items-center gap-2 px-3 py-1">
+                    <div className="flex items-center gap-2 px-2 sm:px-3 py-1 min-w-0">
                         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center shadow-sm">
                             <span className="text-white text-sm">📊</span>
                         </div>

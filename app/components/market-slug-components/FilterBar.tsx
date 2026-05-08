@@ -25,18 +25,18 @@ export function FilterBar({
     onModeOpenChange,
 }: FilterBarProps) {
     return (
-        <div className="flex items-center justify-end gap-2">
+        <div className="grid grid-cols-1 sm:flex sm:items-center sm:justify-end gap-2 w-full">
             {/* Status Filter Dropdown */}
-            <div className="relative">
+            <div className="relative w-full sm:w-auto min-w-0">
                 <button
                     onClick={() => {
                         onStatusOpenChange(!statusOpen);
                         if (modeOpen) onModeOpenChange(false);
                     }}
-                    className="flex items-center gap-1.5 px-3 py-2 bg-white rounded-lg border border-gray-200 hover:bg-gray-50 transition-all text-sm whitespace-nowrap"
+                    className="w-full sm:w-auto flex items-center justify-between gap-2 px-4 py-3 sm:py-2 bg-white rounded-xl border border-gray-200 hover:bg-gray-50 transition-all text-sm"
                 >
-                    <span className="text-gray-700 font-medium">{selectedStatus}</span>
-                    <ChevronDown className={`w-3.5 h-3.5 text-gray-500 transition-transform ${statusOpen ? "rotate-180" : ""}`} />
+                    <span className="text-gray-700 font-medium truncate">{selectedStatus}</span>
+                    <ChevronDown className={`w-3.5 h-3.5 shrink-0 text-gray-500 transition-transform ${statusOpen ? "rotate-180" : ""}`} />
                 </button>
 
                 {/* Status Dropdown Menu */}
@@ -46,7 +46,7 @@ export function FilterBar({
                             className="fixed inset-0 z-40"
                             onClick={() => onStatusOpenChange(false)}
                         />
-                        <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl border border-gray-200 shadow-xl z-50 overflow-hidden">
+                        <div className="absolute left-0 sm:right-0 sm:left-auto top-full mt-1 w-full sm:w-48 bg-white rounded-xl border border-gray-200 shadow-xl z-50 overflow-hidden max-h-64 overflow-y-auto">
                             {statusFilterOptions.map((option) => (
                                 <button
                                     key={option}
@@ -54,12 +54,12 @@ export function FilterBar({
                                         onStatusChange(option);
                                         onStatusOpenChange(false);
                                     }}
-                                    className={`w-full flex items-center justify-between px-4 py-2.5 text-left hover:bg-gray-50 transition-colors text-sm ${selectedStatus === option
+                                    className={`w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors text-sm ${selectedStatus === option
                                         ? "bg-amber-50 text-amber-700"
                                         : "text-gray-700"
                                         }`}
                                 >
-                                    <span className="font-medium">{option}</span>
+                                    <span className="font-medium truncate">{option}</span>
                                     {selectedStatus === option && (
                                         <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -73,16 +73,16 @@ export function FilterBar({
             </div>
 
             {/* Mode Filter Dropdown */}
-            <div className="relative">
+            <div className="relative w-full sm:w-auto min-w-0">
                 <button
                     onClick={() => {
                         onModeOpenChange(!modeOpen);
                         if (statusOpen) onStatusOpenChange(false);
                     }}
-                    className="flex items-center gap-1.5 px-3 py-2 bg-white rounded-lg border border-gray-200 hover:bg-gray-50 transition-all text-sm whitespace-nowrap"
+                    className="w-full sm:w-auto flex items-center justify-between gap-2 px-4 py-3 sm:py-2 bg-white rounded-xl border border-gray-200 hover:bg-gray-50 transition-all text-sm"
                 >
-                    <span className="text-gray-700 font-medium">{selectedMode}</span>
-                    <ChevronDown className={`w-3.5 h-3.5 text-gray-500 transition-transform ${modeOpen ? "rotate-180" : ""}`} />
+                    <span className="text-gray-700 font-medium truncate">{selectedMode}</span>
+                    <ChevronDown className={`w-3.5 h-3.5 shrink-0 text-gray-500 transition-transform ${modeOpen ? "rotate-180" : ""}`} />
                 </button>
 
                 {/* Mode Dropdown Menu */}
@@ -92,7 +92,7 @@ export function FilterBar({
                             className="fixed inset-0 z-40"
                             onClick={() => onModeOpenChange(false)}
                         />
-                        <div className="absolute right-0 top-full mt-1 w-44 bg-white rounded-xl border border-gray-200 shadow-xl z-50 overflow-hidden">
+                        <div className="absolute left-0 sm:right-0 sm:left-auto top-full mt-1 w-full sm:w-44 bg-white rounded-xl border border-gray-200 shadow-xl z-50 overflow-hidden max-h-64 overflow-y-auto">
                             {modeFilterOptions.map((option) => (
                                 <button
                                     key={option}
@@ -100,12 +100,12 @@ export function FilterBar({
                                         onModeChange(option);
                                         onModeOpenChange(false);
                                     }}
-                                    className={`w-full flex items-center justify-between px-4 py-2.5 text-left hover:bg-gray-50 transition-colors text-sm ${selectedMode === option
+                                    className={`w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors text-sm ${selectedMode === option
                                         ? "bg-amber-50 text-amber-700"
                                         : "text-gray-700"
                                         }`}
                                 >
-                                    <span className="font-medium">{option}</span>
+                                    <span className="font-medium truncate">{option}</span>
                                     {selectedMode === option && (
                                         <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
