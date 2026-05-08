@@ -25,6 +25,7 @@ const ChallengeCard = ({ challenge, sourceChallenge, sourceChallengeId, onChalle
             id: full.id,
             title: full.title,
             mode: full.mode,
+            resolution_source: full.resolution_source,
             initial_bet: full.initial_bet,
             target_price: typeof candidate.target_price === "number" ? candidate.target_price : undefined,
             min_accept_bet: full.min_accept_bet,
@@ -75,17 +76,33 @@ const ChallengeCard = ({ challenge, sourceChallenge, sourceChallengeId, onChalle
 
     const computed = useMemo(() => {
         const liveChallenge = sourceChallenge;
+        const liveChallengeWithMeta = liveChallenge as ChallengeListItem & {
+            metadata?: {
+                ui?: {
+                    title?: string;
+                };
+            };
+        };
+        const uiTitle = liveChallengeWithMeta.metadata?.ui?.title;
         const assetSymbol = liveChallenge?.market?.name || challenge.asset || "BTC";
         const assetIcon = liveChallenge?.market?.icon || "/scribbles/btc.png";
-        const title = liveChallenge?.title || challenge.title || `Bet on ${assetSymbol}`;
+        const title = uiTitle || liveChallenge?.title || challenge.title || `Bet on ${assetSymbol}`;
         const isPoolMode = liveChallenge?.mode === "pool";
         const expiryTimestamp = liveChallenge?.expire_time ? new Date(liveChallenge.expire_time).getTime() : null;
         const resolveTimestamp = liveChallenge?.resolve_time ? new Date(liveChallenge.resolve_time).getTime() : null;
+        const resolveDateByText = resolveTimestamp
+            ? new Date(resolveTimestamp).toLocaleDateString("en-GB", {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+            })
+            : "";
         const hasOpponents =
             Number(liveChallenge?.total_opponents ?? 0) > 0 ||
             Boolean(liveChallenge?.opponent_info?.username || liveChallenge?.opponent_info?.wallet_address);
         const isExpireTimeAchieved = Boolean(expiryTimestamp && expiryTimestamp <= currentTime);
         const isResolveTimeAchieved = Boolean(resolveTimestamp && resolveTimestamp <= currentTime);
+        const isManualResolution = String(liveChallenge?.resolution_source ?? "").toLowerCase() === "manual";
         const resolutionStatusRaw = String(liveChallenge?.resolution_status ?? "").toLowerCase();
         const isResolutionPending = resolutionStatusRaw === "pending";
         const isResolutionResolved = resolutionStatusRaw === "resolved";
@@ -110,6 +127,12 @@ const ChallengeCard = ({ challenge, sourceChallenge, sourceChallengeId, onChalle
                     : "Resolving"
                 : "Battle On"
             : formatExpiryCountdown(expiryTimestamp);
+        const endsByCountdown = formatExpiryCountdown(resolveTimestamp);
+        const displayTitle = isManualResolution
+            ? title
+            : isResolveTimeAchieved
+                ? `${title} by ${resolveDateByText}`
+                : `${title} In Next ${endsByCountdown}`;
 
         let ctaLabel = "";
         let ctaToneClass = "bg-gradient-to-r from-green-700 to-green-600";
@@ -134,7 +157,7 @@ const ChallengeCard = ({ challenge, sourceChallenge, sourceChallengeId, onChalle
                 ctaLabel = "EXPIRED!";
                 ctaToneClass = expiredCtaClassName;
             } else {
-                ctaLabel = "ACCEPT ⚔️";
+                ctaLabel = "COUNTER ⚔️";
                 ctaToneClass = activePvpCtaClassName;
             }
         } else if (isResolveTimeAchieved && isResolutionResolved) {
@@ -147,14 +170,14 @@ const ChallengeCard = ({ challenge, sourceChallenge, sourceChallengeId, onChalle
             ctaLabel = "EXPIRED";
             ctaToneClass = expiredCtaClassName;
         } else if (!isExpireTimeAchieved) {
-            ctaLabel = "JOIN CHALLENGE ⚔️";
+            ctaLabel = "JOIN ⚔️";
             ctaToneClass = activeCtaClassName;
         } else {
             ctaLabel = "ONGOING ⚔️";
             ctaToneClass = ongoingCtaClassName;
         }
 
-        return { assetIcon, title, ctaLabel, ctaToneClass, expiresIn };
+        return { assetIcon, displayTitle, ctaLabel, ctaToneClass, expiresIn };
     }, [sourceChallenge, challenge.asset, challenge.title, currentTime]);
 
     return (
@@ -175,7 +198,7 @@ const ChallengeCard = ({ challenge, sourceChallenge, sourceChallengeId, onChalle
                         />
                     </div>
                     <div className="min-w-0 flex-1">
-                        <h4 className="font-bold text-gray-900 text-xs sm:text-sm leading-tight line-clamp-2">{computed.title}</h4>
+                        <h4 className="font-bold text-gray-900 text-xs sm:text-sm leading-tight line-clamp-2">{computed.displayTitle}</h4>
                         <div className="flex items-center gap-1 mt-0.5">
                             <div className="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full bg-green-500 flex-shrink-0" />
                             <span className="text-[10px] sm:text-xs text-gray-500">{challenge.creator}</span>

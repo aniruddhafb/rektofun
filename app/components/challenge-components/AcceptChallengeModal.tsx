@@ -215,7 +215,7 @@ export function AcceptChallengeModal({
                         <div className="flex items-center gap-3 border-t border-[#eee2d8] pt-3 md:border-l md:border-t-0 md:pl-4 md:pt-0">
                             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-lg">💵</div>
                             <div>
-                                <p className="text-xs font-medium text-gray-900">Min bet set by creator</p>
+                                <p className="text-xs font-medium text-gray-900">Min bet</p>
                                 <p className="text-2xl font-bold text-[#1f1b16]">${(minAcceptBet ?? 0)}</p>
                                 <p className="text-xs text-gray-900">You can bet ${(minAcceptBet ?? 0)} or more</p>
                             </div>
@@ -330,7 +330,7 @@ export function AcceptChallengeModal({
                         disabled={isLoading || Boolean(liveValidationError)}
                         className="cursor-pointer w-full rounded-2xl bg-[#11895a] px-5 py-3.5 text-lg font-black text-white shadow-lg transition hover:bg-[#0f7b50] disabled:cursor-not-allowed disabled:opacity-70"
                     >
-                        {isLoading ? "ACCEPTING..." : "ACCEPT & PLACE BET"}
+                        {isLoading ? "PROCESSING..." : "ACCEPT & PROCEED"}
                     </button>
 
                 </form>

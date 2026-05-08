@@ -24,7 +24,7 @@ type TabType = "challenges" | "activity";
 export default function ProfilePage() {
     const params = useParams();
     const slug = params.slug as string;
-    const { solBalance, usdcBalance } = useSolanaWallet();
+    const { solBalance, usdcBalance, solanaWallet } = useSolanaWallet();
     const [activeTab, setActiveTab] = useState<TabType>("challenges");
     const [selectedChallenge, setSelectedChallenge] = useState<ChallengeListItem | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -182,6 +182,7 @@ export default function ProfilePage() {
                                 userId={user.id}
                                 username={user.username}
                                 avatar={user.profile_image || "/scribbles/pepe.png"}
+                                isOwnProfile={solanaWallet?.address === user.wallet_address}
                             />
                         )}
                     </>
