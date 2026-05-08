@@ -39,7 +39,11 @@ export function CreateChallengeModal({
     const [childMarkets, setChildMarkets] = useState<Market[]>([]);
     const [childMarketsLoading, setChildMarketsLoading] = useState(false);
     const [selectedChildMarket, setChildMarket] = useState<Market | null>(null);
+    const [sportsEventMarkets, setSportsEventMarkets] = useState<Market[]>([]);
+    const [sportsEventMarketsLoading, setSportsEventMarketsLoading] = useState(false);
+    const [selectedSportsEventMarket, setSelectedSportsEventMarket] = useState<Market | null>(null);
     const [isCoinDropdownOpen, setIsCoinDropdownOpen] = useState(false);
+    const [isSportsEventMarketDropdownOpen, setIsSportsEventMarketDropdownOpen] = useState(false);
     const [betAmount, setBetAmount] = useState(5);
     const [betAmountError, setBetAmountError] = useState<string | null>(null);
     const [predictionDirection, setPredictionDirection] = useState("Above");
@@ -70,10 +74,12 @@ export function CreateChallengeModal({
 
     const marketDropdownRef = useRef<HTMLDivElement>(null);
     const coinDropdownRef = useRef<HTMLDivElement>(null);
+    const sportsEventMarketDropdownRef = useRef<HTMLDivElement>(null);
     const directionDropdownRef = useRef<HTMLDivElement>(null);
 
     // Privy wallet hook
     const { authenticated, login, program, sendTransaction, publicKey } = useSolanaWallet();
+    const isSportsSelected = selectedMarket?.symbol?.toLowerCase() === 'sports' || selectedMarket?.name?.toLowerCase() === 'sports';
 
     useEffect(() => {
         if (isOpen) document.body.style.overflow = "hidden";
@@ -151,6 +157,33 @@ export function CreateChallengeModal({
     }, [isOpen, selectedMarket]);
 
     useEffect(() => {
+        const fetchSportsEventMarkets = async () => {
+            if (!isOpen || !isSportsSelected || !selectedChildMarket?.id) {
+                setSportsEventMarkets([]);
+                setSelectedSportsEventMarket(null);
+                return;
+            }
+
+            try {
+                setSportsEventMarketsLoading(true);
+                const response = await getMarkets({ parent_id: selectedChildMarket.id });
+                const fetchedMarkets = response.markets;
+
+                setSportsEventMarkets(fetchedMarkets);
+                setSelectedSportsEventMarket(fetchedMarkets[0] ?? null);
+            } catch (error) {
+                console.error("Error fetching sports event markets:", error);
+                setSportsEventMarkets([]);
+                setSelectedSportsEventMarket(null);
+            } finally {
+                setSportsEventMarketsLoading(false);
+            }
+        };
+
+        fetchSportsEventMarkets();
+    }, [isOpen, isSportsSelected, selectedChildMarket]);
+
+    useEffect(() => {
         const resolveDiaBlockchain = (market: Market): string => {
             const symbol = (market.symbol || "").toUpperCase();
             if (symbol === "SOL") return "Solana";
@@ -202,6 +235,9 @@ export function CreateChallengeModal({
             if (coinDropdownRef.current && !coinDropdownRef.current.contains(event.target as Node)) {
                 setIsCoinDropdownOpen(false);
             }
+            if (sportsEventMarketDropdownRef.current && !sportsEventMarketDropdownRef.current.contains(event.target as Node)) {
+                setIsSportsEventMarketDropdownOpen(false);
+            }
             if (directionDropdownRef.current && !directionDropdownRef.current.contains(event.target as Node)) {
                 setIsDirectionDropdownOpen(false);
             }
@@ -210,8 +246,6 @@ export function CreateChallengeModal({
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
-
-    const isSportsSelected = selectedMarket?.symbol?.toLowerCase() === 'sports' || selectedMarket?.name?.toLowerCase() === 'sports';
 
     useEffect(() => {
         if (!isOpen || !selectedMarket) {
@@ -240,6 +274,7 @@ export function CreateChallengeModal({
     const closeAllDropdowns = () => {
         setIsMarketDropdownOpen(false);
         setIsCoinDropdownOpen(false);
+        setIsSportsEventMarketDropdownOpen(false);
         setIsDirectionDropdownOpen(false);
     };
 
@@ -399,15 +434,25 @@ export function CreateChallengeModal({
             // future joiners can look the challenge up by PDA in O(1) instead of
             // scanning every on-chain account.
             try {
+                const selectedCategory = isSportsSelected
+                    ? (selectedSportsEventMarket?.name || selectedSportsEventMarket?.symbol || "")
+                    : (selectedChildMarket?.name || "");
+                const selectedTicker = isSportsSelected
+                    ? (selectedSportsEventMarket?.symbol || selectedSportsEventMarket?.name || "")
+                    : (selectedChildMarket?.symbol || "");
+                const selectedAssetName = isSportsSelected
+                    ? (selectedSportsEventMarket?.description || selectedSportsEventMarket?.name || selectedSportsEventMarket?.symbol || "")
+                    : (selectedChildMarket?.description || "");
+
                 await createChallenge({
                     title: isSportsSelected ? challengeStatement : `${selectedChildMarket?.symbol} ${predictionDirection} $${predictionPrice}`,
                     description: isSportsSelected
                         ? challengeStatement
                         : `Bet ${betAmount} USDC that ${selectedChildMarket?.symbol} will be ${predictionDirection.toLowerCase()} $${predictionPrice} by ${selectedDate.toISOString()}`,
-                    category: selectedChildMarket?.name || "",
+                    category: selectedCategory,
                     event_type: "binary",
-                    ticker: selectedChildMarket?.symbol || "",
-                    asset_name: selectedChildMarket?.description || "",
+                    ticker: selectedTicker,
+                    asset_name: selectedAssetName,
                     created_by: user?.id || "",
                     mode: challengeMode,
                     initial_bet: betAmount,
@@ -592,6 +637,54 @@ export function CreateChallengeModal({
                                 </div>
                             )}
                         </div>
+                        {isSportsSelected && (
+                            <div className="space-y-2 pt-2">
+                                <label className="text-sm font-medium text-gray-700">Select Market</label>
+                                <div className="relative" ref={sportsEventMarketDropdownRef}>
+                                    <button onClick={() => { closeAllDropdowns(); setIsSportsEventMarketDropdownOpen(!isSportsEventMarketDropdownOpen); }} className="w-full flex items-center justify-between px-4 py-3 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl hover:border-[#d4b8a8] transition-colors">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden">
+                                                {selectedSportsEventMarket?.image ? (
+                                                    <Image src={selectedSportsEventMarket.image} alt={selectedSportsEventMarket.symbol || selectedSportsEventMarket.name} width={24} height={24} className="w-6 h-6 object-contain" />
+                                                ) : (
+                                                    <span className="text-xs font-bold text-white">
+                                                        {selectedSportsEventMarket?.symbol?.slice(0, 2) || "?"}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <span className="font-semibold text-gray-900">{selectedSportsEventMarket?.symbol || selectedSportsEventMarket?.name || "Select Market"}</span>
+                                        </div>
+                                        <svg className={`w-5 h-5 text-gray-500 transition-transform ${isSportsEventMarketDropdownOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </button>
+                                    {isSportsEventMarketDropdownOpen && (
+                                        <div className="absolute top-full left-0 right-0 mt-1 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl shadow-lg z-10 overflow-hidden">
+                                            {sportsEventMarketsLoading ? (
+                                                <div className="px-4 py-3 text-sm text-gray-500">Loading markets...</div>
+                                            ) : sportsEventMarkets.length > 0 ? (
+                                                sportsEventMarkets.map((market) => (
+                                                    <button key={market.id} onClick={() => { setSelectedSportsEventMarket(market); setIsSportsEventMarketDropdownOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#f3e1d7] transition-colors">
+                                                        <div className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden">
+                                                            {market.image ? (
+                                                                <Image src={market.image} alt={market.symbol || market.name} width={24} height={24} className="w-6 h-6 object-contain" />
+                                                            ) : (
+                                                                <span className="text-xs font-bold text-white">
+                                                                    {market.symbol?.slice(0, 2) || "?"}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <span className="font-medium text-gray-900">{market.symbol || market.name}</span>
+                                                    </button>
+                                                ))
+                                            ) : (
+                                                <div className="px-4 py-3 text-sm text-gray-500">No markets available</div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* bet amount section  */}
