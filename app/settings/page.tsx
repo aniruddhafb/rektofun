@@ -50,7 +50,7 @@ export default function SettingsPage() {
                     }
                 }
             } catch (error) {
-                console.log('[Settings] Could not fetch user data:', error);
+                console.error('[Settings] Could not fetch user data:', error);
             } finally {
                 setIsLoadingProfile(false);
             }
@@ -124,7 +124,6 @@ export default function SettingsPage() {
                 description: description,
                 profile_image: `https://earningrecords.com/assets/rektofun/profiles/${profileIndex}.svg`,
             });
-            console.log('[Settings] Profile saved successfully');
             setIsEditingProfile(false);
             setShowSuccessMessage(true);
             setTimeout(() => setShowSuccessMessage(false), 3000);

@@ -119,7 +119,6 @@ export async function updateUser(id: string, params: Partial<CreateUserParams>):
 }
 
 export async function acceptReferral(newUserWallet: string, referrerCode: string): Promise<{ newUser: User; referrer: User }> {
-  console.log('[acceptReferral] Attempting to accept referral with wallet:', newUserWallet, 'and code:', referrerCode);
   const response = await fetch(`${API_BASE_URL}/users/accept-referral`, {
     method: 'POST',
     headers: {

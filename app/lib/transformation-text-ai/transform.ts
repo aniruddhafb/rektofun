@@ -34,7 +34,6 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
  *   category: 'ipl',
  *   statement: 'Who will win, Mumbai Indians or Rajasthan?',
  * });
- * console.log(result);
  * ```
  */
 export async function transform(payload: TransformRequest): Promise<TransformResponse> {

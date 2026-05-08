@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { CreateChallengeModal } from "../../../components/challenge-components/CreateChallengeModal";
 import { MarketHeader } from "../../../components/market-slug-components/MarketHeader";
@@ -29,6 +29,7 @@ function formatMarketDescription(name: string) {
 
 export default function MarketPage() {
     const CREATE_TOAST_DURATION_MS = 3000;
+    const BOOKMARKS_STORAGE_KEY = "rektofun:challenge-bookmarks";
     const params = useParams<{ slug: string }>();
     const slugName = useMemo(() => decodeURIComponent(params.slug ?? ""), [params.slug]);
     const [showChart, setShowChart] = useState(false);
@@ -46,6 +47,40 @@ export default function MarketPage() {
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const [showCreateSuccessToast, setShowCreateSuccessToast] = useState(false);
     const [createToastProgress, setCreateToastProgress] = useState(100);
+    const [bookmarkedChallengeIds, setBookmarkedChallengeIds] = useState<string[]>(() => {
+        if (typeof window === "undefined") return [];
+        try {
+            const rawBookmarks = window.localStorage.getItem(BOOKMARKS_STORAGE_KEY);
+            if (!rawBookmarks) return [];
+            const parsed = JSON.parse(rawBookmarks);
+            if (!Array.isArray(parsed)) return [];
+            return parsed.filter((value): value is string => typeof value === "string");
+        } catch (error) {
+            console.error("Failed to read challenge bookmarks from localStorage:", error);
+            return [];
+        }
+    });
+
+    useEffect(() => {
+        try {
+            window.localStorage.setItem(BOOKMARKS_STORAGE_KEY, JSON.stringify(bookmarkedChallengeIds));
+        } catch (error) {
+            console.error("Failed to persist challenge bookmarks to localStorage:", error);
+        }
+    }, [bookmarkedChallengeIds]);
+
+    const toggleBookmark = useCallback((challengeId: string) => {
+        setBookmarkedChallengeIds((prev) =>
+            prev.includes(challengeId)
+                ? prev.filter((id) => id !== challengeId)
+                : [...prev, challengeId]
+        );
+    }, []);
+
+    const isChallengeBookmarked = useCallback(
+        (challengeId: string) => bookmarkedChallengeIds.includes(challengeId),
+        [bookmarkedChallengeIds]
+    );
 
     const loadMarketChallenges = async (isMountedCheck?: () => boolean) => {
         if (!slugName) {
@@ -244,6 +279,8 @@ export default function MarketPage() {
                             <MarketChallengesGrid
                                 challenges={filteredChallenges}
                                 onChallengeClick={handleChallengeClick}
+                                onToggleBookmark={toggleBookmark}
+                                isBookmarked={isChallengeBookmarked}
                             />
                         )}
                     </div>
@@ -264,4 +301,3 @@ export default function MarketPage() {
         </div>
     );
 }
-

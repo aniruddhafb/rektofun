@@ -65,9 +65,7 @@ export function CreateClanModal({ isOpen, onClose, onClanCreated, userId, hasCre
                 clan_leader: userId,
             };
 
-            console.log("Creating clan:", clanData);
-            const createdClan = await createClan(clanData);
-            console.log("Clan created successfully:", createdClan);
+            await createClan(clanData);
 
             // Reset and close
             setClanName("");
