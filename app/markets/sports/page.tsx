@@ -3,10 +3,12 @@
 import React from "react";
 import Image from "next/image";
 import { ArrowRight, Users, Trophy, Sparkles, Calendar, Clock } from "lucide-react";
+import Link from "next/link";
 
 const sports = [
     {
         id: "ipl-2026",
+        slug: "ipl",
         title: "IPL 2026",
         subtitle: "Indian Premier League",
         description:
@@ -22,6 +24,7 @@ const sports = [
     },
     {
         id: "fifa-2026",
+        slug: "fifa",
         title: "FIFA World Cup 2026",
         subtitle: "The Greatest Show on Earth",
         description:
@@ -141,12 +144,14 @@ export default function SportsPage() {
                                         available
                                     </span>
                                 </div>
+                                <Link href={`/markets/sports/${sport.slug}`}>
                                 <button
                                     className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#246044] hover:bg-[#2b7351] text-white font-bold text-sm shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all"
                                 >
                                     <span>Explore Markets</span>
                                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                                 </button>
+                                </Link>
                             </div>
                         </div>
                     ))}
