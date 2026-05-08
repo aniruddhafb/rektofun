@@ -3,7 +3,7 @@
  * Fetch clan members with user details
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 export interface ClanMember {
     id: string;
@@ -84,3 +84,4 @@ function formatRektPoints(earnings: number): string {
     }
     return earnings.toString();
 }
+

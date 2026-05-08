@@ -6,7 +6,7 @@
 import { Clan as FrontendClan } from "@/app/components/clan-components/ClanTypes";
 import { ClanData } from "@/app/components/clan-slug-components/types";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 export interface Clan {
     id: string;
@@ -347,3 +347,4 @@ export async function leaveClan(clanId: string, userId: string): Promise<JoinCla
 
     return response.json();
 }
+

@@ -3,7 +3,7 @@
  * API calls for clan chat functionality
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 export interface ClanMessage {
     id: string;
@@ -90,3 +90,4 @@ export async function deleteClanMessage(
         throw new Error(`Failed to delete clan message: ${response.statusText}`);
     }
 }
+
