@@ -8,9 +8,17 @@ interface ProfileChallengesProps {
     challenges: ChallengeListItem[];
     loading?: boolean;
     onChallengeClick: (challenge: ChallengeListItem) => void;
+    onToggleBookmark?: (challengeId: string) => void;
+    isBookmarked?: (challengeId: string) => boolean;
 }
 
-export function ProfileChallenges({ challenges, loading, onChallengeClick }: ProfileChallengesProps) {
+export function ProfileChallenges({
+    challenges,
+    loading,
+    onChallengeClick,
+    onToggleBookmark,
+    isBookmarked,
+}: ProfileChallengesProps) {
     if (loading) {
         return (
             <div className="mt-6 p-4 bg-white/70 rounded-xl border border-[#d4a574]/30 text-center text-[#8b7355]">
@@ -34,6 +42,8 @@ export function ProfileChallenges({ challenges, loading, onChallengeClick }: Pro
                     key={challenge.id}
                     challenge={challenge}
                     onClick={onChallengeClick}
+                    onToggleBookmark={onToggleBookmark}
+                    isBookmarked={isBookmarked?.(challenge.id)}
                 />
             ))}
         </div>

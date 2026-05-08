@@ -29,7 +29,7 @@ export interface GetMarketsParams {
   offset?: number;
 }
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 const DEFAULT_TIMEOUT_MS = 10000;
 const DEFAULT_RETRIES = 2;
 
@@ -190,3 +190,4 @@ export async function createMarket(params: CreateMarketParams): Promise<Market> 
 
   return response.json();
 }
+

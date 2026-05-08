@@ -20,7 +20,7 @@ export interface TransformResponse {
  * Base URL for the backend API.
  * Falls back to localhost:8000 if the environment variable is not set.
  */
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 /**
  * Calls the transformation endpoint and returns the parsed JSON response.
@@ -34,7 +34,6 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
  *   category: 'ipl',
  *   statement: 'Who will win, Mumbai Indians or Rajasthan?',
  * });
- * console.log(result);
  * ```
  */
 export async function transform(payload: TransformRequest): Promise<TransformResponse> {

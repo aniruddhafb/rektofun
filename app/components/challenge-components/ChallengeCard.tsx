@@ -406,8 +406,6 @@ export function ChallengeCard({
             const creatorWalletStr =
                 onchainMeta?.creator_wallet ?? creator.wallet_address;
 
-            console.log({ onchainMeta });
-
             if (!challengePdaStr) {
                 throw new Error(
                     "This challenge has no on-chain reference yet. It may have been created before the on-chain integration — please ask the creator to recreate it."
@@ -471,10 +469,6 @@ export function ChallengeCard({
                 side: challenge.mode === "pool" ? joinSide : "opponent",
                 bet_amount: requiredBetUsdc,
             });
-
-            console.log(
-                `[join] accepted challenge ${challenge.id} on-chain — sig ${signature}`
-            );
 
             setIsBetFormOpen(false);
             if (onRekt) onRekt(challenge);
@@ -639,8 +633,6 @@ export function ChallengeCard({
     ).toLowerCase();
     const isResolutionPending = resolutionStatusRaw === "pending";
     const isResolutionResolved = resolutionStatusRaw === "resolved" || challenge.status === "resolved";
-    console.log({ isResolutionPending, isResolutionResolved });
-
     let ctaLabel = "";
     let ctaDisabled = false;
     let ctaClassName = "";
@@ -734,11 +726,11 @@ export function ChallengeCard({
     return (
         <>
             <div
-                className="bg-[#f8ede7] rounded-2xl border border-gray-400 p-4 shadow-sm border border-gray-300 hover:shadow-lg transition-shadow block"
+                className="block overflow-hidden rounded-2xl border border-gray-300 bg-[#f8ede7] p-3 shadow-sm transition-shadow hover:shadow-lg sm:p-4"
             >
                 {/* Header */}
-                <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-3">
+                <div className="mb-3 flex items-start justify-between gap-2">
+                    <div className="flex min-w-0 items-center gap-2 sm:gap-3">
                         <Image
                             src={assetIcon}
                             alt={assetName}
@@ -746,19 +738,19 @@ export function ChallengeCard({
                             height={32}
                             className="w-8 h-8 object-contain"
                         />
-                        <div>
-                            <h3 className="text-gray-900 leading-tight">
+                        <div className="min-w-0">
+                            <h3 className="break-words text-gray-900 leading-tight">
                                 {isManualResolution ? (
                                     <span
                                         onClick={handleClick}
-                                        className="block text-[16px] font-bold tracking-tight cursor-pointer"
+                                        className="block cursor-pointer break-words text-[15px] font-bold tracking-tight sm:text-[16px]"
                                     >
                                         {title}
                                     </span>
                                 ) : isResolveTimeAchieved ? (
                                     <span
                                         onClick={handleClick}
-                                        className="block text-[16px] font-bold tracking-tight cursor-pointer"
+                                        className="block cursor-pointer break-words text-[15px] font-bold tracking-tight sm:text-[16px]"
                                     >
                                         {title} by {resolveDateByText}
                                     </span>
@@ -766,16 +758,16 @@ export function ChallengeCard({
                                     <>
                                         <span
                                             onClick={handleClick}
-                                            className="block text-[16px] font-bold tracking-tight cursor-pointer"
+                                            className="block cursor-pointer break-words text-[15px] font-bold tracking-tight sm:text-[16px]"
                                         >
                                             {title} In
                                         </span>
                                         <span
                                             onClick={handleClick}
-                                            className="block text-[16px] font-bold tracking-tight cursor-pointer"
+                                            className="block cursor-pointer break-words text-[15px] font-bold tracking-tight sm:text-[16px]"
                                         >
                                             Next
-                                            <span className="ml-2 inline-flex items-center gap-1.5">
+                                                <span className="ml-1 inline-flex items-center gap-1 sm:ml-2 sm:gap-1.5">
                                                 <span className="text-sm font-bold text-emerald-900">{endsByCountdown}</span>
                                                 <span className="group relative inline-flex items-center">
                                                     <svg className="w-3.5 h-3.5 text-emerald-600 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -801,7 +793,7 @@ export function ChallengeCard({
                         onClick={handleBookmarkClick}
                         aria-label={isBookmarked ? "Remove Pin" : "Pin this"}
                         title={isBookmarked ? "Remove pin" : "Pin this"}
-                        className="cursor-pointer p-2 bg-white/50 hover:bg-white/20 border border-gray-400 hover:text-gray-500 rounded-lg transition-colors"
+                        className="shrink-0 cursor-pointer rounded-lg border border-gray-400 bg-white/50 p-2 transition-colors hover:bg-white/20 hover:text-gray-500"
                     >
                         <svg className="w-5 h-5 text-black rotate-45" stroke="currentColor" viewBox="0 0 24 24" fill={isBookmarked ? "currentColor" : "none"}>
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 17v4" />
@@ -846,13 +838,13 @@ export function ChallengeCard({
 
                 {/* VS Section */}
                 <div className="mb-5">
-                    <div className="flex flex-row items-center justify-center gap-2 sm:gap-4">
+                    <div className="flex flex-row items-center justify-center gap-1.5 sm:gap-4">
                         {/* Challenger Profile */}
                         <div
                             onClick={(e) => openProfile(e, creator.wallet_address)}
                             className="relative group flex flex-col items-center cursor-pointer"
                         >
-                            <div className={`w-[120px] h-[140px] flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-300 ${hasWon
+                            <div className={`flex h-[132px] w-[98px] max-w-full flex-col items-center justify-center rounded-xl p-2 transition-all duration-300 sm:h-[140px] sm:w-[120px] sm:p-3 ${hasWon
                                 ? "bg-gradient-to-br from-amber-100 to-yellow-50 border-2 border-amber-400"
                                 : hasLost
                                     ? "bg-gradient-to-br from-red-100 to-rose-50 border-2 border-red-300"
@@ -866,7 +858,7 @@ export function ChallengeCard({
                                 )}
 
                                 {/* Avatar */}
-                                <div className={`w-14 h-14 rounded-full overflow-hidden border-2 ${hasWon ? "border-amber-400" : "border-[#d4a574]"
+                                <div className={`h-11 w-11 overflow-hidden rounded-full border-2 sm:h-14 sm:w-14 ${hasWon ? "border-amber-400" : "border-[#d4a574]"
                                     } shadow-md`}>
                                     <Image
                                         src={creatorProfileImage}
@@ -882,9 +874,9 @@ export function ChallengeCard({
                                 </div>
 
                                 {/* Info */}
-                                <div className="mt-2 text-center">
-                                    <p className="font-bold text-[#2d1f1a] text-xs">{creatorDisplayName}</p>
-                                    <p className="text-[10px] text-[#8b7355] mt-0.5">
+                                <div className="mt-2 w-full text-center">
+                                    <p className="break-words font-bold text-[#2d1f1a] text-xs">{creatorDisplayName}</p>
+                                    <p className="mt-0.5 break-all text-[10px] text-[#8b7355]">
                                         {hasWon ? "Won!" : hasLost ? "Lost" : creatorWalletDisplay}
                                     </p>
                                 </div>
@@ -908,9 +900,9 @@ export function ChallengeCard({
                         </div>
 
                         {/* VS Badge or Pending Badge */}
-                        <div className="flex flex-col items-center justify-center px-2">
+                        <div className="flex flex-col items-center justify-center px-1 sm:px-2">
                             <>
-                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#2d1f1a] to-[#4a3830] flex items-center justify-center shadow-lg">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#2d1f1a] to-[#4a3830] shadow-lg sm:h-12 sm:w-12">
                                     {isOngoingCta ? (
                                         <video
                                             src="/animations/Sword%20Battle.webm"
@@ -918,14 +910,14 @@ export function ChallengeCard({
                                             loop
                                             muted
                                             playsInline
-                                            className="w-10 h-10 object-contain"
+                                            className="h-8 w-8 object-contain sm:h-10 sm:w-10"
                                         />
                                     ) : (
-                                        <span className="text-lg font-black text-[#f3e1d7]">VS</span>
+                                        <span className="text-base font-black text-[#f3e1d7] sm:text-lg">VS</span>
                                     )}
                                 </div>
                                 {/* Pool Display */}
-                                <div className="mt-2 px-3 py-1.5 bg-emerald-50 rounded-lg text-center border border-emerald-200">
+                                <div className="mt-2 rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1 text-center sm:px-3 sm:py-1.5">
                                     <div className="flex items-center justify-center gap-1">
                                         <span className="text-[9px] text-emerald-600 font-medium">Pool</span>
                                         <div className="group relative">
@@ -938,7 +930,7 @@ export function ChallengeCard({
                                             </div>
                                         </div>
                                     </div>
-                                    <p className="text-sm font-bold text-emerald-600">{poolDisplay}</p>
+                                    <p className="text-xs font-bold text-emerald-600 sm:text-sm">{poolDisplay}</p>
                                 </div>
                             </>
                         </div>
@@ -949,7 +941,7 @@ export function ChallengeCard({
                                 onClick={(e) => openProfile(e, opponentInfo?.wallet_address)}
                                 className="relative group flex flex-col items-center cursor-pointer"
                             >
-                                <div className={`w-[120px] h-[140px] flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-300 ${hasLost
+                                <div className={`flex h-[132px] w-[98px] max-w-full flex-col items-center justify-center rounded-xl p-2 transition-all duration-300 sm:h-[140px] sm:w-[120px] sm:p-3 ${hasLost
                                     ? "bg-gradient-to-br from-amber-100 to-yellow-50 border-2 border-amber-400"
                                     : hasWon
                                         ? "bg-gradient-to-br from-red-100 to-rose-50 border-2 border-red-300"
@@ -963,7 +955,7 @@ export function ChallengeCard({
                                     )}
 
                                     {/* Avatar */}
-                                    <div className={`w-14 h-14 rounded-full overflow-hidden border-2 ${hasLost ? "border-amber-400" : "border-[#d4a574]"
+                                    <div className={`h-11 w-11 overflow-hidden rounded-full border-2 sm:h-14 sm:w-14 ${hasLost ? "border-amber-400" : "border-[#d4a574]"
                                         } shadow-md`}>
                                         <Image
                                             src={opponentProfileImage}
@@ -985,9 +977,9 @@ export function ChallengeCard({
                                     </div>
 
                                     {/* Info */}
-                                    <div className="mt-2 text-center">
-                                        <p className="font-bold text-[#2d1f1a] text-xs">{opponentDisplayName}</p>
-                                        <p className="text-[10px] text-[#8b7355] mt-0.5">
+                                    <div className="mt-2 w-full text-center">
+                                        <p className="break-words font-bold text-[#2d1f1a] text-xs">{opponentDisplayName}</p>
+                                        <p className="mt-0.5 break-all text-[10px] text-[#8b7355]">
                                             {hasLost ? "Won!" : hasWon ? "Lost" : opponentWalletDisplay}
                                         </p>
                                     </div>
@@ -1012,8 +1004,8 @@ export function ChallengeCard({
                         ) : (
                             /* Placeholder for pending state */
                             <div className="flex flex-col items-center">
-                                <div className="relative w-[120px] h-[140px] flex flex-col items-center justify-center p-3 rounded-xl opponent-placeholder-bg border-2 border-dashed border-[#d4a574]/30">
-                                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center border-2 border-[#d4a574]/50 opponent-placeholder-icon">
+                                <div className="relative flex h-[132px] w-[98px] max-w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-[#d4a574]/30 p-2 opponent-placeholder-bg sm:h-[140px] sm:w-[120px] sm:p-3">
+                                    <div className="opponent-placeholder-icon flex h-11 w-11 items-center justify-center rounded-full border-2 border-[#d4a574]/50 bg-gradient-to-br from-gray-200 to-gray-300 sm:h-14 sm:w-14">
                                         <span className="text-xl">❓</span>
                                     </div>
                                     <div className="mt-1 px-1.5 py-0.5 bg-[#2d1f1a] text-white text-[9px] font-bold rounded-full">
@@ -1099,7 +1091,7 @@ export function ChallengeCard({
                 />
 
                 {/* Challenge Expiry */}
-                <div className="flex items-center justify-center gap-1.5 text-xs text-gray-600 mt-1.5">
+                <div className="mt-1.5 flex flex-wrap items-center justify-center gap-1.5 text-center text-xs text-gray-600">
                     {isExpiresInState ? (
                         <>
                             <span>{expiryStatusText}</span>
@@ -1136,12 +1128,12 @@ export function ChallengeCard({
                 <div className="border-t border-gray-200 my-2"></div>
 
                 {/* Footer */}
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-gray-600">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex min-w-0 flex-1 items-center gap-1.5 text-gray-600 sm:gap-2">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        <span className="text-sm">Created <span className="font-semibold text-gray-900">{createdTimeText}</span></span>
+                        <span className="min-w-0 break-words text-xs sm:text-sm">Created <span className="font-semibold text-gray-900">{createdTimeText}</span></span>
                         <div className="group relative">
                             <svg className="w-3.5 h-3.5 text-gray-400 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -1152,7 +1144,7 @@ export function ChallengeCard({
                             </div>
                         </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-3">
                         <button
                             type="button"
                             onClick={handleShareChallenge}

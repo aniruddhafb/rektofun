@@ -82,7 +82,7 @@ export interface GetChallengesParams {
   offset?: number;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 const DEFAULT_TIMEOUT_MS = 10000;
 const DEFAULT_RETRIES = 2;
 
@@ -478,4 +478,5 @@ export async function getPositions(params: GetPositionsParams = {}): Promise<Pos
 
   return response.json();
 }
+
 

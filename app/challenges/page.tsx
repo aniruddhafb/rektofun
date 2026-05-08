@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { ChallengeHeader } from "../components/challenge-components/ChallengeHeader";
 import { ChallengeFiltersSection } from "../components/challenge-components/ChallengeFiltersSection";
 import { FeedbackBanner } from "../components/challenge-components/FeedbackBanner";
@@ -50,6 +50,7 @@ function ChallengesContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
+  const lastClosedDeepLinkIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     try {
@@ -81,15 +82,23 @@ function ChallengesContent() {
 
   // Close detail modal handler
   const closeDetailModal = () => {
-    // Prevent deep link handling while manually closing the modal.
     setIgnoreDeepLink(true);
-    // Replace URL to clear query param before state changes.
-    router.replace(pathname, { scroll: false });
-    // Close modal and clear selected challenge.
+
+    const activeDeepLinkId = searchParams.get("challengeId");
+    if (activeDeepLinkId) {
+      lastClosedDeepLinkIdRef.current = activeDeepLinkId;
+    }
+
+    const nextParams = new URLSearchParams(searchParams.toString());
+    nextParams.delete("challengeId");
+    const nextQuery = nextParams.toString();
+    const nextUrl = nextQuery ? `${pathname}?${nextQuery}` : pathname;
+
+    router.replace(nextUrl, { scroll: false });
     setIsDetailModalOpen(false);
     setSelectedChallenge(null);
-    // Reset ignore flag after short delay.
-    setTimeout(() => setIgnoreDeepLink(false), 300);
+
+    window.setTimeout(() => setIgnoreDeepLink(false), 200);
   };
 
   const handleChallengesLoaded = useCallback((loadedChallenges: ChallengeListItem[]) => {
@@ -101,7 +110,12 @@ function ChallengesContent() {
     if (ignoreDeepLink) return;
 
     const deepLinkChallengeId = searchParams.get("challengeId");
-    if (!deepLinkChallengeId || challenges.length === 0) return;
+    if (!deepLinkChallengeId) {
+      lastClosedDeepLinkIdRef.current = null;
+      return;
+    }
+    if (deepLinkChallengeId === lastClosedDeepLinkIdRef.current) return;
+    if (challenges.length === 0) return;
 
     const matchedChallenge = challenges.find((challenge) => challenge.id === deepLinkChallengeId);
     if (!matchedChallenge) return;

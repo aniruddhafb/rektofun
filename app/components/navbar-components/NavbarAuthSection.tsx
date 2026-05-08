@@ -14,8 +14,10 @@ type NavbarAuthSectionProps = {
     onLogout: () => void;
     onMouseEnterDropdown: () => void;
     onMouseLeaveDropdown: () => void;
+    onToggleDropdown: () => void;
     onOpenDeposit: () => void;
     profileHref: string;
+    isMobileViewport: boolean;
 };
 
 export function NavbarAuthSection({
@@ -30,8 +32,10 @@ export function NavbarAuthSection({
     onLogout,
     onMouseEnterDropdown,
     onMouseLeaveDropdown,
+    onToggleDropdown,
     onOpenDeposit,
     profileHref,
+    isMobileViewport,
 }: NavbarAuthSectionProps) {
     const balanceDisplay = usdcBalance !== null
         ? `$${usdcBalance.toFixed(2)}`
@@ -62,9 +66,11 @@ export function NavbarAuthSection({
                         onClose={onCloseDropdown}
                         onMouseEnter={onMouseEnterDropdown}
                         onMouseLeave={onMouseLeaveDropdown}
+                        onToggle={onToggleDropdown}
                         onLogout={onLogout}
                         onOpenDeposit={onOpenDeposit}
                         profileHref={profileHref}
+                        isMobileViewport={isMobileViewport}
                     />
                 </div>
             ) : (

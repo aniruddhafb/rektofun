@@ -99,14 +99,12 @@ export default function ClanDetailPage({ params }: { params: Promise<{ slug: str
             try {
                 setLoading(true);
                 setError(null);
-                console.log("Fetching clan with slug:", slug);
                 const [clan, membersResponse] = await Promise.all([
                     getClanDataBySlugDeduped(slug),
                     getClanMembersDeduped(slug),
                 ]);
 
                 if (isCancelled) return;
-                console.log("Fetched clan data:", clan);
                 setClanData(clan);
 
                 // Check if user is a member
@@ -118,7 +116,6 @@ export default function ClanDetailPage({ params }: { params: Promise<{ slug: str
                             m.id === walletAddress
                         );
                         if (isCancelled) return;
-                        console.log("Membership check:", { walletAddress, memberExists });
                         setIsMember(memberExists);
                     } catch (err) {
                         console.error("Failed to check membership:", err);

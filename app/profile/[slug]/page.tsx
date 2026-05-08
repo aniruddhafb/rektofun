@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import ChallengeDetailModal from "@/app/components/challenge-components/ChallengeDetailModal";
 import {
@@ -22,6 +22,7 @@ type TabType = "challenges" | "activity";
 
 
 export default function ProfilePage() {
+    const BOOKMARKS_STORAGE_KEY = "rektofun:challenge-bookmarks";
     const params = useParams();
     const slug = params.slug as string;
     const { solBalance, usdcBalance, solanaWallet } = useSolanaWallet();
@@ -33,8 +34,42 @@ export default function ProfilePage() {
     const [error, setError] = useState<string | null>(null);
     const [userChallenges, setUserChallenges] = useState<ChallengeListItem[]>([]);
     const [challengesLoading, setChallengesLoading] = useState(false);
+    const [bookmarkedChallengeIds, setBookmarkedChallengeIds] = useState<string[]>(() => {
+        if (typeof window === "undefined") return [];
+        try {
+            const rawBookmarks = window.localStorage.getItem(BOOKMARKS_STORAGE_KEY);
+            if (!rawBookmarks) return [];
+            const parsed = JSON.parse(rawBookmarks);
+            if (!Array.isArray(parsed)) return [];
+            return parsed.filter((value): value is string => typeof value === "string");
+        } catch (error) {
+            console.error("Failed to read challenge bookmarks from localStorage:", error);
+            return [];
+        }
+    });
 
     const walletFromSlug = decodeURIComponent(slug || "");
+
+    useEffect(() => {
+        try {
+            window.localStorage.setItem(BOOKMARKS_STORAGE_KEY, JSON.stringify(bookmarkedChallengeIds));
+        } catch (error) {
+            console.error("Failed to persist challenge bookmarks to localStorage:", error);
+        }
+    }, [bookmarkedChallengeIds]);
+
+    const toggleBookmark = useCallback((challengeId: string) => {
+        setBookmarkedChallengeIds((prev) =>
+            prev.includes(challengeId)
+                ? prev.filter((id) => id !== challengeId)
+                : [...prev, challengeId]
+        );
+    }, []);
+
+    const isChallengeBookmarked = useCallback(
+        (challengeId: string) => bookmarkedChallengeIds.includes(challengeId),
+        [bookmarkedChallengeIds]
+    );
 
     // Fetch user data by wallet address (slug)
     useEffect(() => {
@@ -173,6 +208,8 @@ export default function ProfilePage() {
                                 challenges={userChallenges}
                                 loading={challengesLoading}
                                 onChallengeClick={handleChallengeClick}
+                                onToggleBookmark={toggleBookmark}
+                                isBookmarked={isChallengeBookmarked}
                             />
                         )}
 
