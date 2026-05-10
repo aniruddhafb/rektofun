@@ -167,12 +167,19 @@ We started building Rekto.fun on:
 > April 17th, 2026
 
 In just 27 days we shipped:
+
 ✅ Live Solana Devnet MVP
+
 ✅ PvP challenge system
+
 ✅ Multiplayer prediction pools
+
 ✅ Clan systems
+
 ✅ Community validation mechanics
+
 ✅ Gamified UI/UX
+
 ✅ Full frontend + backend infrastructure
 
 ---
