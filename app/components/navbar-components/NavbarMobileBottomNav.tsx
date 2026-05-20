@@ -19,7 +19,7 @@ export function NavbarMobileBottomNav({
     const isHomeActive =
         isActive("/") &&
         !isActive("/challenges") &&
-        !isActive("/arenas") &&
+        !isActive("/masters") &&
         !isActive("/leaderboard") &&
         !isActive("/referral") &&
         !isActive("/activity") &&

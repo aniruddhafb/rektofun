@@ -93,7 +93,7 @@ export function NavbarProfileDropdown({
             <button
                 type="button"
                 onClick={isMobileViewport ? onToggle : undefined}
-                className="flex items-center gap-2 p-1 pr-3 rounded-full bg-white/50 border border-gray-400 hover:bg-white/80 transition-all cursor-pointer"
+                className="flex items-center gap-2 px-[4px] py-[2px] pr-3 rounded-full bg-white/50 border border-gray-400 hover:bg-white/80 transition-all cursor-pointer"
             >
                 {displayProfileImage ? (
                     <Image

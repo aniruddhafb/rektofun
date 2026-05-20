@@ -687,7 +687,7 @@ export function ChallengeCard({
     return (
         <>
             <div
-                className="block overflow-hidden rounded border border-gray-700 bg-[#f8ede7] p-3 shadow-sm transition-shadow hover:shadow-lg sm:p-4"
+                className="block overflow-hidden rounded border border-gray-400 bg-[#f8ede7] p-3 shadow-sm transition-shadow hover:shadow-lg sm:p-4"
             >
                 {/* Header */}
                 <div className="mb-3 flex items-start justify-between gap-2">
