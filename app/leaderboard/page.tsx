@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { getLeaderboard, type LeaderboardUser } from "../lib/users-service/users";
 
 const SparkleIcon = ({ className }: { className?: string }) => (
@@ -63,6 +64,7 @@ const ChevronIcon = ({ direction }: { direction: "up" | "down" }) => (
 
 type LeaderboardRow = {
     id: string;
+    walletAddress: string;
     rank: number;
     username: string;
     avatar: string;
@@ -73,6 +75,9 @@ type LeaderboardRow = {
     earnings: string;
 };
 
+type SortField = "rank" | "wins" | "rekts" | "rektoPoints" | "earnings";
+type SortOrder = "desc" | "asc";
+
 function mapUserToRow(user: LeaderboardUser, rank: number): LeaderboardRow {
     const referralCount = user.referrals?.length ?? 0;
     const wins = referralCount * 100;
@@ -82,6 +87,7 @@ function mapUserToRow(user: LeaderboardUser, rank: number): LeaderboardRow {
 
     return {
         id: user.id,
+        walletAddress: user.wallet_address,
         rank,
         username: user.username || `user-${user.wallet_address.slice(0, 6)}`,
         avatar: user.profile_image || "/scribbles/pepe.png",
@@ -110,7 +116,10 @@ async function fetchAllLeaderboardUsers(): Promise<LeaderboardUser[]> {
 }
 
 export default function LeaderboardPage() {
+    const router = useRouter();
     const [searchQuery, setSearchQuery] = useState("");
+    const [sortField, setSortField] = useState<SortField>("rank");
+    const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
     const [currentPage, setCurrentPage] = useState(1);
     const [rows, setRows] = useState<LeaderboardRow[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -140,9 +149,20 @@ export default function LeaderboardPage() {
         [rows, searchQuery]
     );
 
-    const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+    const sortedData = useMemo(() => {
+        const sorted = [...filteredData];
+        sorted.sort((a, b) => {
+            const direction = sortOrder === "asc" ? 1 : -1;
+            if (sortField === "earnings") return (Number(a.earnings) - Number(b.earnings)) * direction;
+            if (sortField === "rektoPoints") return (a.wins - b.wins) * direction;
+            return ((a[sortField] as number) - (b[sortField] as number)) * direction;
+        });
+        return sorted;
+    }, [filteredData, sortField, sortOrder]);
+
+    const totalPages = Math.ceil(sortedData.length / itemsPerPage);
     const startIndex = (currentPage - 1) * itemsPerPage;
-    const paginatedData = filteredData.slice(startIndex, startIndex + itemsPerPage);
+    const paginatedData = sortedData.slice(startIndex, startIndex + itemsPerPage);
     const totalEarned = rows.reduce((sum, row) => sum + Number(row.earnings), 0);
 
     const handlePageChange = (page: number) => {
@@ -203,9 +223,9 @@ export default function LeaderboardPage() {
                     </div>
                 </div>
 
-                <div className="mb-6">
-                    <div className="relative max-w-md">
-                        <div className="absolute left-4 top-1/2 -translate-y-1/2">
+                <div className="mb-6 flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
+                    <div className="relative max-w-md w-full">
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
                             <SearchIcon />
                         </div>
                         <input
@@ -218,6 +238,46 @@ export default function LeaderboardPage() {
                             }}
                             className="pl-11 pr-4 py-3 bg-white/60 border border-white/50 rounded-xl text-base text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30 w-full"
                         />
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                        <label className="relative inline-flex items-center w-full sm:w-auto">
+                            <span className="sr-only">Sort metric</span>
+                            <select
+                                value={sortField}
+                                onChange={(e) => {
+                                    setSortField(e.target.value as SortField);
+                                    setCurrentPage(1);
+                                }}
+                                className="appearance-none w-full sm:w-auto rounded-lg border border-slate-200 bg-white py-3 pl-3 pr-10 text-sm font-semibold text-slate-600 outline-none transition hover:border-slate-300 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100"
+                            >
+                                <option value="rank">Sort by Rank</option>
+                                <option value="wins">Sort by Wins</option>
+                                <option value="rekts">Sort by Rekts</option>
+                                <option value="rektoPoints">Sort by Rekto Points</option>
+                                <option value="earnings">Sort by Earnings</option>
+                            </select>
+                            <span className="pointer-events-none absolute right-3">
+                                <ChevronIcon direction="down" />
+                            </span>
+                        </label>
+
+                        <label className="relative inline-flex items-center w-full sm:w-auto">
+                            <span className="sr-only">Sort order</span>
+                            <select
+                                value={sortOrder}
+                                onChange={(e) => {
+                                    setSortOrder(e.target.value as SortOrder);
+                                    setCurrentPage(1);
+                                }}
+                                className="appearance-none w-full sm:w-auto rounded-lg border border-slate-200 bg-white py-3 pl-3 pr-10 text-sm font-semibold text-slate-600 outline-none transition hover:border-slate-300 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100"
+                            >
+                                <option value="desc">Highest First</option>
+                                <option value="asc">Lowest First</option>
+                            </select>
+                            <span className="pointer-events-none absolute right-3">
+                                <ChevronIcon direction="down" />
+                            </span>
+                        </label>
                     </div>
                 </div>
 
@@ -241,11 +301,15 @@ export default function LeaderboardPage() {
                                     <div className="px-6 py-8 text-gray-600">No users found.</div>
                                 )}
 
-                                {!isLoading && !error && paginatedData.map((user) => (
-                                    <div key={user.id} className="grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-white/30 transition-colors">
+                                {!isLoading && !error && paginatedData.map((user, index) => (
+                                    <div
+                                        key={user.id}
+                                        className="grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-white/30 transition-colors cursor-pointer"
+                                        onClick={() => router.push(`/profile/${user.walletAddress}`)}
+                                    >
                                         <div className="col-span-1 flex items-center gap-2">
-                                            <span className="text-lg font-semibold text-gray-700 w-4">{user.rank}</span>
-                                            {user.rank === 1 ? <StarBadge /> : <DiamondIcon />}
+                                            <span className="text-lg font-semibold text-gray-700 w-4">{startIndex + index + 1}</span>
+                                            {startIndex + index + 1 === 1 ? <StarBadge /> : <DiamondIcon />}
                                         </div>
 
                                         <div className="col-span-3 flex items-center gap-3">
@@ -285,8 +349,8 @@ export default function LeaderboardPage() {
 
                     {!isLoading && !error && totalPages > 1 && (
                         <div className="flex items-center justify-between px-6 py-4 border-t border-white/50">
-                            <div className="text-sm text-gray-600">
-                                Showing {startIndex + 1}-{Math.min(startIndex + itemsPerPage, filteredData.length)} of {filteredData.length} traders
+                            <div className="hidden sm:block text-sm text-gray-600">
+                                Showing {startIndex + 1}-{Math.min(startIndex + itemsPerPage, sortedData.length)} of {sortedData.length} traders
                             </div>
                             <div className="flex items-center gap-2">
                                 <button

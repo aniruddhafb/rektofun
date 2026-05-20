@@ -14,7 +14,7 @@ export function NavbarNavLinks({ isActive }: NavbarNavLinksProps) {
     const navIconByHref = {
         "/challenges": Sword,
         "/arenas": Search,
-        "/clans": Shield,
+        "/masters": Shield,
         "/activity": Zap,
     } as const;
 
@@ -26,7 +26,7 @@ export function NavbarNavLinks({ isActive }: NavbarNavLinksProps) {
         const iconClassByHref = {
             "/challenges": "text-[#cb8a22]",
             "/arenas": "text-[#2e9ec3]",
-            "/clans": "text-[#4b6fd1]",
+            "/masters": "text-[#4b6fd1]",
             "/activity": "text-[#d9a31b]",
         } as const;
 

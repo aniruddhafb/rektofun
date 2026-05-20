@@ -12,7 +12,7 @@ import {
 } from "@/app/components/profile-components";
 import { LoadingPage } from "@/app/components/LoadingPage";
 import { getUserByWallet, User } from "@/app/lib/users-service/users";
-import { useSolanaWallet } from "@/app/lib/useSolanaWallet";
+import { getWalletBalancesByAddress, useSolanaWallet } from "@/app/lib/useSolanaWallet";
 import {
     ChallengeListItem,
     getChallenges,
@@ -27,7 +27,7 @@ export default function ProfilePage() {
     const params = useParams();
     const { user: privyUser } = usePrivy();
     const slug = params.slug as string;
-    const { solBalance, usdcBalance, solanaWallet } = useSolanaWallet();
+    const { solanaWallet } = useSolanaWallet();
     const [activeTab, setActiveTab] = useState<TabType>("challenges");
     const [selectedChallenge, setSelectedChallenge] = useState<ChallengeListItem | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -36,6 +36,8 @@ export default function ProfilePage() {
     const [error, setError] = useState<string | null>(null);
     const [userChallenges, setUserChallenges] = useState<ChallengeListItem[]>([]);
     const [challengesLoading, setChallengesLoading] = useState(false);
+    const [profileSolBalance, setProfileSolBalance] = useState<number | null>(null);
+    const [profileUsdcBalance, setProfileUsdcBalance] = useState<number | null>(null);
     const [bookmarkedChallengeIds, setBookmarkedChallengeIds] = useState<string[]>(() => {
         if (typeof window === "undefined") return [];
         try {
@@ -128,6 +130,29 @@ export default function ProfilePage() {
         fetchUserChallenges();
     }, [user?.id]);
 
+    // Fetch balances for the profile wallet (slug user), not the connected viewer wallet.
+    useEffect(() => {
+        async function fetchProfileBalances() {
+            if (!user?.wallet_address) {
+                setProfileSolBalance(null);
+                setProfileUsdcBalance(null);
+                return;
+            }
+
+            try {
+                const snapshot = await getWalletBalancesByAddress(user.wallet_address);
+                setProfileSolBalance(snapshot.solBalance);
+                setProfileUsdcBalance(snapshot.usdcBalance);
+            } catch (balanceError) {
+                console.error("Failed to fetch profile wallet balances:", balanceError);
+                setProfileSolBalance(null);
+                setProfileUsdcBalance(null);
+            }
+        }
+
+        fetchProfileBalances();
+    }, [user?.wallet_address]);
+
     // Handle challenge card click
     const handleChallengeClick = (challenge: ChallengeListItem) => {
         setSelectedChallenge(challenge);
@@ -197,10 +222,10 @@ export default function ProfilePage() {
                             twitterUsername={twitterUsername}
                             joinedDate={user.created_at}
                             balance={{
-                                sol: solBalance ?? user.earnings ?? 0,
-                                solUsd: (solBalance ?? user.earnings ?? 0) * 165, // Approximate SOL to USD
-                                usdc: usdcBalance ?? 0,
-                                usdcUsd: usdcBalance ?? 0, // USDC is 1:1 with USD
+                                sol: profileSolBalance ?? user.earnings ?? 0,
+                                solUsd: (profileSolBalance ?? user.earnings ?? 0) * 165, // Approximate SOL to USD
+                                usdc: profileUsdcBalance ?? 0,
+                                usdcUsd: profileUsdcBalance ?? 0, // USDC is 1:1 with USD
                             }}
                             stats={{
                                 wins: userChallenges.filter((c) => c.status === "resolved").length,
