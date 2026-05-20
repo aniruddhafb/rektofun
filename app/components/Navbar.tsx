@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { usePathname, useSearchParams } from "next/navigation";
 import { DepositModal } from "./DepositModal";
+import { WithdrawModal } from "./WithdrawModal";
 import { useSolanaWallet } from "@/app/lib/useSolanaWallet";
 import * as components from "./navbar-components";
 import { ensureUserByWallet, updateUser, getUserByWallet, acceptReferral, User } from "@/app/lib/users-service/users";
@@ -19,6 +20,7 @@ export default function Navbar() {
     const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
+    const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const [isMobileViewport, setIsMobileViewport] = useState(false);
     const [editUsername, setEditUsername] = useState("");
@@ -385,6 +387,7 @@ export default function Navbar() {
                             onMouseLeaveDropdown={() => setIsDropdownOpen(false)}
                             onToggleDropdown={() => setIsDropdownOpen((prev) => !prev)}
                             onOpenDeposit={() => setIsDepositModalOpen(true)}
+                            onOpenWithdraw={() => setIsWithdrawModalOpen(true)}
                             profileHref={profileHref}
                             isMobileViewport={isMobileViewport}
                         />
@@ -549,6 +552,10 @@ export default function Navbar() {
             <DepositModal
                 isOpen={isDepositModalOpen}
                 onClose={() => setIsDepositModalOpen(false)}
+            />
+            <WithdrawModal
+                isOpen={isWithdrawModalOpen}
+                onClose={() => setIsWithdrawModalOpen(false)}
             />
 
             {/* Mobile Bottom Navigation - Fixed at bottom */}

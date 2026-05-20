@@ -17,6 +17,7 @@ type NavbarProfileDropdownProps = {
     onToggle: () => void;
     onLogout: () => void;
     onOpenDeposit: () => void;
+    onOpenWithdraw: () => void;
     profileHref: string;
     isMobileViewport: boolean;
 };
@@ -77,6 +78,7 @@ export function NavbarProfileDropdown({
     onToggle,
     onLogout,
     onOpenDeposit,
+    onOpenWithdraw,
     profileHref,
     isMobileViewport,
 }: NavbarProfileDropdownProps) {
@@ -174,30 +176,56 @@ export function NavbarProfileDropdown({
                                 <p className="text-xs text-gray-500 mb-1.5">Your USDC Balance</p>
                                 <div className="flex items-center justify-between gap-2">
                                     <span className="text-base font-semibold text-gray-900">{balanceDisplay}</span>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            onClose();
-                                            onOpenDeposit();
-                                        }}
-                                        className="w-7 h-7 rounded-full bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 hover:text-black transition-colors flex items-center justify-center cursor-pointer"
-                                        aria-label="Deposit funds"
-                                        title="Deposit funds"
-                                    >
-                                        <svg
-                                            className="w-4 h-4"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
+                                    <div className="flex items-center gap-1.5">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                onClose();
+                                                onOpenWithdraw();
+                                            }}
+                                            className="w-7 h-7 rounded-full bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 hover:text-black transition-colors flex items-center justify-center cursor-pointer"
+                                            aria-label="Withdraw funds"
+                                            title="Withdraw funds"
                                         >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M12 5v14m-7-7h14"
-                                            />
-                                        </svg>
-                                    </button>
+                                            <svg
+                                                className="w-4 h-4"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
+                                                    d="M17 8l4 4m0 0l-4 4m4-4H3"
+                                                />
+                                            </svg>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                onClose();
+                                                onOpenDeposit();
+                                            }}
+                                            className="w-7 h-7 rounded-full bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 hover:text-black transition-colors flex items-center justify-center cursor-pointer"
+                                            aria-label="Deposit funds"
+                                            title="Deposit funds"
+                                        >
+                                            <svg
+                                                className="w-4 h-4"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
+                                                    d="M12 5v14m-7-7h14"
+                                                />
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 

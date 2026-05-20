@@ -165,14 +165,6 @@ export default function ProfilePage() {
         setTimeout(() => setSelectedChallenge(null), 300);
     };
 
-    // Format wallet address for display (shorten it)
-    const formatWalletAddress = (address: string) => {
-        if (address.length > 10) {
-            return `${address.slice(0, 6)}...${address.slice(-4)}`;
-        }
-        return address;
-    };
-
     if (loading) {
         return <LoadingPage variant="simple" message="Loading profile..." />;
     }
@@ -188,7 +180,7 @@ export default function ProfilePage() {
                         <ProfileHeader
                             username={slug}
                             avatar="/scribbles/pepe.png"
-                            walletAddress={formatWalletAddress(slug)}
+                            walletAddress={slug}
                             bio="No bio yet"
                             twitterUsername={null}
                             joinedDate={new Date().toISOString()}
@@ -217,7 +209,7 @@ export default function ProfilePage() {
                         <ProfileHeader
                             username={user.username}
                             avatar={user.profile_image || "/scribbles/pepe.png"}
-                            walletAddress={formatWalletAddress(user.wallet_address)}
+                            walletAddress={user.wallet_address}
                             bio={user.description || "No bio yet"}
                             twitterUsername={twitterUsername}
                             joinedDate={user.created_at}
