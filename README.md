@@ -39,7 +39,6 @@ Rekto.fun is a social PvP prediction platform built on Solana where users can:
 * Create permissionless prediction challenges
 * Compete head-to-head in PvP battles
 * Join multiplayer prediction pools
-* Participate in clan wars
 * Earn rewards through correct predictions
 * Validate outcomes through community governance
 
@@ -79,20 +78,6 @@ Winner takes the pool.
 Users join the side they believe in.
 
 Winning side shares the rewards.
-
----
-
-## 👥 Clan Wars
-
-Rekto.fun introduces a strong social layer through:
-
-* Clans
-* Team battles
-* Internal PvP competitions
-* Clan wars
-* Community coordination
-
-Prediction markets become multiplayer experiences.
 
 ---
 
