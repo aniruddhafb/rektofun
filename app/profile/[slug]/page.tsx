@@ -11,8 +11,9 @@ import {
     ProfileActivity,
 } from "@/app/components/profile-components";
 import { LoadingPage } from "@/app/components/LoadingPage";
-import { getUserByWallet, User } from "@/app/lib/users-service/users";
+import { followUser, getUserByWallet, unfollowUser, User } from "@/app/lib/users-service/users";
 import { getWalletBalancesByAddress, useSolanaWallet } from "@/app/lib/useSolanaWallet";
+import { useUserStore } from "@/app/store/useUserStore";
 import {
     ChallengeListItem,
     getChallenges,
@@ -26,6 +27,7 @@ export default function ProfilePage() {
     const BOOKMARKS_STORAGE_KEY = "rektofun:challenge-bookmarks";
     const params = useParams();
     const { user: privyUser } = usePrivy();
+    const { user: currentUser } = useUserStore();
     const slug = params.slug as string;
     const { solanaWallet } = useSolanaWallet();
     const [activeTab, setActiveTab] = useState<TabType>("challenges");
@@ -38,6 +40,7 @@ export default function ProfilePage() {
     const [challengesLoading, setChallengesLoading] = useState(false);
     const [profileSolBalance, setProfileSolBalance] = useState<number | null>(null);
     const [profileUsdcBalance, setProfileUsdcBalance] = useState<number | null>(null);
+    const [isFollowActionLoading, setIsFollowActionLoading] = useState(false);
     const [bookmarkedChallengeIds, setBookmarkedChallengeIds] = useState<string[]>(() => {
         if (typeof window === "undefined") return [];
         try {
@@ -60,6 +63,9 @@ export default function ProfilePage() {
         solanaWallet.address === user.wallet_address
     );
     const twitterUsername = isOwnProfile ? linkedTwitter?.username ?? null : null;
+    const viewerWalletAddress = solanaWallet?.address ?? null;
+    const viewerUserId = currentUser?.id ?? null;
+    const isFollowing = !!(viewerUserId && user?.followers?.includes(viewerUserId));
 
     useEffect(() => {
         try {
@@ -165,6 +171,22 @@ export default function ProfilePage() {
         setTimeout(() => setSelectedChallenge(null), 300);
     };
 
+    const handleToggleFollow = useCallback(async () => {
+        if (!viewerWalletAddress || !user?.wallet_address || isOwnProfile) return;
+
+        try {
+            setIsFollowActionLoading(true);
+            const updatedTarget = isFollowing
+                ? await unfollowUser(user.wallet_address, viewerWalletAddress)
+                : await followUser(user.wallet_address, viewerWalletAddress);
+            setUser(updatedTarget);
+        } catch (followError) {
+            console.error("Failed to toggle follow:", followError);
+        } finally {
+            setIsFollowActionLoading(false);
+        }
+    }, [viewerWalletAddress, isOwnProfile, isFollowing, user]);
+
     if (loading) {
         return <LoadingPage variant="simple" message="Loading profile..." />;
     }
@@ -212,6 +234,12 @@ export default function ProfilePage() {
                             walletAddress={user.wallet_address}
                             bio={user.description || "No bio yet"}
                             twitterUsername={twitterUsername}
+                            isOwnProfile={isOwnProfile}
+                            isFollowing={isFollowing}
+                            followersCount={user.followers?.length ?? 0}
+                            followingCount={user.following?.length ?? 0}
+                            onToggleFollow={handleToggleFollow}
+                            isFollowActionLoading={isFollowActionLoading}
                             joinedDate={user.created_at}
                             balance={{
                                 sol: profileSolBalance ?? user.earnings ?? 0,

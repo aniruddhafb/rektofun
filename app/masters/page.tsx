@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
     BadgeCheck,
     ChevronDown,
@@ -15,27 +16,28 @@ import {
     ShieldOff,
     UserPlus,
 } from "lucide-react";
+import { getLeaderboard, type LeaderboardUser } from "@/app/lib/users-service/users";
+import { LoadingPage } from "@/app/components/LoadingPage";
+import { followUser, unfollowUser } from "@/app/lib/users-service/users";
+import { useSolanaWallet } from "@/app/lib/useSolanaWallet";
+import { useUserStore } from "@/app/store/useUserStore";
+import Link from "next/link";
 
-type BadgeTone = "violet" | "green" | "yellow" | "blue" | "red";
+type MasterCategory = "Crypto" | "Sports" | "Stocks" | "Others";
 
-type Influencer = {
-    id: number;
+type Master = {
+    id: string;
     name: string;
     username: string;
-    category: "Crypto" | "Sports" | "Stocks" | "Others";
+    walletAddress: string;
+    category: MasterCategory;
     verified: boolean;
-    topGainer: boolean;
-    role1: string;
-    role2: string;
-    role1Tone: BadgeTone;
-    role2Tone: BadgeTone;
     challenges: number;
-    winRate: number;
     wins: number;
     rekts: number;
-    banner: string;
-    bannerLabel: string;
+    followers: string[];
     avatarPath: string;
+    banner: string;
 };
 
 const CATEGORY_OPTIONS = ["All Categories", "Crypto", "Sports", "Stocks", "Others"] as const;
@@ -43,198 +45,61 @@ type CategoryFilter = (typeof CATEGORY_OPTIONS)[number];
 const VERIFICATION_OPTIONS = ["All Masters", "Verified", "Unverified"] as const;
 type VerificationFilter = (typeof VERIFICATION_OPTIONS)[number];
 
-const BASE_INFLUENCERS: Omit<Influencer, "id" | "avatarPath">[] = [
-    {
-        name: "Crypto Yoddha",
-        username: "@cryptoyoddha",
-        category: "Crypto",
-        verified: true,
-        topGainer: false,
-        role1: "Crypto Analyst",
-        role2: "Top Creator",
-        role1Tone: "violet",
-        role2Tone: "yellow",
-        challenges: 342,
-        winRate: 68,
-        wins: 512,
-        rekts: -243,
-        banner: "linear-gradient(120deg, #211548 0%, #3d2e7a 45%, #20163e 100%)",
-        bannerLabel: "CRYPTO YODDHA",
-    },
-    {
-        name: "Street Alpha",
-        username: "@streetalpha",
-        category: "Stocks",
-        verified: true,
-        topGainer: false,
-        role1: "Equity Pro",
-        role2: "Top Creator",
-        role1Tone: "blue",
-        role2Tone: "yellow",
-        challenges: 301,
-        winRate: 65,
-        wins: 497,
-        rekts: -277,
-        banner: "linear-gradient(120deg, #121f2f 0%, #214062 50%, #132439 100%)",
-        bannerLabel: "STREET ALPHA",
-    },
-    {
-        name: "Macro Monk",
-        username: "@macromonk",
-        category: "Others",
-        verified: false,
-        topGainer: false,
-        role1: "Macro Trends",
-        role2: "Community Pick",
-        role1Tone: "green",
-        role2Tone: "blue",
-        challenges: 168,
-        winRate: 57,
-        wins: 266,
-        rekts: -199,
-        banner: "linear-gradient(120deg, #1f1f1f 0%, #3a3a3a 50%, #212121 100%)",
-        bannerLabel: "MACRO MONK",
-    },
-    {
-        name: "The Degen Trader",
-        username: "@thedegentrader",
-        category: "Crypto",
-        verified: true,
-        topGainer: false,
-        role1: "Market Wizard",
-        role2: "High Volume",
-        role1Tone: "violet",
-        role2Tone: "green",
-        challenges: 586,
-        winRate: 61,
-        wins: 787,
-        rekts: -501,
-        banner: "linear-gradient(120deg, #0b0f18 0%, #1f2a43 52%, #111827 100%)",
-        bannerLabel: "THE DEGEN",
-    },
-    {
-        name: "Bullish Bantai",
-        username: "@bullishbantai",
-        category: "Crypto",
-        verified: true,
-        topGainer: true,
-        role1: "Bullish",
-        role2: "Top Gainer",
-        role1Tone: "green",
-        role2Tone: "yellow",
-        challenges: 278,
-        winRate: 71,
-        wins: 605,
-        rekts: -247,
-        banner: "linear-gradient(120deg, #052d15 0%, #0f5f2e 52%, #081f16 100%)",
-        bannerLabel: "BULLISH",
-    },
-    {
-        name: "BearWala",
-        username: "@bearwala",
-        category: "Crypto",
-        verified: true,
-        topGainer: false,
-        role1: "Contrarian",
-        role2: "Top Creator",
-        role1Tone: "red",
-        role2Tone: "yellow",
-        challenges: 315,
-        winRate: 64,
-        wins: 424,
-        rekts: -238,
-        banner: "linear-gradient(120deg, #2f0207 0%, #6b0914 52%, #1f0c12 100%)",
-        bannerLabel: "BEARWALA",
-    },
-    {
-        name: "Crypto Maafiya",
-        username: "@cryptomaafiya",
-        category: "Crypto",
-        verified: true,
-        topGainer: false,
-        role1: "Alpha Hunter",
-        role2: "High Volume",
-        role1Tone: "violet",
-        role2Tone: "green",
-        challenges: 452,
-        winRate: 67,
-        wins: 892,
-        rekts: -439,
-        banner: "linear-gradient(120deg, #20062b 0%, #65108e 52%, #2a0b3e 100%)",
-        bannerLabel: "CRYPTO MAAFIYA",
-    },
-    {
-        name: "Futbol Predicts",
-        username: "@futbolpredicts",
-        category: "Sports",
-        verified: true,
-        topGainer: false,
-        role1: "Sports Guru",
-        role2: "Top Creator",
-        role1Tone: "blue",
-        role2Tone: "yellow",
-        challenges: 189,
-        winRate: 59,
-        wins: 327,
-        rekts: -228,
-        banner: "linear-gradient(120deg, #0b1f30 0%, #12385a 45%, #0d1c2e 100%)",
-        bannerLabel: "FUTBOL PREDICTS",
-    },
-    {
-        name: "Moon Mission",
-        username: "@moonmission",
-        category: "Crypto",
-        verified: true,
-        topGainer: true,
-        role1: "Long Term",
-        role2: "Top Gainer",
-        role1Tone: "violet",
-        role2Tone: "yellow",
-        challenges: 234,
-        winRate: 73,
-        wins: 556,
-        rekts: -206,
-        banner: "linear-gradient(120deg, #22084a 0%, #4b1a8c 52%, #2f125c 100%)",
-        bannerLabel: "MOON MISSION",
-    },
-    {
-        name: "King of Calls",
-        username: "@kingofcalls",
-        category: "Crypto",
-        verified: true,
-        topGainer: false,
-        role1: "Accuracy King",
-        role2: "Verified",
-        role1Tone: "blue",
-        role2Tone: "blue",
-        challenges: 402,
-        winRate: 69,
-        wins: 723,
-        rekts: -325,
-        banner: "linear-gradient(120deg, #061326 0%, #12365e 50%, #0b1a33 100%)",
-        bannerLabel: "KING OF CALLS",
-    },
+const PAGE_SIZE_OPTIONS = [8, 12, 16];
+
+const BANNERS = [
+    "linear-gradient(120deg, #211548 0%, #3d2e7a 45%, #20163e 100%)",
+    "linear-gradient(120deg, #121f2f 0%, #214062 50%, #132439 100%)",
+    "linear-gradient(120deg, #1f1f1f 0%, #3a3a3a 50%, #212121 100%)",
+    "linear-gradient(120deg, #0b0f18 0%, #1f2a43 52%, #111827 100%)",
+    "linear-gradient(120deg, #052d15 0%, #0f5f2e 52%, #081f16 100%)",
+    "linear-gradient(120deg, #2f0207 0%, #6b0914 52%, #1f0c12 100%)",
 ];
 
-const influencers: Influencer[] = Array.from({ length: 24 }, (_, index) => {
-    const seed = BASE_INFLUENCERS[index % BASE_INFLUENCERS.length];
-    const cycle = Math.floor(index / BASE_INFLUENCERS.length);
-    const nameSuffix = cycle === 0 ? "" : ` ${["Prime", "Pro", "X"][cycle - 1] ?? "Elite"}`;
+function getCategoryFromWallet(walletAddress: string): MasterCategory {
+    const score = walletAddress
+        .split("")
+        .reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const categories: MasterCategory[] = ["Crypto", "Sports", "Stocks", "Others"];
+    return categories[score % categories.length];
+}
+
+function mapUserToMaster(user: LeaderboardUser, index: number): Master {
+    const challenges = user.referrals?.length ?? 0;
+    const wins = challenges * 100;
+    const rekts = Math.max(0, Math.floor(challenges * 0.2));
 
     return {
-        ...seed,
-        id: index + 1,
-        name: `${seed.name}${nameSuffix}`,
-        username: cycle === 0 ? seed.username : `${seed.username}${cycle + 1}`,
-        challenges: seed.challenges + cycle * 34 + (index % 3) * 6,
-        winRate: Math.min(79, Math.max(52, seed.winRate + ((index % 5) - 2))),
-        wins: seed.wins + cycle * 92 + index * 7,
-        rekts: seed.rekts - cycle * 19 - (index % 4) * 4,
-        avatarPath: `/profiles/${(index % 31) + 1}.svg`,
+        id: user.id,
+        name: user.username || `user-${user.wallet_address.slice(0, 6)}`,
+        username: `@${(user.username || `user-${user.wallet_address.slice(0, 6)}`).toLowerCase()}`,
+        walletAddress: user.wallet_address,
+        category: getCategoryFromWallet(user.wallet_address),
+        verified: Boolean(user.username),
+        challenges,
+        wins,
+        rekts,
+        followers: user.followers ?? [],
+        avatarPath: user.profile_image || "/scribbles/pepe.png",
+        banner: BANNERS[index % BANNERS.length],
     };
-});
+}
 
-const PAGE_SIZE_OPTIONS = [8, 12, 16];
+async function fetchAllUsers(): Promise<LeaderboardUser[]> {
+    const pageSize = 100;
+    let offset = 0;
+    let total = 0;
+    const allUsers: LeaderboardUser[] = [];
+
+    do {
+        const response = await getLeaderboard(pageSize, offset);
+        total = response.count;
+        allUsers.push(...response.users);
+        offset += pageSize;
+    } while (allUsers.length < total);
+
+    return allUsers;
+}
 
 function buildPagination(currentPage: number, totalPages: number): Array<number | string> {
     if (totalPages <= 7) {
@@ -266,23 +131,10 @@ function buildPagination(currentPage: number, totalPages: number): Array<number 
     return output;
 }
 
-function Badge({ text, tone }: { text: string; tone: BadgeTone }) {
-    const toneMap = {
-        violet: "border-violet-200 bg-violet-50 text-violet-700",
-        green: "border-emerald-200 bg-emerald-50 text-emerald-700",
-        yellow: "border-amber-200 bg-amber-50 text-amber-700",
-        blue: "border-sky-200 bg-sky-50 text-sky-700",
-        red: "border-rose-200 bg-rose-50 text-rose-700",
-    };
-
-    return (
-        <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${toneMap[tone]}`}>
-            {text}
-        </span>
-    );
-}
-
 export default function MastersPage() {
+    const router = useRouter();
+    const { solanaWallet } = useSolanaWallet();
+    const { user: currentUser } = useUserStore();
     const [search, setSearch] = useState("");
     const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>("All Categories");
     const [verificationFilter, setVerificationFilter] = useState<VerificationFilter>("All Masters");
@@ -290,6 +142,10 @@ export default function MastersPage() {
     const [itemsPerPage, setItemsPerPage] = useState(12);
     const [isCategoryOpen, setIsCategoryOpen] = useState(false);
     const [isVerificationOpen, setIsVerificationOpen] = useState(false);
+    const [masters, setMasters] = useState<Master[]>([]);
+    const [followLoadingByWallet, setFollowLoadingByWallet] = useState<Record<string, boolean>>({});
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const categoryRef = useRef<HTMLDivElement>(null);
     const verificationRef = useRef<HTMLDivElement>(null);
 
@@ -306,35 +162,87 @@ export default function MastersPage() {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    const filteredInfluencers = useMemo(() => {
-        return influencers.filter((influencer) => {
-            const matchesSearch =
-                influencer.name.toLowerCase().includes(search.toLowerCase()) ||
-                influencer.username.toLowerCase().includes(search.toLowerCase());
+    const toggleFollow = async (targetWalletAddress: string) => {
+        if (!solanaWallet?.address || !currentUser?.id) return;
 
-            const matchesCategory =
-                categoryFilter === "All Categories" || influencer.category === categoryFilter;
+        const targetMaster = masters.find((m) => m.walletAddress === targetWalletAddress);
+        if (!targetMaster || targetMaster.walletAddress === solanaWallet.address) return;
+
+        const viewerAlreadyFollowing = targetMaster.followers.includes(currentUser.id);
+
+        try {
+            setFollowLoadingByWallet((prev) => ({ ...prev, [targetWalletAddress]: true }));
+            const updatedTarget = viewerAlreadyFollowing
+                ? await unfollowUser(targetWalletAddress, solanaWallet.address)
+                : await followUser(targetWalletAddress, solanaWallet.address);
+
+            setMasters((prev) =>
+                prev.map((master) =>
+                    master.walletAddress === targetWalletAddress
+                        ? ({
+                            ...master,
+                            followers: updatedTarget.followers,
+                        } as Master)
+                        : master,
+                ),
+            );
+        } catch (followError) {
+            console.error("Failed to toggle follow:", followError);
+        } finally {
+            setFollowLoadingByWallet((prev) => ({ ...prev, [targetWalletAddress]: false }));
+        }
+    };
+
+    useEffect(() => {
+        const loadUsers = async () => {
+            try {
+                setIsLoading(true);
+                setError(null);
+                const users = await fetchAllUsers();
+                setMasters(users.map((user, index) => mapUserToMaster(user, index)));
+            } catch {
+                setError("Failed to load masters.");
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        loadUsers();
+    }, []);
+
+    const filteredMasters = useMemo(() => {
+        return masters.filter((master) => {
+            const matchesSearch =
+                master.name.toLowerCase().includes(search.toLowerCase()) ||
+                master.username.toLowerCase().includes(search.toLowerCase()) ||
+                master.walletAddress.toLowerCase().includes(search.toLowerCase());
+
+            const matchesCategory = categoryFilter === "All Categories" || master.category === categoryFilter;
 
             const matchesVerification =
                 verificationFilter === "All Masters" ||
-                (verificationFilter === "Verified" && influencer.verified) ||
-                (verificationFilter === "Unverified" && !influencer.verified);
+                (verificationFilter === "Verified" && master.verified) ||
+                (verificationFilter === "Unverified" && !master.verified);
 
             return matchesSearch && matchesCategory && matchesVerification;
         });
-    }, [search, categoryFilter, verificationFilter]);
+    }, [masters, search, categoryFilter, verificationFilter]);
 
-    const totalPages = Math.max(1, Math.ceil(filteredInfluencers.length / itemsPerPage));
+    const totalPages = Math.max(1, Math.ceil(filteredMasters.length / itemsPerPage));
     const safeCurrentPage = Math.min(currentPage, totalPages);
 
-    const pagedInfluencers = useMemo(() => {
+    const pagedMasters = useMemo(() => {
         const startIndex = (safeCurrentPage - 1) * itemsPerPage;
-        return filteredInfluencers.slice(startIndex, startIndex + itemsPerPage);
-    }, [filteredInfluencers, itemsPerPage, safeCurrentPage]);
+        return filteredMasters.slice(startIndex, startIndex + itemsPerPage);
+    }, [filteredMasters, itemsPerPage, safeCurrentPage]);
 
     const pageButtons = useMemo(() => buildPagination(safeCurrentPage, totalPages), [safeCurrentPage, totalPages]);
-    const currentStart = (safeCurrentPage - 1) * itemsPerPage + 1;
-    const currentEnd = Math.min(safeCurrentPage * itemsPerPage, filteredInfluencers.length);
+    const currentStart = filteredMasters.length === 0 ? 0 : (safeCurrentPage - 1) * itemsPerPage + 1;
+    const currentEnd = Math.min(safeCurrentPage * itemsPerPage, filteredMasters.length);
+
+    if (isLoading) {
+        return <LoadingPage variant="simple" message="Loading masters..." />;
+    }
 
     return (
         <div className="min-h-screen" style={{ backgroundColor: "#f3e1d7" }}>
@@ -344,10 +252,10 @@ export default function MastersPage() {
                         <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">Explore Masters</h1>
                         <p className="mt-1 text-base text-gray-500">Discover top challenge creators and their track record</p>
                     </div>
-                    <button className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-700">
+                    <Link href="https://rektofun.gitbook.io/rektofun/introduction/what-is-rektofun" target="_blank" className="inline-flex items-center gap-2 rounded border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-700">
                         <Info className="h-4 w-4" />
                         How it works?
-                    </button>
+                    </Link>
                 </div>
 
                 <div className="max-w-7xl pb-8">
@@ -438,69 +346,106 @@ export default function MastersPage() {
                     </div>
                 </div>
 
+                {error ? (
+                    <div className="mb-8 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+                ) : null}
+
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-                    {pagedInfluencers.map((influencer) => (
-                        <article
-                            key={influencer.id}
-                            className="group mx-auto flex h-full w-full max-w-[400px] flex-col overflow-hidden rounded border border-gray-400 bg-white/70 p-4 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-gray-300/80 hover:shadow-xl md:max-w-[350px]"
-                        >
-                            <div className="relative h-[88px] overflow-hidden rounded-[8px] border border-[#d9d0ef]" style={{ background: influencer.banner }}>
-                                <div className="absolute inset-0 opacity-75 [background-image:linear-gradient(rgba(164,140,255,0.25)_1px,transparent_1px),linear-gradient(90deg,rgba(164,140,255,0.25)_1px,transparent_1px)] [background-size:24px_24px]" />
-                                <div className="absolute inset-0 opacity-65 [background-image:linear-gradient(0deg,transparent_0_58%,rgba(126,90,235,0.38)_58%_72%,transparent_72%_100%),linear-gradient(90deg,transparent_0_35%,rgba(126,90,235,0.4)_35%_48%,transparent_48%_100%)] [background-size:84px_84px] [background-position:0_0,14px_8px]" />
-                            </div>
+                    {!error && pagedMasters.length === 0 ? (
+                        <div className="col-span-full rounded-xl border border-slate-200 bg-white/70 p-6 text-center text-slate-600">
+                            No masters found.
+                        </div>
+                    ) : null}
 
-                            <div className="-mt-9 flex justify-center">
-                                <div className="relative h-[80px] w-[80px] rounded-full border-4 border-white bg-slate-100 shadow-[0_4px_12px_rgba(15,23,42,0.18)]">
-                                    <Image
-                                        src={influencer.avatarPath}
-                                        alt={`${influencer.name} avatar`}
-                                        fill
-                                        sizes="80px"
-                                        className="rounded-full object-cover"
-                                    />
-                                    {influencer.verified ? (
-                                        <span className="absolute -bottom-1 -right-1 z-10 grid h-6 w-6 place-items-center rounded-full border-2 border-white bg-[#2f7bff] text-white shadow-[0_3px_8px_rgba(47,123,255,0.45)]">
-                                            <BadgeCheck className="h-3.5 w-3.5" />
-                                        </span>
-                                    ) : null}
-                                </div>
-                            </div>
+                    {!error && pagedMasters.map((master) => {
+                        const followerIds = master.followers;
+                        const isOwnCard = master.walletAddress === solanaWallet?.address;
+                        const isFollowing = currentUser?.id ? followerIds.includes(currentUser.id) : false;
+                        const isFollowLoading = followLoadingByWallet[master.walletAddress];
 
-                            <div className="mt-4 text-center">
-                                <h2 className="text-[21px] leading-tight font-black text-slate-900">{influencer.name}</h2>
-                                <p className="mt-1 text-base font-semibold text-slate-500">{influencer.username}</p>
-                            </div>
+                        return (
+                            <article
+                                key={master.id}
+                                className="group mx-auto flex h-full w-full max-w-[400px] flex-col overflow-hidden rounded border border-gray-400 bg-white/70 p-4 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-gray-300/80 hover:shadow-xl md:max-w-[350px]"
+                            >
+                                <div className="relative h-[88px] overflow-hidden rounded-[8px] border border-[#d9d0ef]" style={{ background: master.banner }}>
+                                    <div className="absolute inset-0 opacity-75 [background-image:linear-gradient(rgba(164,140,255,0.25)_1px,transparent_1px),linear-gradient(90deg,rgba(164,140,255,0.25)_1px,transparent_1px)] [background-size:24px_24px]" />
+                                    <div className="absolute inset-0 opacity-65 [background-image:linear-gradient(0deg,transparent_0_58%,rgba(126,90,235,0.38)_58%_72%,transparent_72%_100%),linear-gradient(90deg,transparent_0_35%,rgba(126,90,235,0.4)_35%_48%,transparent_48%_100%)] [background-size:84px_84px] [background-position:0_0,14px_8px]" />
+                                </div>
 
+                                <div className="-mt-9 flex justify-center">
+                                    <button
+                                        type="button"
+                                        onClick={() => router.push(`/profile/${encodeURIComponent(master.walletAddress)}`)}
+                                        className="relative h-[80px] w-[80px] cursor-pointer rounded-full border-4 border-white bg-slate-100 shadow-[0_4px_12px_rgba(15,23,42,0.18)]"
+                                        aria-label={`View ${master.name}'s profile`}
+                                    >
+                                        <Image
+                                            src={master.avatarPath}
+                                            alt={`${master.name} avatar`}
+                                            fill
+                                            sizes="80px"
+                                            className="rounded-full object-cover"
+                                        />
+                                        {master.verified ? (
+                                            <span className="absolute -bottom-1 -right-1 z-10 grid h-6 w-6 place-items-center rounded-full border-2 border-white bg-[#2f7bff] text-white shadow-[0_3px_8px_rgba(47,123,255,0.45)]">
+                                                <BadgeCheck className="h-3.5 w-3.5" />
+                                            </span>
+                                        ) : null}
+                                    </button>
+                                </div>
 
-                            <div className="mt-6 grid grid-cols-3 gap-3 text-center">
-                                <div>
-                                    <p className="text-[14px] leading-none font-black text-slate-900">{influencer.challenges}</p>
-                                    <p className="mt-1 text-[12px] font-semibold text-slate-500">Challenges</p>
+                                <div className="mt-4 text-center">
+                                    <h2 className="text-[21px] leading-tight font-black text-slate-900">{master.name}</h2>
+                                    <p className="mt-1 text-base font-semibold text-slate-500">{master.username}</p>
                                 </div>
-                                <div>
-                                    <p className="text-[14px] leading-none font-black text-slate-900">+{influencer.wins}</p>
-                                    <p className="mt-1 text-[12px] font-semibold text-slate-500">Wins</p>
+
+                                <div className="mt-6 grid grid-cols-3 gap-3 text-center">
+                                    <div>
+                                        <p className="text-[14px] leading-none font-black text-slate-900">{master.challenges}</p>
+                                        <p className="mt-1 text-[12px] font-semibold text-slate-500">Challenges</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-[14px] leading-none font-black text-slate-900">+{master.wins}</p>
+                                        <p className="mt-1 text-[12px] font-semibold text-slate-500">Wins</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-[14px] leading-none font-black text-slate-900">{master.rekts}</p>
+                                        <p className="mt-1 text-[12px] font-semibold text-slate-500">Rekts</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p className="text-[14px] leading-none font-black text-slate-900">{influencer.rekts}</p>
-                                    <p className="mt-1 text-[12px] font-semibold text-slate-500">Rekts</p>
+
+                                <div className="mt-6 flex gap-3">
+                                    <button
+                                        onClick={() => router.push(`/profile/${encodeURIComponent(master.walletAddress)}`)}
+                                        className="flex-1 cursor-pointer rounded-xl border border-[#e6e2f0] bg-white/80 px-3 py-3 text-sm font-bold text-[#5a4fff] transition hover:bg-[#f5f3ff]"
+                                    >
+                                        View Profile
+                                    </button>
+                                    <button
+                                        onClick={() => toggleFollow(master.walletAddress)}
+                                        disabled={!currentUser?.id || !solanaWallet?.address || isOwnCard || isFollowLoading}
+                                        title={!currentUser?.id ? "Connect wallet to follow users" : isOwnCard ? "You cannot follow yourself" : ""}
+                                        className={`grid h-11 w-11 place-items-center rounded-xl border transition disabled:opacity-50 disabled:cursor-not-allowed ${isFollowing
+                                            ? "cursor-pointer border-blue-600 bg-blue-600 text-white hover:bg-blue-700"
+                                            : "cursor-pointer border-[#e6e2f0] bg-white/80 text-slate-500 hover:bg-slate-50"
+                                            }`}
+                                    >
+                                        {isFollowLoading ? (
+                                            <span className="text-[10px] font-bold">{isFollowing ? "..." : "..."}</span>
+                                        ) : (
+                                            <UserPlus className="h-4 w-4" />
+                                        )}
+                                    </button>
                                 </div>
-                            </div>
-                            <div className="mt-6 flex gap-3">
-                                <button className="flex-1 rounded-xl border border-[#e6e2f0] bg-white/80 px-3 py-3 text-sm font-bold text-[#5a4fff] transition hover:bg-[#f5f3ff]">
-                                    View Profile
-                                </button>
-                                <button className="grid h-11 w-11 place-items-center rounded-xl border border-[#e6e2f0] bg-white/80 text-slate-500 transition hover:bg-slate-50">
-                                    <UserPlus className="h-4 w-4" />
-                                </button>
-                            </div>
-                        </article>
-                    ))}
+                            </article>
+                        );
+                    })}
                 </div>
 
                 <div className="mt-10 grid gap-4 md:grid-cols-[1fr_auto_1fr] md:items-center">
                     <p className="hidden text-sm font-medium text-slate-500 md:block">
-                        Showing {currentStart}-{currentEnd} of {filteredInfluencers.length}
+                        Showing {currentStart}-{currentEnd} of {filteredMasters.length}
                     </p>
 
                     <nav className="flex items-center justify-center gap-1.5">
