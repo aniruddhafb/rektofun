@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { DepositModal } from "./DepositModal";
 import { WithdrawModal } from "./WithdrawModal";
 import { useSolanaWallet } from "@/app/lib/useSolanaWallet";
@@ -34,8 +34,10 @@ export default function Navbar() {
     const latestFetchedWalletRef = useRef<string | null>(null);
     const inFlightProfileFetchRef = useRef<Map<string, Promise<User>>>(new Map());
     const pathname = usePathname();
-    const searchParams = useSearchParams();
-    const inviteCodeFromUrl = useMemo(() => searchParams.get("ref") || "", [searchParams]);
+    const inviteCodeFromUrl = useMemo(() => {
+        if (typeof window === "undefined") return "";
+        return new URLSearchParams(window.location.search).get("ref") || "";
+    }, [pathname]);
 
     const applyUserToNavbarState = useCallback((userData: User) => {
         setCurrentUser(userData);

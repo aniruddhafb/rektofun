@@ -405,8 +405,7 @@ export function NavbarProfileDropdown({
 
                             <div className="my-2 border-t border-gray-200" />
 
-                            <button
-                                type="button"
+                            <div
                                 onClick={() => {
                                     onClose();
                                     onLogout();
@@ -427,7 +426,7 @@ export function NavbarProfileDropdown({
                                     />
                                 </svg>
                                 Logout
-                            </button>
+                            </div>
                         </div>
                     </div>
                 </div>
