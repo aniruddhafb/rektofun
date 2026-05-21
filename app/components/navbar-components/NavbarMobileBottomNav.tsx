@@ -59,8 +59,8 @@ export function NavbarMobileBottomNav({
                 </Link>
 
                 <Link
-                    href="/arenas"
-                    className={`${itemBase} ${isActive("/arenas") ? "text-black" : "text-gray-500"}`}
+                    href="/challenges"
+                    className={`${itemBase} ${isActive("/challenges") ? "text-black" : "text-gray-500"}`}
                 >
                     <span className={`absolute top-0 h-0.5 w-7 rounded-full transition-opacity`} />
                     <Image
@@ -70,7 +70,7 @@ export function NavbarMobileBottomNav({
                         height={20}
                         className="w-5 h-5 flex-shrink-0"
                     />
-                    <span className={labelBase}>Arenas</span>
+                    <span className={labelBase}>Challenges</span>
                 </Link>
 
                 <div

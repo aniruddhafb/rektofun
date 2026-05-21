@@ -427,7 +427,7 @@ export default function MastersPage() {
                                         disabled={!currentUser?.id || !solanaWallet?.address || isOwnCard || isFollowLoading}
                                         title={!currentUser?.id ? "Connect wallet to follow users" : isOwnCard ? "You cannot follow yourself" : ""}
                                         className={`grid h-11 w-11 place-items-center rounded-xl border transition disabled:opacity-50 disabled:cursor-not-allowed ${isFollowing
-                                            ? "cursor-pointer border-blue-600 bg-blue-600 text-white hover:bg-blue-700"
+                                            ? "cursor-pointer border-blue-600 bg-blue-500 text-white hover:bg-blue-700"
                                             : "cursor-pointer border-[#e6e2f0] bg-white/80 text-slate-500 hover:bg-slate-50"
                                             }`}
                                     >
