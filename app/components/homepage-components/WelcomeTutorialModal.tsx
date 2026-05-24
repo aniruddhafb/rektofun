@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useState, useSyncExternalStore } from "react";
+import { useBodyScrollLock } from "@/app/lib/useBodyScrollLock";
 
 type Slide = {
     description: string;
@@ -16,35 +17,35 @@ const slides: Slide[] = [
             "welcome to rektofun, your social prediction arena for crypto and sports. this quick guided flow gets you battle ready in seconds.",
         accent: "Quick start for new users",
         cta: "Start Tutorial",
-        image: "/welcome/111.png",
+        image: "/welcome/111.jpg",
     },
     {
         description:
             "rektofun is a pvp prediction battleground where players challenge each other with real outcomes and real stakes in real time.",
         accent: "PvP predictions built for speed",
         cta: "Next",
-        image: "/welcome/22.png",
+        image: "/welcome/22.jpg",
     },
     {
         description:
             "Create your own challenge in seconds or join active battles from the community. pick your side, lock in and compete.",
         accent: "Pick your side & lock in",
         cta: "Next",
-        image: "/welcome/3.png",
+        image: "/welcome/3.jpg",
     },
     {
         description:
             "Earn Rekto Points by referring friends and creating challenges. stay active, grow your network, and climb the ranks faster.",
         accent: "Referral + creator rewards",
         cta: "Next",
-        image: "/welcome/44.png",
+        image: "/welcome/44.jpg",
     },
     {
         description:
             "RektoFun is currently live on Solana Devnet. Connect your wallet and try the full experience right now.",
         accent: "Test it safely on Devnet",
         cta: "Try RektoFun",
-        image: "/welcome/5.png",
+        image: "/welcome/5.jpg",
     },
 ];
 
@@ -59,6 +60,7 @@ export function WelcomeTutorialModal() {
         () => true
     );
     const isOpen = !isCompleted && !isDismissedForSession;
+    useBodyScrollLock(isOpen);
 
     const isLastSlide = activeSlide === slides.length - 1;
 
@@ -82,11 +84,9 @@ export function WelcomeTutorialModal() {
             }
         };
 
-        document.body.style.overflow = "hidden";
         window.addEventListener("keydown", onKeyDown);
 
         return () => {
-            document.body.style.overflow = "";
             window.removeEventListener("keydown", onKeyDown);
         };
     }, [isOpen]);

@@ -15,6 +15,7 @@ import { getMarkets, Market } from "@/app/lib/markets-service/market";
 import { transform } from "@/app/lib/transformation-text-ai/transform";
 import { useUserStore } from "@/app/store/useUserStore";
 import { blockedContentError, hasBlockedContent } from "@/app/lib/content-moderation";
+import { useBodyScrollLock } from "@/app/lib/useBodyScrollLock";
 
 interface CreateChallengeModalProps {
     isOpen: boolean;
@@ -81,13 +82,7 @@ export function CreateChallengeModal({
     const { authenticated, login, program, sendTransaction, publicKey, refreshBalances } = useSolanaWallet();
     const isSportsSelected = selectedMarket?.symbol?.toLowerCase() === 'sports' || selectedMarket?.name?.toLowerCase() === 'sports';
 
-    useEffect(() => {
-        if (isOpen) document.body.style.overflow = "hidden";
-        else document.body.style.overflow = "unset";
-        return () => {
-            document.body.style.overflow = "unset";
-        };
-    }, [isOpen]);
+    useBodyScrollLock(isOpen);
 
     // Reset tx state when modal opens
     useEffect(() => {

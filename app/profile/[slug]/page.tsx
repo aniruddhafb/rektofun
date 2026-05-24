@@ -233,6 +233,7 @@ export default function ProfilePage() {
                             avatar={user.profile_image || "/scribbles/pepe.png"}
                             walletAddress={user.wallet_address}
                             bio={user.description || "No bio yet"}
+                            showSettingsIcon={isOwnProfile}
                             twitterUsername={twitterUsername}
                             isOwnProfile={isOwnProfile}
                             isFollowing={isFollowing}

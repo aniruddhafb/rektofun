@@ -10,6 +10,7 @@ import { useUserStore } from "@/app/store/useUserStore";
 import { useSolanaWallet } from "@/app/lib/useSolanaWallet";
 import { buildAcceptChallengeTx, fetchChallenge } from "@/app/lib/rektofun-program";
 import { PublicKey } from "@solana/web3.js";
+import { useBodyScrollLock } from "@/app/lib/useBodyScrollLock";
 
 
 interface ChallengeDetailModalProps {
@@ -36,6 +37,7 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
     const [escrowAddress, setEscrowAddress] = React.useState<string | undefined>(undefined);
     const [isDescriptionExpanded, setIsDescriptionExpanded] = React.useState(true);
     const [isTitleExpanded, setIsTitleExpanded] = React.useState(true);
+    useBodyScrollLock(isOpen);
 
     const formatEndsByCountdown = (timestamp: number | null, nowMs: number): string => {
         if (!timestamp) return "unknown";
@@ -145,11 +147,9 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
         };
         if (isOpen) {
             document.addEventListener("keydown", handleEscape);
-            document.body.style.overflow = "hidden";
         }
         return () => {
             document.removeEventListener("keydown", handleEscape);
-            document.body.style.overflow = "";
         };
     }, [isOpen, onClose, isBetFormOpen]);
 

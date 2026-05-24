@@ -32,6 +32,7 @@ export default function Navbar() {
     const [userProfileData, setUserProfileData] = useState<{ username: string; profileImage: string } | null>(null);
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const latestFetchedWalletRef = useRef<string | null>(null);
+    const hasRandomizedUsernameOnFirstProfileOpenRef = useRef(false);
     const inFlightProfileFetchRef = useRef<Map<string, Promise<User>>>(new Map());
     const pathname = usePathname();
     const router = useRouter();
@@ -246,6 +247,7 @@ export default function Navbar() {
     useEffect(() => {
         const fetchUserData = async () => {
             if (isProfileModalOpen && publicKey) {
+                const isFirstProfileModalOpen = !hasRandomizedUsernameOnFirstProfileOpenRef.current;
                 try {
                     const existingUser = (
                         currentUser && walletAddress && latestFetchedWalletRef.current === walletAddress
@@ -255,12 +257,22 @@ export default function Navbar() {
                     if (!existingUser) {
                         throw new Error("User not found");
                     }
-                    setEditUsername(existingUser.username || username || "");
+                    if (isFirstProfileModalOpen) {
+                        generateRandomUsername();
+                        hasRandomizedUsernameOnFirstProfileOpenRef.current = true;
+                    } else {
+                        setEditUsername(existingUser.username || username || "");
+                    }
                     setEditBio(existingUser.description || "");
                     setEditProfileIndex(existingUser.profile_image ? parseInt(existingUser.profile_image.match(/profiles\/(\d+)\.svg/)?.[1] || '1') - 1 : 0);
                 } catch (error) {
                     console.error('[Navbar] Could not fetch existing user data:', error);
-                    setEditUsername(username || "");
+                    if (isFirstProfileModalOpen) {
+                        generateRandomUsername();
+                        hasRandomizedUsernameOnFirstProfileOpenRef.current = true;
+                    } else {
+                        setEditUsername(username || "");
+                    }
                 }
                 // Pre-fill invite code from URL if available
                 setEditInviteCode(inviteCodeFromUrl || "");
@@ -268,7 +280,7 @@ export default function Navbar() {
             }
         };
         fetchUserData();
-    }, [isProfileModalOpen, username, inviteCodeFromUrl, publicKey, currentUser, walletAddress, fetchUserProfileData]);
+    }, [isProfileModalOpen, username, inviteCodeFromUrl, publicKey, currentUser, walletAddress, fetchUserProfileData, generateRandomUsername]);
 
     // Ensure user exists when user authenticates (only once per session)
     useEffect(() => {
@@ -319,6 +331,31 @@ export default function Navbar() {
         mediaQuery.addEventListener("change", syncViewport);
         return () => mediaQuery.removeEventListener("change", syncViewport);
     }, []);
+
+    useEffect(() => {
+        if (!isProfileModalOpen) return;
+
+        const blockEscapeClose = (event: KeyboardEvent) => {
+            if (event.key === "Escape") {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+        };
+
+        window.addEventListener("keydown", blockEscapeClose, true);
+        return () => window.removeEventListener("keydown", blockEscapeClose, true);
+    }, [isProfileModalOpen]);
+
+    useEffect(() => {
+        if (!isProfileModalOpen) return;
+
+        const originalOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+
+        return () => {
+            document.body.style.overflow = originalOverflow;
+        };
+    }, [isProfileModalOpen]);
 
     // Helper function to check if link is active
     const isActive = (href: string) => {
@@ -424,144 +461,26 @@ export default function Navbar() {
                 />
             )}
 
-            {/* Profile Create Modal */}
-            {isProfileModalOpen && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-                    <div
-                        className="absolute inset-0 bg-black/30 backdrop-blur-sm"
-                        onClick={() => setIsProfileModalOpen(false)}
-                    />
-                    <div className="relative z-10 w-full max-w-md bg-[#f3e1d7] rounded-3xl shadow-2xl overflow-hidden">
-                        <div className="p-6">
-                            <div className="flex items-center justify-between mb-6">
-                                <div>
-                                    <h2 className="text-xl font-bold text-gray-900">
-                                        Create Profile*
-                                    </h2>
-                                    <p className="text-sm text-gray-600">
-                                        Get started by creating a profile
-                                    </p>
-                                </div>
-                                <button
-                                    onClick={() =>
-                                        setIsProfileModalOpen(false)
-                                    }
-                                    className="cursor-pointer w-8 h-8 flex items-center justify-center rounded-full bg-white/50 hover:bg-white/80 transition-colors"
-                                >
-                                    <svg
-                                        className="w-5 h-5 text-gray-600"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M6 18L18 6M6 6l12 12"
-                                        />
-                                    </svg>
-                                </button>
-                            </div>
-
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Profile Character
-                                    </label>
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-white shadow-lg">
-                                            <img
-                                                src={`https://earningrecords.com/assets/rektofun/profiles/${editProfileIndex + 1}.svg`}
-                                                alt="Profile"
-                                                className="w-full h-full object-cover"
-                                            />
-                                        </div>
-                                        <button
-                                            onClick={randomizeProfile}
-                                            className="px-4 py-2 bg-white/80 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 hover:bg-white transition-colors"
-                                        >
-                                            Randomize
-                                        </button>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div className="flex items-center justify-between mb-2">
-                                        <label className="block text-sm font-medium text-gray-700">
-                                            Username*
-                                        </label>
-                                        <button
-                                            type="button"
-                                            onClick={generateRandomUsername}
-                                            className="px-3 py-1.5 bg-white/80 border border-gray-300 rounded-lg text-xs font-semibold text-gray-700 hover:bg-white transition-colors"
-                                        >
-                                            Randomize
-                                        </button>
-                                    </div>
-                                    <input
-                                        maxLength={18}
-                                        type="text"
-                                        value={editUsername}
-                                        onChange={(e) => {
-                                            setEditUsername(e.target.value);
-                                            if (profileFormError) setProfileFormError(null);
-                                        }
-                                        }
-                                        className="w-full px-4 py-2 bg-white/80 border border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent required"
-                                        placeholder="Enter username"
-                                    />
-                                    <p className="mt-1 text-xs text-gray-500">Create a unique username</p>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Bio*
-                                    </label>
-                                    <textarea
-                                        maxLength={100}
-                                        required
-                                        value={editBio}
-                                        onChange={(e) => {
-                                            setEditBio(e.target.value);
-                                            if (profileFormError) setProfileFormError(null);
-                                        }
-                                        }
-                                        className="w-full px-4 py-2 bg-white/80 border border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent required"
-                                        placeholder="Write a short bio"
-                                    />
-                                </div>
-                                {profileFormError && (
-                                    <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
-                                        {profileFormError}
-                                    </div>
-                                )}
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Invite Code (Optional)
-                                    </label>
-                                    <input
-                                        maxLength={10}
-                                        type="text"
-                                        value={editInviteCode}
-                                        onChange={(e) =>
-                                            setEditInviteCode(e.target.value)
-                                        }
-                                        className="w-full px-4 py-2 bg-white/80 border border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent"
-                                        placeholder="Enter invite code"
-                                    />
-                                </div>
-                                <button
-                                    onClick={handleProfileSubmit}
-                                    disabled={!editUsername.trim() || !editBio.trim()}
-                                    className="cursor-pointer w-full py-3 bg-gray-900 hover:bg-gray-800 text-white font-medium rounded-xl transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-                                >
-                                    Continue
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <components.CreateProfileModal
+                isOpen={isProfileModalOpen}
+                editProfileIndex={editProfileIndex}
+                editUsername={editUsername}
+                editBio={editBio}
+                editInviteCode={editInviteCode}
+                profileFormError={profileFormError}
+                onRandomizeProfile={randomizeProfile}
+                onRandomizeUsername={generateRandomUsername}
+                onEditUsernameChange={(value) => {
+                    setEditUsername(value);
+                    if (profileFormError) setProfileFormError(null);
+                }}
+                onEditBioChange={(value) => {
+                    setEditBio(value);
+                    if (profileFormError) setProfileFormError(null);
+                }}
+                onEditInviteCodeChange={setEditInviteCode}
+                onSubmit={handleProfileSubmit}
+            />
 
             {/* Deposit Modal */}
             <DepositModal
