@@ -469,12 +469,30 @@ export default function SettingsPage() {
                                         </svg>
                                     </div>
                                     <div>
-                                        <p className="font-medium text-gray-900">Crypto Wallet</p>
-                                        <p className="text-sm text-gray-500">{displayAddress}</p>
+                                        <p className="font-medium text-gray-900">Embedded Crypto Wallet</p>
+                                        <div className="flex items-center gap-2">
+                                            <p className="text-sm text-gray-500">{displayAddress}</p>
+                                            {walletAddress && (
+                                                <button
+                                                    type="button"
+                                                    onClick={copyAddress}
+                                                    className="p-1 rounded-md hover:bg-orange-100 transition-colors cursor-pointer"
+                                                    aria-label="Copy full wallet address"
+                                                    title={copiedAddress ? "Copied!" : "Copy full address"}
+                                                >
+                                                    <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 10h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                                    </svg>
+                                                </button>
+                                            )}
+                                            {copiedAddress && (
+                                                <span className="text-xs text-green-700 font-medium">Copied</span>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                                 <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">
-                                    Current Login
+                                    Privy
                                 </span>
                             </div>
                         )}
