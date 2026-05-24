@@ -29,7 +29,7 @@ export function ProfileChallenges({
 
     if (!challenges.length) {
         return (
-            <div className="mt-6 p-4 bg-white/70 rounded-xl border border-[#d4a574]/30 text-center text-[#8b7355]">
+            <div className="bg-[#f8ede7] rounded-2xl p-6 border border-[#e8d5c8] text-[#5c4a42] mt-4">
                 No challenges found for this user yet.
             </div>
         );
