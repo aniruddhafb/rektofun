@@ -10,6 +10,7 @@ import {
 } from "@solana/spl-token";
 import { useSolanaWallet } from "@/app/lib/useSolanaWallet";
 import { USDC_MINT, USDC_MULTIPLIER, getReadonlyConnection } from "@/app/lib/rektofun-program";
+import { useBodyScrollLock } from "@/app/lib/useBodyScrollLock";
 
 interface WithdrawModalProps {
   isOpen: boolean;
@@ -38,13 +39,7 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
     onClose();
   }, [onClose, resetForm]);
 
-  useEffect(() => {
-    if (isOpen) document.body.style.overflow = "hidden";
-    else document.body.style.overflow = "unset";
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, [isOpen, handleClose]);
+  useBodyScrollLock(isOpen);
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {

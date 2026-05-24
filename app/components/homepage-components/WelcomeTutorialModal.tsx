@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useState, useSyncExternalStore } from "react";
+import { useBodyScrollLock } from "@/app/lib/useBodyScrollLock";
 
 type Slide = {
     description: string;
@@ -59,6 +60,7 @@ export function WelcomeTutorialModal() {
         () => true
     );
     const isOpen = !isCompleted && !isDismissedForSession;
+    useBodyScrollLock(isOpen);
 
     const isLastSlide = activeSlide === slides.length - 1;
 
@@ -82,11 +84,9 @@ export function WelcomeTutorialModal() {
             }
         };
 
-        document.body.style.overflow = "hidden";
         window.addEventListener("keydown", onKeyDown);
 
         return () => {
-            document.body.style.overflow = "";
             window.removeEventListener("keydown", onKeyDown);
         };
     }, [isOpen]);

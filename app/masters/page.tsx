@@ -73,15 +73,6 @@ export default function MastersPage() {
     }, []);
 
     useEffect(() => {
-        if (!isMobileFiltersOpen) return;
-        const previousOverflow = document.body.style.overflow;
-        document.body.style.overflow = "hidden";
-        return () => {
-            document.body.style.overflow = previousOverflow;
-        };
-    }, [isMobileFiltersOpen]);
-
-    useEffect(() => {
         const loadUsers = async () => {
             try {
                 setIsLoading(true);

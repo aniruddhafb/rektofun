@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useBodyScrollLock } from "@/app/lib/useBodyScrollLock";
 
 interface DurationPickerModalProps {
     isOpen: boolean;
@@ -15,6 +16,8 @@ export function DurationPickerModal({
     selectedDuration,
     onSelectDuration,
 }: DurationPickerModalProps) {
+    useBodyScrollLock(isOpen);
+
     const [hours, setHours] = useState(selectedDuration.hours);
     const [minutes, setMinutes] = useState(selectedDuration.minutes);
 

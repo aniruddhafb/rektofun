@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useBodyScrollLock } from "@/app/lib/useBodyScrollLock";
 
 interface DatePickerModalProps {
     isOpen: boolean;
@@ -15,6 +16,8 @@ export function DatePickerModal({
     selectedDate,
     onSelectDate,
 }: DatePickerModalProps) {
+    useBodyScrollLock(isOpen);
+
     const [currentMonth, setCurrentMonth] = useState(selectedDate.getMonth());
     const [currentYear, setCurrentYear] = useState(selectedDate.getFullYear());
     const [selectedHour, setSelectedHour] = useState(selectedDate.getHours());

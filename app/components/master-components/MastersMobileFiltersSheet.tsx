@@ -1,6 +1,7 @@
 import { Search, Shapes, Shield, ShieldCheck, ShieldOff } from "lucide-react";
 import type { CategoryFilter, VerificationFilter } from "./types";
 import { CATEGORY_OPTIONS, VERIFICATION_OPTIONS } from "./types";
+import { useBodyScrollLock } from "@/app/lib/useBodyScrollLock";
 
 type Props = {
     isOpen: boolean;
@@ -23,6 +24,8 @@ export function MastersMobileFiltersSheet({
     onCategorySelect,
     onVerificationSelect,
 }: Props) {
+    useBodyScrollLock(isOpen);
+
     if (!isOpen) return null;
 
     return (

@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Search, ChevronDown, Clock, TrendingUp, Eye, Bookmark, PinIcon } from "lucide-react";
+import { useBodyScrollLock } from "@/app/lib/useBodyScrollLock";
 
 interface ChallengeFiltersSectionProps {
     activeFilter: string;
@@ -33,6 +34,7 @@ export function ChallengeFiltersSection({
     const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
     const [isMarketDropdownOpen, setIsMarketDropdownOpen] = useState(false);
     const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
+    useBodyScrollLock(isMobileFiltersOpen);
     const filterDropdownRef = useRef<HTMLDivElement>(null);
     const marketDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -46,15 +48,6 @@ export function ChallengeFiltersSection({
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
-
-    useEffect(() => {
-        if (!isMobileFiltersOpen) return;
-        const previousOverflow = document.body.style.overflow;
-        document.body.style.overflow = "hidden";
-        return () => {
-            document.body.style.overflow = previousOverflow;
-        };
-    }, [isMobileFiltersOpen]);
 
     // Close market dropdown when clicking outside
     useEffect(() => {

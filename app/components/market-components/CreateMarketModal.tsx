@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { createMarket, getMarkets, type Market } from "@/app/lib/markets-service/market";
+import { useBodyScrollLock } from "@/app/lib/useBodyScrollLock";
 
 interface CreateMarketModalProps {
     isOpen: boolean;
@@ -26,13 +27,7 @@ export function CreateMarketModal({ isOpen, onClose, onCreated }: CreateMarketMo
 
     const parentDropdownRef = useRef<HTMLDivElement>(null);
 
-    useEffect(() => {
-        if (isOpen) document.body.style.overflow = "hidden";
-        else document.body.style.overflow = "unset";
-        return () => {
-            document.body.style.overflow = "unset";
-        };
-    }, [isOpen]);
+    useBodyScrollLock(isOpen);
 
     useEffect(() => {
         if (isOpen) {
