@@ -7,6 +7,7 @@ type NavbarMobileBottomNavProps = {
     isActive: (href: string) => boolean;
     profileHref: string;
     onSearchClick: () => void;
+    onCreateClick: () => void;
     isSearchOpen: boolean;
 };
 
@@ -14,18 +15,9 @@ export function NavbarMobileBottomNav({
     isActive,
     profileHref,
     onSearchClick,
+    onCreateClick,
     isSearchOpen,
 }: NavbarMobileBottomNavProps) {
-    const isHomeActive =
-        isActive("/") &&
-        !isActive("/challenges") &&
-        !isActive("/masters") &&
-        !isActive("/leaderboard") &&
-        !isActive("/referral") &&
-        !isActive("/activity") &&
-        !isActive("/roadmap") &&
-        !isActive("/profile");
-
     const itemBase =
         "relative flex flex-col items-center justify-center gap-0.5 min-w-0 flex-1 py-1.5 transition-colors";
 
@@ -37,27 +29,6 @@ export function NavbarMobileBottomNav({
             style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
         >
             <div className="flex items-center justify-around h-14">
-                <Link
-                    href="/"
-                    className={`${itemBase} ${isHomeActive ? "text-black" : "text-gray-500"}`}
-                >
-                    <span className={`absolute top-0 h-0.5 w-7 rounded-full transition-opacity`} />
-                    <svg
-                        className="w-5 h-5 flex-shrink-0"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-                        />
-                    </svg>
-                    <span className={labelBase}>Home</span>
-                </Link>
-
                 <Link
                     href="/challenges"
                     className={`${itemBase} ${isActive("/challenges") ? "text-black" : "text-gray-500"}`}
@@ -99,6 +70,39 @@ export function NavbarMobileBottomNav({
                         />
                     </svg>
                     <span className={labelBase}>Search</span>
+                </div>
+
+                <div
+                    onClick={onCreateClick}
+                    tabIndex={0}
+                    onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            onCreateClick();
+                        }
+                    }}
+                    className={`${itemBase} cursor-pointer text-black`}
+                >
+                    <svg
+                        className="w-6 h-6 flex-shrink-0"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 8v8m4-4H8"
+                        />
+                        <circle
+                            cx="12"
+                            cy="12"
+                            r="9"
+                            strokeWidth={2}
+                        />
+                    </svg>
+                    <span className={`${labelBase} font-semibold`}>Create</span>
                 </div>
 
                 <Link

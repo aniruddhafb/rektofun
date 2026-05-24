@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { DepositModal } from "./DepositModal";
 import { WithdrawModal } from "./WithdrawModal";
 import { useSolanaWallet } from "@/app/lib/useSolanaWallet";
@@ -34,6 +34,7 @@ export default function Navbar() {
     const latestFetchedWalletRef = useRef<string | null>(null);
     const inFlightProfileFetchRef = useRef<Map<string, Promise<User>>>(new Map());
     const pathname = usePathname();
+    const router = useRouter();
     const inviteCodeFromUrl = useMemo(() => {
         if (typeof window === "undefined") return "";
         return new URLSearchParams(window.location.search).get("ref") || "";
@@ -331,6 +332,18 @@ export default function Navbar() {
         ? `/profile/${walletAddress}`
         : "/settings";
 
+    const handleMobileCreateClick = useCallback(() => {
+        if (pathname === "/challenges") {
+            const params = new URLSearchParams(window.location.search);
+            params.set("create", "1");
+            const nextQuery = params.toString();
+            router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false });
+            return;
+        }
+
+        router.push("/challenges?create=1");
+    }, [pathname, router]);
+
     return (
         <>
             {/* Development Mode Banner */}
@@ -565,6 +578,7 @@ export default function Navbar() {
                 isActive={isActive}
                 profileHref={profileHref}
                 onSearchClick={() => setIsSearchModalOpen(true)}
+                onCreateClick={handleMobileCreateClick}
                 isSearchOpen={isSearchModalOpen}
             />
         </>

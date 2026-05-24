@@ -78,14 +78,14 @@ export function ProfileHeader({
         : walletAddress;
 
     return (
-        <div className="flex flex-col lg:flex-row lg:items-stretch gap-4 sm:gap-6 lg:gap-8 p-4 sm:p-6 bg-white/40 backdrop-blur-xl rounded-2xl sm:rounded-3xl border border-gray-400 shadow-lg items-start">
+        <div className="flex flex-col lg:flex-row lg:items-stretch gap-4 sm:gap-6 lg:gap-8 p-4 sm:p-6 bg-white/40 backdrop-blur-xl rounded-2xl sm:rounded-3xl border border-gray-400 shadow-lg items-center sm:items-start">
             {/* Left: Avatar and Info */}
-            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 lg:gap-8 flex-1 min-w-0 items-center sm:items-start">
+            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 lg:gap-8 flex-1 min-w-0 items-center sm:items-start w-full">
                 {/* Avatar with glow effect */}
-                <div className="relative flex-shrink-0 mx-auto sm:mx-0">
+                <div className="relative flex w-full sm:w-auto flex-col items-center sm:items-start flex-shrink-0 mx-auto sm:mx-0">
                     <div className="absolute inset-0 rounded-full blur-xl pointer-events-none"></div>
                     {/* Image container  */}
-                    <div className="relative z-10 w-24 h-24 sm:w-32 sm:h-32 rounded-full ring-4 ring-orange-200 ">
+                    <div className="relative z-10 w-24 h-24 sm:w-32 sm:h-32 rounded-full ring-4 ring-orange-200 overflow-hidden">
                         <Image
                             src={avatar}
                             alt={username}
@@ -111,7 +111,7 @@ export function ProfileHeader({
                             </a>
                         )}
                     </div>
-                    <div className="mt-3 flex w-full min-w-[180px] max-w-[220px] flex-col items-center gap-2">
+                    <div className="mt-3 flex w-full min-w-[180px] max-w-[280px] sm:max-w-[220px] flex-col items-center gap-2">
                         <div className="grid w-full grid-cols-2 gap-2 rounded-xl border border-orange-200/60 bg-orange-50/70 p-2 text-center">
                             <div>
                                 <p className="text-sm font-bold text-gray-900">{followingCount}</p>
@@ -124,7 +124,7 @@ export function ProfileHeader({
                         </div>
                         {!isOwnProfile && onToggleFollow ? (
                             <button
-                                className={`w-full px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 border ${isFollowing
+                                className={`w-full px-3 sm:px-4 py-2.5 sm:py-2 rounded-xl text-sm sm:text-sm font-semibold transition-all duration-200 border ${isFollowing
                                     ? "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
                                     : "bg-gray-900 text-white border-gray-900 hover:bg-black"
                                     }`}
@@ -138,7 +138,7 @@ export function ProfileHeader({
                 </div>
 
                 {/* User Info */}
-                <div className="flex flex-col gap-3 justify-center min-w-0 items-center sm:items-start text-center sm:text-left">
+                <div className="flex w-full sm:w-auto sm:flex-1 flex-col gap-3 justify-center min-w-0 items-center sm:items-start text-center sm:text-left">
                     {/* Username with gradient */}
                     <div className="flex items-center justify-center sm:justify-start gap-2 min-w-0">
                         <h1 className="text-xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent break-words sm:break-normal">
@@ -158,10 +158,10 @@ export function ProfileHeader({
                     </div>
 
                     {/* Wallet Address - Improved with copy feedback */}
-                    <div className="group flex flex-wrap items-center justify-center sm:justify-start gap-2 min-w-0">
-                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100/80 rounded-lg border border-gray-200/50 min-w-0">
+                    <div className="group flex w-full sm:w-auto flex-wrap items-center justify-center sm:justify-start gap-2 min-w-0">
+                        <div className="flex max-w-full items-center gap-1.5 px-3 py-1.5 bg-gray-100/80 rounded-lg border border-gray-200/50 min-w-0">
                             <span className="text-sm">🌙</span>
-                            <span className="text-xs sm:text-sm text-gray-600 font-mono break-all sm:break-normal sm:whitespace-nowrap">{truncatedAddress}</span>
+                            <span className="text-xs sm:text-sm text-gray-600 font-mono truncate sm:break-normal sm:whitespace-nowrap">{truncatedAddress}</span>
                         </div>
                         <button
                             className="p-1.5 rounded-lg bg-gray-100/80 border border-gray-200/50 text-gray-500 hover:text-orange-600 hover:bg-orange-50 hover:border-orange-200 transition-all duration-200 active:scale-95"
@@ -181,12 +181,12 @@ export function ProfileHeader({
                     </div>
 
                     {/* Bio */}
-                    <p className="text-sm text-gray-500 max-w-md leading-relaxed break-words">
+                    <p className="text-sm text-gray-500 max-w-md leading-relaxed break-words px-1 sm:px-0">
                         {bio}
                     </p>
 
                     {/* Action Buttons - Redesigned */}
-                    <div className="flex flex-wrap items-stretch justify-center sm:justify-start gap-2 sm:gap-3 mt-1">
+                    <div className="flex w-full flex-wrap items-stretch justify-center sm:justify-start gap-2 sm:gap-3 mt-1">
                         {/* Joined Badge */}
                         <div className="w-full sm:w-auto px-3 sm:px-4 py-2 bg-gradient-to-r from-orange-100 to-amber-100 rounded-xl text-xs sm:text-sm font-medium text-orange-700 border border-orange-200/50 flex items-center justify-center sm:justify-start gap-2">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -197,7 +197,7 @@ export function ProfileHeader({
 
                         {/* Share Button */}
                         <button
-                            className="w-full sm:w-auto cursor-pointer group px-3 sm:px-4 py-2 bg-orange-400 rounded-xl text-xs sm:text-sm font-semibold text-white shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 flex items-center justify-center gap-2"
+                            className="w-full sm:w-auto cursor-pointer group px-3 sm:px-4 py-2.5 sm:py-2 bg-orange-400 rounded-xl text-sm sm:text-sm font-semibold text-white shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 flex items-center justify-center gap-2"
                             onClick={shareProfile}
                         >
                             {profileCopied ? (
@@ -223,9 +223,9 @@ export function ProfileHeader({
             {/* Right: Balance & Stats Card */}
             <div className="flex flex-col bg-white/20 backdrop-blur-lg rounded-2xl p-3 sm:p-5 border border-gray-200/40 shadow-lg gap-3 sm:gap-4 w-full lg:w-[480px]">
                 {/* Balance Section */}
-                <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] items-stretch sm:items-center gap-2 sm:gap-4 p-3 bg-gradient-to-r from-gray-50 to-gray-100/50 rounded-xl">
+                <div className="grid grid-cols-2 sm:grid-cols-[1fr_auto_1fr] items-stretch sm:items-center gap-2 sm:gap-4 p-3 bg-gradient-to-r from-gray-50 to-gray-100/50 rounded-xl">
                     {/* SOL Balance */}
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="flex items-center justify-center sm:justify-start gap-2 sm:gap-3 flex-1 min-w-0">
                         <Image
                             src="/scribbles/solbal.png"
                             alt="SOL"
@@ -233,7 +233,7 @@ export function ProfileHeader({
                             height={48}
                             className="w-9 h-9 sm:w-12 sm:h-12 object-contain"
                         />
-                        <div className="flex flex-col">
+                        <div className="flex flex-col items-start">
                             <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">SOL</span>
                             <div className="flex items-baseline gap-1.5">
                                 <span className="text-xl sm:text-2xl font-bold text-gray-900 break-all sm:break-normal">{balance.sol.toFixed(2)}</span>
@@ -244,7 +244,7 @@ export function ProfileHeader({
                     <div className="hidden sm:block w-px h-10 bg-gray-200/60"></div>
 
                     {/* USDC Balance */}
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <div className="flex items-center justify-center sm:justify-start gap-2 flex-1 min-w-0">
                         <Image
                             src="/scribbles/dollar.png"
                             alt="USDC"
@@ -252,7 +252,7 @@ export function ProfileHeader({
                             height={36}
                             className="w-8 h-8 sm:w-9 sm:h-9 object-contain"
                         />
-                        <div className="flex flex-col">
+                        <div className="flex flex-col items-start">
                             <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">USDC</span>
                             <div className="flex items-baseline gap-1.5">
                                 <span className="text-xl sm:text-2xl font-bold text-gray-900 break-all sm:break-normal">{balance.usdc.toFixed(2)}</span>
@@ -262,9 +262,9 @@ export function ProfileHeader({
                 </div>
 
                 {/* Stats Row - Cleaner design */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 p-3 bg-gradient-to-r from-orange-50/50 to-amber-50/50 rounded-xl border border-orange-100/30">
+                <div className="grid grid-cols-3 sm:grid-cols-3 gap-2 p-3 bg-gradient-to-r from-orange-50/50 to-amber-50/50 rounded-xl border border-orange-100/30">
                     {/* Wins */}
-                    <div className="flex items-center gap-2 px-2 sm:px-3 py-1 min-w-0">
+                    <div className="flex items-center justify-start gap-2 px-2 sm:px-3 py-1.5 min-w-0 w-fit mx-auto sm:w-auto sm:mx-0">
                         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-500 flex items-center justify-center shadow-sm">
                             <span className="text-white text-sm">🏆</span>
                         </div>
@@ -275,7 +275,7 @@ export function ProfileHeader({
                     </div>
 
                     {/* Rekts */}
-                    <div className="flex items-center gap-2 px-2 sm:px-3 py-1 min-w-0">
+                    <div className="flex items-center justify-start gap-2 px-2 sm:px-3 py-1.5 min-w-0 w-fit mx-auto sm:w-auto sm:mx-0">
                         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-red-400 to-red-500 flex items-center justify-center shadow-sm">
                             <span className="text-white text-sm">💀</span>
                         </div>
@@ -286,13 +286,13 @@ export function ProfileHeader({
                     </div>
 
                     {/* Win Rate */}
-                    <div className="flex items-center gap-2 px-2 sm:px-3 py-1 min-w-0">
+                    <div className="flex items-center justify-start gap-2 px-2 sm:px-3 py-1.5 min-w-0 w-fit mx-auto sm:w-auto sm:mx-0">
                         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center shadow-sm">
                             <span className="text-white text-sm">📊</span>
                         </div>
                         <div>
                             <p className="text-lg font-bold text-gray-900 leading-none">{stats.winRatio}%</p>
-                            <p className="text-xs text-gray-500">Win Rate</p>
+                            <p className="text-xs text-gray-500"> Rate</p>
                         </div>
                     </div>
                 </div>
