@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { blockedContentError, hasBlockedContent } from "@/app/lib/content-moderation";
+import { useBodyScrollLock } from "@/app/lib/useBodyScrollLock";
 
 type NavbarProfileModalProps = {
     defaultUsername: string;
@@ -32,6 +33,8 @@ export function NavbarProfileModal({
     saveError,
     profileSvgs,
 }: NavbarProfileModalProps) {
+    useBodyScrollLock(isOpen);
+
     const handleSave = () => {
         if (hasBlockedContent(editUsername)) return;
         onSave();

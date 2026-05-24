@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { ChallengeHeader } from "../components/challenge-components/ChallengeHeader";
 import { ChallengeFiltersSection } from "../components/challenge-components/ChallengeFiltersSection";
 import { FeedbackBanner } from "../components/challenge-components/FeedbackBanner";
@@ -284,6 +284,10 @@ function ChallengesContent() {
 }
 
 export default function ChallengesPage() {
-  return <ChallengesContent />;
+  return (
+    <Suspense fallback={null}>
+      <ChallengesContent />
+    </Suspense>
+  );
 }
 

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSolanaWallet } from "@/app/lib/useSolanaWallet";
+import { useBodyScrollLock } from "@/app/lib/useBodyScrollLock";
 
 interface DepositModalProps {
   isOpen: boolean;
@@ -21,11 +22,7 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
     true, false, true, false, true,
   ];
 
-  useEffect(() => {
-    if (isOpen) document.body.style.overflow = "hidden";
-    else document.body.style.overflow = "unset";
-    return () => { document.body.style.overflow = "unset"; };
-  }, [isOpen]);
+  useBodyScrollLock(isOpen);
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {

@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useBodyScrollLock } from "@/app/lib/useBodyScrollLock";
 
 interface AcceptChallengeModalProps {
     isOpen: boolean;
@@ -45,6 +46,8 @@ export function AcceptChallengeModal({
     onBetInputChange,
     onJoinSideChange,
 }: AcceptChallengeModalProps) {
+    useBodyScrollLock(isOpen);
+
     if (!isOpen) return null;
     const isPriceFeedResolution = String(resolutionSource ?? "").toLowerCase() === "price_feed";
 

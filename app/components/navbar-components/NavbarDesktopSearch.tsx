@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getChallenges, type ChallengeListItem } from "@/app/lib/challenges-service/challenges";
 import { getLeaderboard, type LeaderboardUser } from "@/app/lib/users-service/users";
+import { useBodyScrollLock } from "@/app/lib/useBodyScrollLock";
 
 type SearchTab = "all" | "challenges" | "users";
 
@@ -61,6 +62,8 @@ export function NavbarDesktopSearch({
     onOpenModal,
     onCloseModal,
 }: NavbarDesktopSearchProps) {
+    useBodyScrollLock(isModalOpen);
+
     const router = useRouter();
     const [query, setQuery] = useState(searchQuery);
     const [activeTab, setActiveTab] = useState<SearchTab>("all");
