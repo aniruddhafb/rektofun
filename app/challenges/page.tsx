@@ -11,7 +11,7 @@ import { RektLoadingOverlay } from "../components/RektLoadingOverlay";
 import { CreateChallengeModal } from "../components/challenge-components/CreateChallengeModal";
 import { ChallengeListItem } from "../lib/challenges-service/challenges";
 import ChallengeDetailModal from "../components/challenge-components/ChallengeDetailModal";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { getMarkets } from "../lib/markets-service/market";
 
 function ChallengesContent() {
@@ -49,6 +49,7 @@ function ChallengesContent() {
   });
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const lastClosedDeepLinkIdRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -195,6 +196,19 @@ function ChallengesContent() {
       window.clearTimeout(timeout);
     };
   }, [showCreateSuccessToast]);
+
+  useEffect(() => {
+    const shouldOpenCreateModal = searchParams.get("create") === "1";
+    if (!shouldOpenCreateModal) return;
+
+    setIsCreateModalOpen(true);
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("create");
+    const nextQuery = params.toString();
+    const nextUrl = nextQuery ? `${pathname}?${nextQuery}` : pathname;
+    router.replace(nextUrl, { scroll: false });
+  }, [pathname, router, searchParams]);
 
   return (
     <div className="min-h-full">
