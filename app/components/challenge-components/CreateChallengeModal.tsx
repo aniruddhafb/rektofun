@@ -559,11 +559,11 @@ export function CreateChallengeModal({
     };
 
     const getButtonStyle = () => {
-        if (!authenticated) return "cursor-pointer w-full py-3 sm:py-4 bg-gray-900 hover:bg-gray-700 text-white rounded-full font-bold text-base sm:text-lg transition-colors";
-        if (isLoading || (isSportsSelected && (!transformValid || !isSportsSelectionComplete))) return "cursor-pointer w-full py-3 sm:py-4 bg-gray-400 text-white rounded-full font-bold text-base sm:text-lg cursor-not-allowed";
-        if (txStatus === "success") return "cursor-pointer w-full py-3 sm:py-4 bg-green-500 text-white rounded-full font-bold text-base sm:text-lg cursor-not-allowed";
-        if (txStatus === "error") return "cursor-pointer w-full py-3 sm:py-4 bg-red-500 hover:bg-red-600 text-white rounded-full font-bold text-base sm:text-lg transition-colors";
-        return "cursor-pointer w-full py-3 sm:py-4 bg-gray-900 hover:bg-gray-700 text-white rounded-full font-bold text-base sm:text-lg transition-colors";
+        if (!authenticated) return "rekto-button cursor-pointer w-full py-3 sm:py-4 bg-gray-900 hover:bg-gray-700 text-white font-black text-base sm:text-lg transition-colors";
+        if (isLoading || (isSportsSelected && (!transformValid || !isSportsSelectionComplete))) return "cursor-pointer w-full py-3 sm:py-4 border-2 border-black bg-gray-400 text-white font-black text-base sm:text-lg cursor-not-allowed shadow-[3px_3px_0_#111]";
+        if (txStatus === "success") return "cursor-pointer w-full py-3 sm:py-4 border-2 border-black bg-green-500 text-white font-black text-base sm:text-lg cursor-not-allowed shadow-[1px_1px_0_#111]";
+        if (txStatus === "error") return "cursor-pointer w-full py-3 sm:py-4 border-2 border-black bg-red-500 hover:bg-red-600 text-white font-black text-base sm:text-lg transition-colors shadow-[1px_1px_0_#111]";
+        return "rekto-button cursor-pointer w-full py-3 sm:py-4 bg-gray-900 hover:bg-gray-700 text-white font-black text-base sm:text-lg transition-colors";
     };
 
     const endTimeRemaining = getTimeRemainingParts(selectedDate);
@@ -571,12 +571,12 @@ export function CreateChallengeModal({
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
             <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={handleModalClose} />
-            <div className="relative bg-[#f3e1d7] rounded-2xl sm:rounded-3xl w-full max-w-md md:max-w-2xl max-h-[94vh] sm:max-h-[90vh] overflow-hidden shadow-2xl flex flex-col">
-                <div className="bg-[#f3e1d7] rounded-t-2xl sm:rounded-t-3xl px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b border-[#e8d5c8]">
+            <div className="rekto-modal-panel relative w-full max-w-md md:max-w-2xl max-h-[94vh] sm:max-h-[90vh] overflow-hidden flex flex-col">
+                <div className="bg-[#f3e1d7] px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b-2 border-black">
                     <div className="flex items-center justify-between">
                         <div className="w-8" />
-                        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 text-center">Create Challenge</h2>
-                        <button onClick={handleModalClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-[#e8d5c8] hover:bg-[#dcc9bc] transition-colors">
+                        <h2 className="text-lg sm:text-xl md:text-2xl font-black text-gray-900 text-center drop-shadow-[2px_2px_0_#f5d547]">Create Challenge</h2>
+                        <button onClick={handleModalClose} className="w-8 h-8 flex items-center justify-center border-2 border-black bg-white shadow-[2px_2px_0_#111] hover:bg-[#f5d547] transition-colors">
                             <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                             </svg>

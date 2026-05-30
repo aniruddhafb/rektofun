@@ -107,11 +107,11 @@ export default function ActivityPage() {
     };
 
     return (
-        <div className="min-h-screen bg-[#f3e1d7]">
+        <div className="rekto-page min-h-screen">
             {/* Header Section */}
             <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-6">
                 <div className="flex items-center gap-3 mb-2">
-                    <h1 className="text-3xl sm:text-4xl font-bold text-[#2d1f1a]">
+                    <h1 className="text-3xl sm:text-4xl font-black text-[#2d1f1a] drop-shadow-[3px_3px_0_rgba(232,90,45,0.25)]">
                         Activity
                     </h1>
                 </div>
@@ -128,8 +128,8 @@ export default function ActivityPage() {
                             key={tab.value}
                             onClick={() => setActiveFilter(tab.value)}
                             className={`px-4 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-200 shadow-sm ${activeFilter === tab.value
-                                ? "bg-[#2d1f1a] text-[#f3e1d7] shadow-md"
-                                : "bg-white/80 text-[#5c4a42] hover:bg-white hover:text-[#2d1f1a] border border-[#d4b8a8]"
+                                ? "bg-[#2d1f1a] text-[#f3e1d7] shadow-[4px_4px_0_#e85a2d] border-2 border-black"
+                                : "bg-white/80 text-[#5c4a42] hover:bg-white hover:text-[#2d1f1a] border-2 border-black shadow-[2px_2px_0_#111]"
                                 }`}
                         >
                             {tab.label}
@@ -207,7 +207,7 @@ export default function ActivityPage() {
                                         handleActivityClick(item);
                                     }
                                 }}
-                                className="cursor-pointer group bg-[#f8ede7] hover:bg-white/50 rounded-2xl p-4 transition-all duration-200 border border-[#e8d5c8] hover:border-[#d4b8a8] hover:shadow-lg"
+                                className="rekto-card-hover cursor-pointer group bg-[#f8ede7] hover:bg-white/50 rounded-2xl p-4 transition-all duration-200 border border-[#e8d5c8] hover:border-[#d4b8a8] hover:shadow-lg"
                             >
                                 <div className="flex items-start gap-4">
                                     {/* Avatar with status */}

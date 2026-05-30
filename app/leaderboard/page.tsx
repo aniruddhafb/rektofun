@@ -191,11 +191,11 @@ export default function LeaderboardPage() {
     }
 
     return (
-        <div className="min-h-screen" style={{ backgroundColor: "#f3e1d7" }}>
+        <div className="rekto-page min-h-screen">
             <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 sm:mb-8">
                     <div>
-                        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">Leaderboard</h1>
+                        <h1 className="text-3xl sm:text-4xl font-black text-gray-900 drop-shadow-[3px_3px_0_rgba(232,90,45,0.25)]">Leaderboard</h1>
                         <p className="text-gray-600 text-base sm:text-lg">Explore the top challengers and their achievements</p>
                     </div>
                 </div>
@@ -260,7 +260,7 @@ export default function LeaderboardPage() {
                     </div>
                 </div>
 
-                <div className="bg-white/40 backdrop-blur-sm rounded-2xl border border-white/50 overflow-hidden shadow-sm">
+                <div className="rekto-surface bg-white/40 backdrop-blur-sm rounded-2xl border border-white/50 overflow-hidden shadow-sm">
                     <div className="overflow-x-auto">
                         <div className="min-w-[800px]">
                             <div className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-white/50 text-sm font-medium text-gray-600">

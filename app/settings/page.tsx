@@ -175,8 +175,8 @@ export default function SettingsPage() {
     // Show login prompt if not authenticated
     if (!authenticated) {
         return (
-            <div className="min-h-screen bg-[#f3e1d7] py-8 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
-                <div className="max-w-md w-full bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-300 p-8 text-center">
+            <div className="rekto-page min-h-screen py-8 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
+                <div className="rekto-surface max-w-md w-full bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-300 p-8 text-center">
                     <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
                         <svg className="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -198,16 +198,16 @@ export default function SettingsPage() {
     }
 
     return (
-        <div className="min-h-screen bg-[#f3e1d7] py-8 px-4 sm:px-6 lg:px-8">
+        <div className="rekto-page min-h-screen py-8 px-4 sm:px-6 lg:px-8">
             <div className="max-w-4xl mx-auto">
                 {/* Header */}
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
+                    <h1 className="text-3xl font-black text-gray-900 drop-shadow-[3px_3px_0_rgba(232,90,45,0.25)]">Settings</h1>
                     <p className="text-gray-600 mt-1">Manage your profile, wallet, and connected accounts</p>
                 </div>
 
                 {/* Profile Section */}
-                <section className="bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-300/50 p-6 mb-6">
+                <section className="rekto-card-hover bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-300/50 p-6 mb-6">
                     <div className="flex items-center gap-2 mb-6">
                         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
                             <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -341,7 +341,7 @@ export default function SettingsPage() {
                 </section>
 
                 {/* Social Connections Section */}
-                <section className="bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-300/50 p-6 mb-6">
+                <section className="rekto-card-hover bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-300/50 p-6 mb-6">
                     <div className="flex items-center gap-2 mb-6">
                         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
                             <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -500,7 +500,7 @@ export default function SettingsPage() {
                 </section>
 
                 {/* Logout Section */}
-                <section className="bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-300/50 p-6">
+                <section className="rekto-card-hover bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-300/50 p-6">
                     <div className="flex items-center gap-2 mb-4">
                         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-red-500 to-pink-500 flex items-center justify-center">
                             <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -525,7 +525,7 @@ export default function SettingsPage() {
             {/* Export Wallet Modal */}
             {showExportModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                    <div className="bg-[#f3e1d7] rounded-2xl border border-gray-300 p-6 max-w-md w-full shadow-2xl">
+                    <div className="rekto-modal-panel rounded-2xl border border-gray-300 p-6 max-w-md w-full shadow-2xl">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-xl font-bold text-gray-900">Export Wallet</h3>
                             <button

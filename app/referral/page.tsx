@@ -57,7 +57,7 @@ export default function ReferralPage() {
     const referralPoints = referralsCount * REFERRAL_POINTS_PER_USER;
 
     return (
-        <div className="min-h-full" style={{ backgroundColor: "#f3e1d7" }}>
+        <div className="rekto-page min-h-full">
             {/* Top Section - Refer & Earn */}
             <section className="px-4 sm:px-6 lg:px-8 xl:px-12 py-8 sm:py-12">
                 <div className="max-w-7xl mx-auto">

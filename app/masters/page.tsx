@@ -157,7 +157,7 @@ export default function MastersPage() {
     }
 
     return (
-        <div className="min-h-screen" style={{ backgroundColor: "#f3e1d7" }}>
+        <div className="rekto-page min-h-screen">
             <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
                 <MastersPageHeader />
 
@@ -211,7 +211,7 @@ export default function MastersPage() {
                 />
 
                 {error ? (
-                    <div className="mb-8 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+                    <div className="rekto-surface mb-8 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
                 ) : null}
 
                 <MastersGrid

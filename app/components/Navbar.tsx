@@ -383,7 +383,7 @@ export default function Navbar() {
     return (
         <>
             {/* Development Mode Banner */}
-            <div className="fixed top-0 left-0 right-0 z-[30] bg-amber-100 border-b border-amber-300">
+            <div className="fixed top-0 left-0 right-0 z-[30] border-b-2 border-black bg-[#f5d547]">
                 <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-center gap-2">
                     <svg
                         className="w-4 h-4 text-amber-700 flex-shrink-0"
@@ -398,18 +398,18 @@ export default function Navbar() {
                             d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
                         />
                     </svg>
-                    <p className="text-sm text-amber-900 font-medium text-center hidden md:block">
+                    <p className="text-sm text-black font-black text-center hidden md:block">
                         Devnet Mode — We Are Currently Operating On Solana Devnet
                     </p>
-                    <p className="text-sm text-amber-900 font-medium text-center md:hidden">
+                    <p className="text-sm text-black font-black text-center md:hidden">
                         Currently In Devnet Mode
                     </p>
                 </div>
             </div>
 
             {/* Main Navbar - Sticky at top */}
-            <nav className="fixed top-8 left-0 right-0 z-[40] bg-[#f3e1d7] border-b border-white-100">
-                <div className="max-w-7xl mx-auto px-6 lg:px-8">
+            <nav className="fixed top-8 left-0 right-0 z-[40] bg-[#f3e1d7]/95 shadow-[0_2px_0_#111] backdrop-blur-md">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-20">
                         {/* Brand / Logo */}
                         <components.NavbarBrand />

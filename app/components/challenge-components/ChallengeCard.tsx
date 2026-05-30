@@ -533,19 +533,19 @@ export function ChallengeCard({
     let ctaDisabled = false;
     let ctaClassName = "";
     const ctaBaseClassName =
-        "w-full h-11 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2";
+        "w-full h-11 px-4 border-2 border-black font-black text-sm flex items-center justify-center gap-2 uppercase tracking-[0.06em]";
     const activeCtaClassName =
-        `${ctaBaseClassName} cursor-pointer bg-[#246044] hover:bg-[#2b7351] text-white shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all disabled:opacity-70 disabled:cursor-not-allowed`;
+        `${ctaBaseClassName} cursor-pointer bg-[#246044] hover:bg-[#2b7351] text-white shadow-[3px_3px_0_#111] hover:-translate-y-1 hover:shadow-[3px_3px_0_#111] transition-all disabled:opacity-70 disabled:cursor-not-allowed`;
     const activePvpCtaClassName =
-        `${ctaBaseClassName} cursor-pointer bg-[#0c9d63] opacity-80 hover:bg-[#0a7d4f] border border-gray-500 text-white shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all disabled:opacity-70 disabled:cursor-not-allowed`;
+        `${ctaBaseClassName} cursor-pointer bg-[#0c9d63] opacity-90 hover:bg-[#0a7d4f] text-white shadow-[3px_3px_0_#111] hover:-translate-y-1 hover:shadow-[3px_3px_0_#111] transition-all disabled:opacity-70 disabled:cursor-not-allowed`;
     const ongoingCtaClassName =
-        `${ctaBaseClassName} cursor-not-allowed bg-[#008080] opacity-70 border border-gray-500 text-white shadow-lg`;
+        `${ctaBaseClassName} cursor-not-allowed bg-[#008080] opacity-80 text-white shadow-[2px_2px_0_#111]`;
     const expiredCtaClassName =
-        `${ctaBaseClassName} bg-red-100 border border-red-300 text-red-700 shadow-sm cursor-not-allowed`;
+        `${ctaBaseClassName} bg-red-100 text-red-700 shadow-[2px_2px_0_#111] cursor-not-allowed`;
     const resolvingCtaClassName =
-        `${ctaBaseClassName} bg-amber-100 border border-amber-300 text-amber-700 shadow-sm cursor-not-allowed`;
+        `${ctaBaseClassName} bg-amber-100 text-amber-700 shadow-[2px_2px_0_#111] cursor-not-allowed`;
     const completedCtaClassName =
-        `${ctaBaseClassName} bg-gray-200 border border-gray-300 text-gray-700 shadow-sm cursor-not-allowed`;
+        `${ctaBaseClassName} bg-gray-200 text-gray-700 shadow-[2px_2px_0_#111] cursor-not-allowed`;
 
     if (isPvpMode) {
         if (isResolveTimeAchieved && hasOpponents && isResolutionResolved) {
@@ -621,7 +621,7 @@ export function ChallengeCard({
     return (
         <>
             <div
-                className="block overflow-hidden rounded border border-gray-400 bg-[#f8ede7] p-3 shadow-sm transition-shadow hover:shadow-lg sm:p-4"
+                className="challenge-card-shell group/card block overflow-hidden rounded-xl border border-gray-200 bg-[#fffaf6] p-3 transition-all duration-300 hover:-translate-y-0.5 hover:border-gray-300 hover:shadow-md sm:p-4"
             >
                 {/* Header */}
                 <div className="mb-3 flex items-start justify-between gap-2">
@@ -638,7 +638,7 @@ export function ChallengeCard({
                                 {isManualResolution ? (
                                     <span
                                         onClick={handleClick}
-                                        className="block cursor-pointer break-words text-[15px] font-bold tracking-tight sm:text-[16px]"
+                                        className="block cursor-pointer break-words text-[15px] font-black tracking-tight text-black transition-colors group-hover/card:text-[#e85a2d] sm:text-[16px]"
                                         style={{
                                             display: "-webkit-box",
                                             WebkitLineClamp: 2,
@@ -652,7 +652,7 @@ export function ChallengeCard({
                                 ) : isResolveTimeAchieved ? (
                                     <span
                                         onClick={handleClick}
-                                        className="block cursor-pointer break-words text-[15px] font-bold tracking-tight sm:text-[16px]"
+                                        className="block cursor-pointer break-words text-[15px] font-black tracking-tight text-black transition-colors group-hover/card:text-[#e85a2d] sm:text-[16px]"
                                         style={{
                                             display: "-webkit-box",
                                             WebkitLineClamp: 2,
@@ -667,7 +667,7 @@ export function ChallengeCard({
                                     <>
                                         <span
                                             onClick={handleClick}
-                                            className="block cursor-pointer break-words text-[15px] font-bold tracking-tight sm:text-[16px]"
+                                            className="block cursor-pointer break-words text-[15px] font-black tracking-tight text-black transition-colors group-hover/card:text-[#e85a2d] sm:text-[16px]"
                                             style={{
                                                 display: "-webkit-box",
                                                 WebkitLineClamp: 1,
@@ -680,7 +680,7 @@ export function ChallengeCard({
                                         </span>
                                         <span
                                             onClick={handleClick}
-                                            className="block cursor-pointer break-words text-[15px] font-bold tracking-tight sm:text-[16px]"
+                                            className="block cursor-pointer break-words text-[15px] font-black tracking-tight text-black transition-colors group-hover/card:text-[#e85a2d] sm:text-[16px]"
                                         >
                                             Next
                                             <span className="ml-1 inline-flex items-center gap-1 sm:ml-2 sm:gap-1.5">
@@ -709,7 +709,7 @@ export function ChallengeCard({
                         onClick={handleBookmarkClick}
                         aria-label={isBookmarked ? "Remove Pin" : "Pin this"}
                         title={isBookmarked ? "Remove pin" : "Pin this"}
-                        className="shrink-0 cursor-pointer rounded-lg border border-gray-400 bg-white/50 p-2 transition-colors hover:bg-white/20 hover:text-gray-500"
+                        className="shrink-0 cursor-pointer border-2 border-black bg-white p-2 shadow-[2px_2px_0_#111] transition-all hover:-translate-y-0.5 hover:bg-[#f5d547] hover:text-black"
                     >
                         <svg className="w-5 h-5 text-black rotate-45" stroke="currentColor" viewBox="0 0 24 24" fill={isBookmarked ? "currentColor" : "none"}>
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 17v4" />
@@ -723,10 +723,9 @@ export function ChallengeCard({
 
                 {/* Challenge Mode Info */}
                 <div onClick={handleClick} className="flex items-center justify-center gap-2 mb-4 cursor-pointer">
-                    <h2 className="text-sm font-medium text-black">
+                    <h2 className="border border-black bg-[#f5d547] px-3 py-1 text-xs font-black uppercase tracking-[0.12em] text-black shadow-[2px_2px_0_#111]">
                         {modeMeta.display || (challengeMode === "pvp" ? "PVP Mode" : "Multi Mode")}
                     </h2>
-
                     <div className="relative group inline-flex ml-[-4px]">
                         <svg
                             className="w-4 h-4 text-black cursor-help"
@@ -749,6 +748,7 @@ export function ChallengeCard({
                             <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
                         </div>
                     </div>
+
                 </div>
 
 
@@ -768,7 +768,7 @@ export function ChallengeCard({
                                 }`}>
                                 {/* Winner Crown */}
                                 {hasWon && (
-                                    <div className="text-2xl animate-bounce">
+                                    <div className="text-2xl">
                                         👑
                                     </div>
                                 )}
@@ -874,7 +874,7 @@ export function ChallengeCard({
                                     }`}>
                                     {/* Winner Crown */}
                                     {hasLost && (
-                                        <div className="text-2xl animate-bounce">
+                                        <div className="text-2xl">
                                             👑
                                         </div>
                                     )}

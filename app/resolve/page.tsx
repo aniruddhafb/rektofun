@@ -494,14 +494,14 @@ export default function ResolvePage() {
     const pendingCount = challengesData.length;
 
     return (
-        <div className="min-h-screen" style={{ backgroundColor: "#f3e1d7" }}>
+        <div className="rekto-page min-h-screen">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
 
                 {/* ── Header ── */}
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
                     <div>
                         <div className="flex items-center gap-2.5">
-                            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">Resolve Challenges</h1>
+                            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-gray-900 drop-shadow-[3px_3px_0_rgba(232,90,45,0.25)]">Resolve Challenges</h1>
                         </div>
                         <p className="text-gray-500 mt-1 text-sm sm:text-base">
                             Review real-world event challenges and help the community reach a fair resolution.
@@ -672,7 +672,7 @@ export default function ResolvePage() {
                             aria-label="Close modal"
                             onClick={() => setPendingDecision(null)}
                         />
-                        <div className="relative w-full max-w-lg bg-white rounded-2xl border border-white/80 shadow-2xl p-5 sm:p-6">
+                        <div className="rekto-modal-panel relative w-full max-w-lg rounded-2xl border border-white/80 shadow-2xl p-5 sm:p-6">
                             <h3 className="text-lg sm:text-xl font-bold text-gray-900">Confirm Resolution</h3>
                             <p className="text-sm text-gray-500 mt-1">Final step before you submit your validation.</p>
 
