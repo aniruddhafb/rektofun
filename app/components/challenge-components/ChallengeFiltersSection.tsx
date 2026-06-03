@@ -82,7 +82,7 @@ export function ChallengeFiltersSection({
                 <button
                     type="button"
                     onClick={() => setIsMobileFiltersOpen(true)}
-                    className="flex w-full cursor-pointer items-center justify-between rounded-2xl border border-black/15 bg-white/75 px-4 py-3 text-sm font-medium text-gray-800 shadow-[2px_2px_0_rgba(0,0,0,0.16)] transition hover:border-black/25 hover:bg-white hover:shadow-[3px_3px_0_rgba(0,0,0,0.18)] sm:hidden"
+                    className="flex w-full cursor-pointer items-center justify-between rounded-2xl border border-black/15 bg-white/75 px-4 py-3 text-sm font-medium text-gray-800 !shadow-none transition hover:border-black/25 hover:bg-white hover:!shadow-none active:!shadow-none sm:hidden"
                 >
                     <span>Filters</span>
                     <span className="max-w-[65%] truncate text-right text-xs text-gray-500">
@@ -96,7 +96,7 @@ export function ChallengeFiltersSection({
                     <div className="relative w-full min-w-0" ref={filterDropdownRef}>
                         <button
                             onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
-                            className={`flex w-full cursor-pointer items-center justify-between gap-2 rounded-full border px-4 py-2.5 text-sm font-medium shadow-[2px_2px_0_rgba(0,0,0,0.16)] transition ${isFilterDropdownOpen
+                            className={`flex w-full cursor-pointer items-center justify-between gap-2 rounded-full border px-4 py-2.5 text-sm font-medium transition ${isFilterDropdownOpen
                                 ? "border-black/25 bg-white text-gray-950 shadow-[3px_3px_0_rgba(0,0,0,0.2)] ring-4 ring-gray-900/[0.04]"
                                 : "border-black/15 bg-white/70 text-gray-700 hover:border-black/25 hover:bg-white hover:shadow-[3px_3px_0_rgba(0,0,0,0.18)]"
                                 }`}
@@ -109,7 +109,7 @@ export function ChallengeFiltersSection({
                         </button>
 
                         {isFilterDropdownOpen && (
-                            <div className="absolute left-0 top-full z-20 mt-2 max-h-64 w-full overflow-y-auto rounded-2xl border border-black/15 bg-white p-1.5 shadow-[4px_4px_0_rgba(0,0,0,0.16)] sm:w-auto sm:min-w-[14rem]">
+                            <div className="absolute left-0 top-full z-20 mt-2 max-h-64 w-full overflow-y-auto rounded-2xl border border-black/15 bg-white p-1.5 sm:w-auto sm:min-w-[14rem]">
                                 {filterOptions.map((option) => (
                                     <button
                                         key={option.label}
@@ -134,7 +134,7 @@ export function ChallengeFiltersSection({
                     <div className="relative w-full min-w-0" ref={marketDropdownRef}>
                         <button
                             onClick={() => setIsMarketDropdownOpen(!isMarketDropdownOpen)}
-                            className={`flex w-full cursor-pointer items-center justify-between gap-2 rounded-full border px-4 py-2.5 text-sm font-medium shadow-[2px_2px_0_rgba(0,0,0,0.16)] transition ${isMarketDropdownOpen
+                            className={`flex w-full cursor-pointer items-center justify-between gap-2 rounded-full border px-4 py-2.5 text-sm font-medium transition ${isMarketDropdownOpen
                                 ? "border-black/25 bg-white text-gray-950 shadow-[3px_3px_0_rgba(0,0,0,0.2)] ring-4 ring-gray-900/[0.04]"
                                 : "border-black/15 bg-white/70 text-gray-700 hover:border-black/25 hover:bg-white hover:shadow-[3px_3px_0_rgba(0,0,0,0.18)]"
                                 }`}
@@ -147,7 +147,7 @@ export function ChallengeFiltersSection({
                         </button>
 
                         {isMarketDropdownOpen && (
-                            <div className="absolute left-0 top-full z-20 mt-2 max-h-64 w-full overflow-y-auto rounded-2xl border border-black/15 bg-white p-1.5 shadow-[4px_4px_0_rgba(0,0,0,0.16)] sm:w-auto sm:min-w-[14rem]">
+                            <div className="absolute left-0 top-full z-20 mt-2 max-h-64 w-full overflow-y-auto rounded-2xl border border-black/15 bg-white p-1.5 sm:w-auto sm:min-w-[14rem]">
                                 {marketOptions.map((option) => (
                                     <button
                                         key={option}
@@ -179,7 +179,7 @@ export function ChallengeFiltersSection({
                         className="absolute inset-0 bg-black/40"
                     />
 
-                    <div className="absolute inset-x-0 bottom-0 max-h-[82vh] overflow-y-auto rounded-t-3xl border border-b-0 border-black/[0.06] bg-white p-4 pb-6 shadow-2xl">
+                    <div className="absolute inset-x-0 bottom-0 max-h-[82vh] overflow-y-auto rounded-t-3xl border border-b-0 border-black/[0.06] bg-white p-4 pb-6">
                         <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-gray-300" />
 
                         <div className="flex items-center justify-between">

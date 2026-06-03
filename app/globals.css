@@ -733,6 +733,14 @@ body {
   box-shadow: 4px 4px 0 #111 !important;
 }
 
+.pixel-shell .master-card-shell.master-card-shell {
+  box-shadow: none !important;
+}
+
+.pixel-shell .master-card-shell.master-card-shell:hover {
+  box-shadow: 4px 4px 0 #111 !important;
+}
+
 .rekto-button,
 .pixel-shell button[class*="bg-black"],
 .pixel-shell a[class*="bg-black"] {
@@ -757,6 +765,14 @@ body {
 .pixel-shell button[class*="bg-white"],
 .pixel-shell a[class*="bg-white"] {
   border-radius: 3px !important;
+}
+
+.pixel-shell .master-card-shell .master-card-button.master-card-button {
+  box-shadow: none !important;
+}
+
+.pixel-shell .master-card-shell .master-card-button.master-card-button:hover {
+  box-shadow: none !important;
 }
 
 .rekto-input,

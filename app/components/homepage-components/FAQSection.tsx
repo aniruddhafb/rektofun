@@ -24,10 +24,6 @@ const faqData = [
         question: "How can I deposit and withdraw funds?",
         answer: "You can deposit funds directly from your Solana wallet into the platform. We are using Privy Wallet Infrastructure for secure and seamless transactions. Withdrawals can be made at any time.",
     },
-    {
-        question: "When will the platform go live?",
-        answer: "The platform is currently live on solana devnet for users to try and test and will be launched soon. Please check back for updates.",
-    },
 ];
 
 export function FAQSection() {

@@ -272,7 +272,7 @@ export function NavbarDesktopSearch({
                             type="button"
                             onClick={closeModal}
                             aria-label="Close search"
-                            className="inline-flex h-11 w-11 shrink-0 items-center justify-center border-2 border-black bg-[#ffe8db] text-[#2d1f1a] shadow-[2px_2px_0_#111] transition hover:-translate-y-0.5 hover:bg-[#ffcfbd] focus:outline-none focus:shadow-[0_0_0_4px_rgba(232,90,45,0.22)] md:h-12 md:w-12"
+                            className="cursor-pointer inline-flex h-11 w-11 shrink-0 items-center justify-center border-2 border-black bg-[#ffe8db] text-[#2d1f1a] shadow-[2px_2px_0_#111] transition hover:-translate-y-0.5 hover:bg-[#ffcfbd] focus:outline-none focus:shadow-[0_0_0_4px_rgba(232,90,45,0.22)] md:h-12 md:w-12"
                         >
                             <X className="h-5 w-5" strokeWidth={3} />
                         </button>
@@ -286,7 +286,7 @@ export function NavbarDesktopSearch({
                                     key={tab.key}
                                     type="button"
                                     onClick={() => setActiveTab(tab.key)}
-                                    className={`whitespace-nowrap border-2 px-3 md:px-4 py-1.5 text-xs font-black md:text-sm transition ${selected ? "border-black bg-[#f5d547] text-black shadow-[2px_2px_0_#111]" : "border-black bg-white/70 text-[#475569] hover:bg-white"}`}
+                                    className={`cursor-pointer whitespace-nowrap border-2 px-3 md:px-4 py-1.5 text-xs font-black md:text-sm transition ${selected ? "border-black bg-[#f5d547] text-black shadow-[2px_2px_0_#111]" : "border-black bg-white/70 text-[#475569] hover:bg-white"}`}
                                 >
                                     {tab.label}
                                 </button>

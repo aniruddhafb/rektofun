@@ -63,6 +63,16 @@ const ChevronIcon = ({ direction }: { direction: "up" | "down" }) => (
     </svg>
 );
 
+const ArrowIcon = ({ direction }: { direction: "left" | "right" }) => (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        {direction === "left" ? (
+            <path d="M10 3.5L5.5 8L10 12.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        ) : (
+            <path d="M6 3.5L10.5 8L6 12.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        )}
+    </svg>
+);
+
 type LeaderboardRow = {
     id: string;
     walletAddress: string;
@@ -78,6 +88,7 @@ type LeaderboardRow = {
 
 type SortField = "rank" | "wins" | "rekts" | "challenges" | "earnings";
 type SortOrder = "desc" | "asc";
+type PaginationItem = number | "ellipsis-left" | "ellipsis-right";
 
 const SortIndicator = ({ active, order }: { active: boolean; order: SortOrder }) => {
     if (!active) return <span className="text-gray-300">↕</span>;
@@ -103,6 +114,29 @@ function mapUserToRow(user: LeaderboardUser, rank: number): LeaderboardRow {
         winRate,
         earnings: (user.earnings ?? 0).toFixed(1),
     };
+}
+
+function getRankBadgeClass(rank: number): string {
+    if (rank === 1) return "border-amber-300 bg-amber-100 text-amber-800";
+    if (rank === 2) return "border-slate-300 bg-slate-100 text-slate-700";
+    if (rank === 3) return "border-orange-300 bg-orange-100 text-orange-800";
+    return "border-gray-200 bg-white text-gray-700";
+}
+
+function getVisiblePages(currentPage: number, totalPages: number): PaginationItem[] {
+    if (totalPages <= 7) {
+        return Array.from({ length: totalPages }, (_, index) => index + 1);
+    }
+
+    if (currentPage <= 4) {
+        return [1, 2, 3, 4, 5, "ellipsis-right", totalPages];
+    }
+
+    if (currentPage >= totalPages - 3) {
+        return [1, "ellipsis-left", totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+    }
+
+    return [1, "ellipsis-left", currentPage - 1, currentPage, currentPage + 1, "ellipsis-right", totalPages];
 }
 
 async function fetchAllLeaderboardUsers(): Promise<LeaderboardUser[]> {
@@ -169,6 +203,9 @@ export default function LeaderboardPage() {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const paginatedData = sortedData.slice(startIndex, startIndex + itemsPerPage);
     const totalEarned = rows.reduce((sum, row) => sum + Number(row.earnings), 0);
+    const totalChallenges = rows.reduce((sum, row) => sum + row.challenges, 0);
+    const totalPoints = rows.reduce((sum, row) => sum + row.wins, 0);
+    const visiblePages = getVisiblePages(currentPage, totalPages);
 
     const handlePageChange = (page: number) => {
         if (page >= 1 && page <= totalPages) {
@@ -195,48 +232,57 @@ export default function LeaderboardPage() {
             <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 sm:mb-8">
                     <div>
-                        <h1 className="text-3xl sm:text-4xl font-black text-gray-900 drop-shadow-[3px_3px_0_rgba(232,90,45,0.25)]">Leaderboard</h1>
+                        <h1 className="text-3xl sm:text-4xl font-black text-gray-900">Leaderboard</h1>
                         <p className="text-gray-600 text-base sm:text-lg">Explore the top challengers and their achievements</p>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-                    <div className="bg-white/60 backdrop-blur-sm rounded-xl px-5 py-4 flex items-center justify-between border border-white/50 shadow-sm">
+                {/* stats website  */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
+                    <div className="leaderboard-hover-shadow group bg-[#fffaf6]/80 backdrop-blur-sm rounded-xl px-5 py-4 flex items-center justify-between border border-black/10 transition-all duration-200 hover:-translate-y-0.5 hover:border-black">
                         <div className="flex items-center gap-3">
-                            <ChallengeIcon />
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
+                                <ChallengeIcon />
+                            </div>
                             <div>
-                                <div className="text-xl font-bold text-gray-900">{rows.reduce((sum, row) => sum + row.challenges, 0)}</div>
-                                <div className="text-sm text-gray-600">Challenges Created</div>
+                                <div className="text-2xl font-black text-gray-900">{totalChallenges}</div>
+                                <div className="text-xs font-bold uppercase tracking-wide text-gray-500">Challenges Created</div>
                             </div>
                         </div>
                     </div>
 
-                    <div className="bg-white/60 backdrop-blur-sm rounded-xl px-5 py-4 flex items-center justify-between border border-white/50 shadow-sm">
+                    <div className="leaderboard-hover-shadow group bg-[#fffaf6]/80 backdrop-blur-sm rounded-xl px-5 py-4 flex items-center justify-between border border-black/10 transition-all duration-200 hover:-translate-y-0.5 hover:border-black">
                         <div className="flex items-center gap-3">
-                            <HandshakeIcon />
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-100 text-sky-700">
+                                <HandshakeIcon />
+                            </div>
                             <div>
-                                <div className="text-xl font-bold text-gray-900">{rows.length}</div>
-                                <div className="text-sm text-gray-600">Total Traders</div>
+                                <div className="text-2xl font-black text-gray-900">{rows.length}</div>
+                                <div className="text-xs font-bold uppercase tracking-wide text-gray-500">Total Traders</div>
                             </div>
                         </div>
                     </div>
 
-                    <div className="bg-white/60 backdrop-blur-sm rounded-xl px-5 py-4 flex items-center justify-between border border-white/50 shadow-sm">
+                    <div className="leaderboard-hover-shadow group bg-[#fffaf6]/80 backdrop-blur-sm rounded-xl px-5 py-4 flex items-center justify-between border border-black/10 transition-all duration-200 hover:-translate-y-0.5 hover:border-black">
                         <div className="flex items-center gap-3">
-                            <CoinsIcon />
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
+                                <CoinsIcon />
+                            </div>
                             <div>
-                                <div className="text-xl font-bold text-gray-900">${totalEarned.toFixed(1)}</div>
-                                <div className="text-sm text-gray-600">Total Earned</div>
+                                <div className="text-2xl font-black text-gray-900">${totalEarned.toFixed(1)}</div>
+                                <div className="text-xs font-bold uppercase tracking-wide text-gray-500">Total Earned</div>
                             </div>
                         </div>
                     </div>
 
-                    <div className="bg-white/60 backdrop-blur-sm rounded-xl px-5 py-4 flex items-center justify-between border border-white/50 shadow-sm">
+                    <div className="leaderboard-hover-shadow group bg-[#fffaf6]/80 backdrop-blur-sm rounded-xl px-5 py-4 flex items-center justify-between border border-black/10 transition-all duration-200 hover:-translate-y-0.5 hover:border-black">
                         <div className="flex items-center gap-3">
-                            <SparkleIcon className="text-amber-500" />
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-rose-100 text-rose-700">
+                                <SparkleIcon className="text-rose-600" />
+                            </div>
                             <div>
-                                <div className="text-xl font-bold text-gray-900">{rows.reduce((sum, row) => sum + row.wins, 0)}</div>
-                                <div className="text-sm text-gray-600">Total Points</div>
+                                <div className="text-2xl font-black text-gray-900">{totalPoints}</div>
+                                <div className="text-xs font-bold uppercase tracking-wide text-gray-500">Total Points</div>
                             </div>
                         </div>
                     </div>
@@ -244,7 +290,7 @@ export default function LeaderboardPage() {
 
                 <div className="mb-6 flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
                     <div className="relative max-w-md w-full">
-                        <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                        <div className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2">
                             <SearchIcon />
                         </div>
                         <input
@@ -255,48 +301,62 @@ export default function LeaderboardPage() {
                                 setSearchQuery(e.target.value);
                                 setCurrentPage(1);
                             }}
-                            className="pl-11 pr-4 py-3 bg-white/60 border border-white/50 rounded-xl text-base text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30 w-full"
+                            className="leaderboard-hover-shadow pl-11 pr-4 py-3 bg-white/80 border border-black/10 rounded-xl text-base text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-4 focus:ring-amber-500/20 focus:border-amber-500 w-full"
                         />
+                    </div>
+                    <div className="rounded-full border border-black/10 bg-white/60 px-4 py-2 text-sm font-semibold text-gray-600">
+                        {sortedData.length} {sortedData.length === 1 ? "trader" : "traders"} ranked
                     </div>
                 </div>
 
-                <div className="rekto-surface bg-white/40 backdrop-blur-sm rounded-2xl border border-white/50 overflow-hidden shadow-sm">
+                <div className="leaderboard-hover-shadow bg-[#fffaf6]/80 backdrop-blur-sm rounded-2xl border border-black/10 overflow-hidden transition-all duration-200 hover:border-black">
+                    <div className="flex flex-col gap-1 border-b border-black/10 bg-white/80 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <h2 className="text-lg font-black text-gray-900">Trader Rankings</h2>
+                            <p className="text-sm font-medium text-gray-500">Sorted by {sortField} in {sortOrder === "asc" ? "ascending" : "descending"} order</p>
+                        </div>
+                        <div className="text-sm font-semibold text-gray-600">
+                            Page {Math.min(currentPage, Math.max(totalPages, 1))} of {Math.max(totalPages, 1)}
+                        </div>
+                    </div>
                     <div className="overflow-x-auto">
                         <div className="min-w-[800px]">
-                            <div className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-white/50 text-sm font-medium text-gray-600">
-                                <div onClick={() => handleSort("rank")} className="cursor-pointer col-span-1 text-left flex items-center gap-1 hover:text-gray-800 bg-transparent border-0 p-0 m-0 font-medium text-gray-600">
+                            <div className="grid grid-cols-12 gap-4 border-b border-black/10 bg-[#fff8f4] px-6 py-3 text-xs font-black uppercase tracking-wide text-gray-500">
+                                <div onClick={() => handleSort("rank")} className="col-span-1 flex cursor-pointer items-center gap-1 bg-transparent p-0 text-left font-black text-gray-500 transition hover:text-gray-900">
                                     Rank <SortIndicator active={sortField === "rank"} order={sortOrder} />
                                 </div>
                                 <div className="col-span-3">Trader</div>
-                                <div onClick={() => handleSort("wins")} className="cursor-pointer col-span-2 text-left flex items-center gap-1 hover:text-gray-800 bg-transparent border-0 p-0 m-0 font-medium text-gray-600">
-                                    Wins <SortIndicator active={sortField === "wins"} order={sortOrder} />
+                                <div onClick={() => handleSort("wins")} className="col-span-2 flex cursor-pointer items-center gap-1 bg-transparent p-0 text-left font-black text-gray-500 transition hover:text-gray-900">
+                                    Points <SortIndicator active={sortField === "wins"} order={sortOrder} />
                                 </div>
-                                <div onClick={() => handleSort("rekts")} className="cursor-pointer col-span-1 text-left flex items-center gap-1 hover:text-gray-800 bg-transparent border-0 p-0 m-0 font-medium text-gray-600">
+                                <div onClick={() => handleSort("rekts")} className="col-span-1 flex cursor-pointer items-center gap-1 bg-transparent p-0 text-left font-black text-gray-500 transition hover:text-gray-900">
                                     Rekts <SortIndicator active={sortField === "rekts"} order={sortOrder} />
                                 </div>
-                                <div onClick={() => handleSort("challenges")} className="cursor-pointer col-span-2 text-left flex items-center gap-1 hover:text-gray-800 bg-transparent border-0 p-0 m-0 font-medium text-gray-600">
+                                <div onClick={() => handleSort("challenges")} className="col-span-2 flex cursor-pointer items-center gap-1 bg-transparent p-0 text-left font-black text-gray-500 transition hover:text-gray-900">
                                     Challenges <SortIndicator active={sortField === "challenges"} order={sortOrder} />
                                 </div>
                                 <div className="col-span-1 flex items-center gap-1">Win% <ChevronIcon direction="up" /></div>
-                                <div onClick={() => handleSort("earnings")} className="cursor-pointer col-span-2 text-right flex items-center gap-1 justify-end hover:text-gray-800 bg-transparent border-0 p-0 m-0 font-medium text-gray-600">
+                                <div onClick={() => handleSort("earnings")} className="col-span-2 flex cursor-pointer items-center justify-end gap-1 bg-transparent p-0 text-right font-black text-gray-500 transition hover:text-gray-900">
                                     Earnings <SortIndicator active={sortField === "earnings"} order={sortOrder} />
                                 </div>
                             </div>
 
-                            <div className="divide-y divide-white/30">
-                                {error && <div className="px-6 py-8 text-red-600">{error}</div>}
+                            <div className="divide-y divide-black/5 bg-white/55">
+                                {error && <div className="px-6 py-10 text-center font-semibold text-red-600">{error}</div>}
                                 {!error && paginatedData.length === 0 && (
-                                    <div className="px-6 py-8 text-gray-600">No users found.</div>
+                                    <div className="px-6 py-10 text-center font-semibold text-gray-600">No users found.</div>
                                 )}
 
                                 {!error && paginatedData.map((user) => (
                                     <div
                                         key={user.id}
-                                        className="grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-white/30 transition-colors cursor-pointer"
+                                        className="grid cursor-pointer grid-cols-12 items-center gap-4 px-6 py-4 transition-all duration-200 hover:relative hover:z-10 hover:bg-white hover:shadow-[0_10px_24px_rgba(17,17,17,0.12)]"
                                         onClick={() => router.push(`/profile/${user.walletAddress}`)}
                                     >
                                         <div className="col-span-1 flex items-center gap-2">
-                                            <span className="text-lg font-semibold text-gray-700 w-4">{user.rank}</span>
+                                            <span className={`flex h-8 min-w-8 items-center justify-center rounded-full border px-2 text-sm font-black ${getRankBadgeClass(user.rank)}`}>
+                                                {user.rank}
+                                            </span>
                                             {user.rank === 1 ? <StarBadge /> : <DiamondIcon />}
                                         </div>
 
@@ -311,23 +371,23 @@ export default function LeaderboardPage() {
 
                                         <div className="col-span-2 flex items-center gap-2">
                                             <SparkleIcon className="text-amber-500" />
-                                            <span className="font-semibold text-gray-900">{user.wins}</span>
+                                            <span className="font-black text-gray-900">{user.wins}</span>
                                         </div>
 
                                         <div className="col-span-1 flex items-center gap-1">
-                                            <span className="font-semibold text-red-600">{user.rekts}</span>
+                                            <span className="rounded-full bg-red-50 px-2 py-1 text-xs font-black text-red-600">{user.rekts}</span>
                                         </div>
 
                                         <div className="col-span-2 flex items-center gap-1">
-                                            <span className="text-gray-900">{user.challenges}</span>
+                                            <span className="font-semibold text-gray-900">{user.challenges}</span>
                                         </div>
 
                                         <div className="col-span-1">
-                                            <span className="text-gray-900">{user.winRate}</span>
+                                            <span className="rounded-full bg-emerald-50 px-2 py-1 text-xs font-black text-emerald-700">{user.winRate}</span>
                                         </div>
 
                                         <div className="col-span-2 text-right">
-                                            <span className="font-semibold text-gray-900">${user.earnings}</span>
+                                            <span className="font-black text-gray-900">${user.earnings}</span>
                                         </div>
                                     </div>
                                 ))}
@@ -336,50 +396,76 @@ export default function LeaderboardPage() {
                     </div>
 
                     {!error && totalPages > 1 && (
-                        <div className="flex items-center justify-between px-6 py-4 border-t border-white/50">
-                            <div className="hidden sm:block text-sm text-gray-600">
+                        <div className="flex flex-col gap-4 border-t border-black/10 bg-white/80 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="text-sm font-semibold text-gray-600">
                                 Showing {startIndex + 1}-{Math.min(startIndex + itemsPerPage, sortedData.length)} of {sortedData.length} traders
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex flex-wrap items-center gap-2">
                                 <button
                                     onClick={() => handlePageChange(currentPage - 1)}
                                     disabled={currentPage === 1}
-                                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${currentPage === 1
-                                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                                        : "bg-white/60 text-gray-700 hover:bg-white/80 border border-white/50"
+                                    className={`inline-flex h-9 items-center gap-1 rounded-lg px-3 text-sm font-black transition-all ${currentPage === 1
+                                        ? "cursor-not-allowed border border-gray-200 bg-gray-100 text-gray-400"
+                                        : "border border-black/10 bg-white text-gray-700 hover:border-black hover:bg-[#fff8f4] hover:text-gray-900"
                                         }`}
                                 >
+                                    <ArrowIcon direction="left" />
                                     Previous
                                 </button>
 
-                                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                                    <button
-                                        key={page}
-                                        onClick={() => handlePageChange(page)}
-                                        className={`w-8 h-8 rounded-lg text-sm font-medium transition-all ${currentPage === page
-                                            ? "bg-amber-500 text-white"
-                                            : "bg-white/60 text-gray-700 hover:bg-white/80 border border-white/50"
-                                            }`}
-                                    >
-                                        {page}
-                                    </button>
-                                ))}
+                                {visiblePages.map((page) =>
+                                    typeof page === "number" ? (
+                                        <button
+                                            key={page}
+                                            onClick={() => handlePageChange(page)}
+                                            aria-current={currentPage === page ? "page" : undefined}
+                                            className={`h-9 min-w-9 rounded-lg px-3 text-sm font-black transition-all ${currentPage === page
+                                                ? "border border-black bg-black text-white shadow-[3px_3px_0_#e85a2d]"
+                                                : "border border-black/10 bg-white text-gray-700 hover:border-black hover:bg-[#fff8f4] hover:text-gray-900"
+                                                }`}
+                                        >
+                                            {page}
+                                        </button>
+                                    ) : (
+                                        <span key={page} className="flex h-9 min-w-9 items-center justify-center text-sm font-black text-gray-400">
+                                            ...
+                                        </span>
+                                    )
+                                )}
 
                                 <button
                                     onClick={() => handlePageChange(currentPage + 1)}
                                     disabled={currentPage === totalPages}
-                                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${currentPage === totalPages
-                                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                                        : "bg-white/60 text-gray-700 hover:bg-white/80 border border-white/50"
+                                    className={`inline-flex h-9 items-center gap-1 rounded-lg px-3 text-sm font-black transition-all ${currentPage === totalPages
+                                        ? "cursor-not-allowed border border-gray-200 bg-gray-100 text-gray-400"
+                                        : "border border-black/10 bg-white text-gray-700 hover:border-black hover:bg-[#fff8f4] hover:text-gray-900"
                                         }`}
                                 >
                                     Next
+                                    <ArrowIcon direction="right" />
                                 </button>
                             </div>
                         </div>
                     )}
                 </div>
             </div>
+            <style jsx global>{`
+                .pixel-shell .leaderboard-hover-shadow.leaderboard-hover-shadow {
+                    box-shadow: none !important;
+                }
+
+                .pixel-shell .leaderboard-hover-shadow.leaderboard-hover-shadow:hover {
+                    box-shadow: 4px 4px 0 #111 !important;
+                }
+
+                .pixel-shell input.leaderboard-hover-shadow.leaderboard-hover-shadow:focus {
+                    box-shadow: 4px 4px 0 #111 !important;
+                }
+
+                .pixel-shell input.leaderboard-hover-shadow.leaderboard-hover-shadow:hover:not(:focus) {
+                    box-shadow: 4px 4px 0 #111 !important;
+                }
+            `}</style>
         </div>
     );
 }

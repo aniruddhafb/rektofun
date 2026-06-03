@@ -172,7 +172,7 @@ export function NavbarProfileDropdown({
                         <div className="py-2">
 
                             {/* User Balance Display */}
-                            <div className="px-4 py-3 mx-2 mb-1 bg-[#f5d547] border-2 border-black shadow-[2px_2px_0_#111]">
+                            <div className="px-4 py-3 mx-2 mb-1 bg-[#f5d547] border-2 border-black">
                                 <p className="text-xs font-black uppercase tracking-[0.12em] text-gray-700 mb-1.5">Your USDC Balance</p>
                                 <div className="flex items-center justify-between gap-2">
                                     <span className="text-base font-black text-gray-900">{balanceDisplay}</span>

@@ -180,7 +180,7 @@ export function DepositModal({ isOpen, onClose, initialMode = "deposit" }: Depos
                 <h2 className="truncate text-lg font-black text-gray-950">
                   {mode === "deposit" ? "Deposit Funds" : "Withdraw Funds"}
                 </h2>
-                <p className="text-xs font-semibold text-[#7c6a60]">Solana devnet USDC</p>
+                <p className="text-xs font-semibold text-[#7c6a60]">USDC</p>
               </div>
             </div>
             <button
@@ -231,7 +231,7 @@ export function DepositModal({ isOpen, onClose, initialMode = "deposit" }: Depos
             <>
               <div className="mb-4 rounded-lg border border-[#f0cdbc] bg-[#fff1e8] p-3">
                 <p className="text-sm font-bold text-[#5c4035]">
-                  Only deposit Solana devnet USDC to this wallet address.
+                  Only deposit Solana USDC to this wallet address.
                 </p>
               </div>
 
@@ -257,7 +257,7 @@ export function DepositModal({ isOpen, onClose, initialMode = "deposit" }: Depos
                 </div>
               </div>
 
-              <div className="rounded-lg border border-[#ead7cc] bg-white p-4">
+              {/* <div className="rounded-lg border border-[#ead7cc] bg-white p-4">
                 <p className="mb-3 text-xs font-black uppercase tracking-[0.08em] text-[#7c6a60]">Devnet Faucets</p>
                 <p className="text-sm font-semibold leading-relaxed text-gray-700">
                   Get devnet SOL for transaction fees and devnet USDC for deposits.
@@ -270,7 +270,7 @@ export function DepositModal({ isOpen, onClose, initialMode = "deposit" }: Depos
                     USDC <ExternalLink className="h-3.5 w-3.5" />
                   </a>
                 </div>
-              </div>
+              </div> */}
 
             </>
           ) : (
