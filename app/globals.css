@@ -733,6 +733,14 @@ body {
   box-shadow: 4px 4px 0 #111 !important;
 }
 
+.pixel-shell .challenge-card-shell .challenge-card-profile-tile.challenge-card-profile-tile {
+  box-shadow: none !important;
+}
+
+.pixel-shell .challenge-card-shell .challenge-card-profile-tile.challenge-card-profile-tile:hover {
+  box-shadow: 4px 4px 0 #111 !important;
+}
+
 .pixel-shell .master-card-shell.master-card-shell {
   box-shadow: none !important;
 }

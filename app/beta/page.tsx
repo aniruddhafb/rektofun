@@ -39,7 +39,7 @@ const betaPerks = [
   },
   {
     icon: Trophy,
-    title: "Founder Status",
+    title: "Master Status",
     body: "Get first access to beta-only rewards, drops, and leaderboard flex.",
   },
   {
@@ -51,28 +51,77 @@ const betaPerks = [
 
 export default function BetaPage() {
   const [email, setEmail] = useState("");
+  const [otp, setOtp] = useState("");
+  const [step, setStep] = useState<"email" | "verify">("email");
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const normalizedEmail = useMemo(() => email.trim().toLowerCase(), [email]);
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmitEmail = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
       setStatus("error");
+      setErrorMessage("Enter a valid email so we can save your beta spot.");
       return;
     }
 
-    setStatus("success");
+    setLoading(true);
+    setStatus("idle");
+    try {
+      const res = await fetch(`${API_BASE_URL}/email/request-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: normalizedEmail }),
+      });
+
+      if (!res.ok) throw new Error(await res.text());
+
+      setStep("verify");
+      setStatus("idle");
+    } catch (e: any) {
+      setStatus("error");
+      setErrorMessage(e.message || "Failed to send verification code.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmitOtp = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (otp.length !== 6) {
+      setStatus("error");
+      setErrorMessage("Please enter a 6-digit code.");
+      return;
+    }
+
+    setLoading(true);
+    setStatus("idle");
+    try {
+      const res = await fetch(`${API_BASE_URL}/email/verify-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: normalizedEmail, otp }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.detail || "Invalid verification code.");
+      }
+
+      setStatus("success");
+    } catch (e: any) {
+      setStatus("error");
+      setErrorMessage(e.message || "Verification failed.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <section className="relative min-h-[calc(100vh-80px)] overflow-hidden bg-[#f3e1d7] px-4 py-10 sm:px-6 lg:px-8">
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute left-1/2 top-0 h-64 w-[42rem] -translate-x-1/2 rounded-full bg-[#f5d547]/35 blur-3xl" />
-        <div className="absolute bottom-0 left-0 h-72 w-72 rounded-full bg-[#5ba8d8]/20 blur-3xl" />
-        <div className="absolute bottom-12 right-0 h-72 w-72 rounded-full bg-[#e85a2d]/20 blur-3xl" />
-      </div>
 
       {floatingAssets.map((asset) => (
         <Image
@@ -88,10 +137,6 @@ export default function BetaPage() {
 
       <div className="relative z-10 mx-auto flex min-h-[calc(100vh-160px)] w-full max-w-6xl flex-col items-center justify-center gap-10">
         <div className="max-w-4xl text-center">
-          <div className="mx-auto mb-5 inline-flex items-center gap-2 border border-black bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-black shadow-[3px_3px_0_#111] animate-pop-in">
-            <span className="h-2 w-2 bg-[#e85a2d]" />
-            Private Beta Loading
-          </div>
 
           <h1 className="animate-airdrop text-5xl font-black leading-[0.95] text-black sm:text-6xl md:text-7xl lg:text-8xl">
             Join The
@@ -108,53 +153,108 @@ export default function BetaPage() {
 
         <div className="grid w-full items-stretch gap-6 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="border-2 border-black bg-white p-4 shadow-[5px_5px_0_#111] sm:p-6 lg:p-8">
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-              <label
-                htmlFor="beta-email"
-                className="text-sm font-bold uppercase tracking-[0.14em] text-gray-700"
-              >
-                Email ID
-              </label>
+            <form
+              onSubmit={step === "email" ? handleSubmitEmail : handleSubmitOtp}
+              className="flex flex-col gap-4"
+            >
+              {step === "email" ? (
+                <>
+                  <label
+                    htmlFor="beta-email"
+                    className="text-sm font-bold uppercase tracking-[0.14em] text-gray-700"
+                  >
+                    Email ID
+                  </label>
 
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <div className="relative min-w-0 flex-1">
-                  <Mail
-                    aria-hidden="true"
-                    className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-500"
-                  />
-                  <input
-                    id="beta-email"
-                    type="email"
-                    value={email}
-                    onChange={(event) => {
-                      setEmail(event.target.value);
-                      setStatus("idle");
-                    }}
-                    placeholder="you@arena.com"
-                    className="h-14 w-full border-2 border-black bg-[#fffaf6] pl-12 pr-4 text-base font-semibold text-black outline-none transition focus:bg-white focus:shadow-[0_0_0_4px_rgba(232,90,45,0.2)]"
-                    autoComplete="email"
-                  />
-                </div>
+                  <div className="flex flex-col gap-3 sm:flex-row">
+                    <div className="relative min-w-0 flex-1">
+                      <Mail
+                        aria-hidden="true"
+                        className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-500"
+                      />
+                      <input
+                        id="beta-email"
+                        type="email"
+                        value={email}
+                        onChange={(event) => {
+                          setEmail(event.target.value);
+                          setStatus("idle");
+                        }}
+                        placeholder="you@arena.com"
+                        className="h-14 w-full border-2 border-black bg-[#fffaf6] pl-12 pr-4 text-base font-semibold text-black outline-none transition focus:bg-white focus:shadow-[0_0_0_4px_rgba(232,90,45,0.2)]"
+                        autoComplete="email"
+                      />
+                    </div>
 
-                <button
-                  type="submit"
-                  className="inline-flex h-14 shrink-0 items-center justify-center gap-2 border-2 border-black bg-black px-6 text-sm font-bold uppercase tracking-[0.08em] text-white shadow-[4px_4px_0_#e85a2d] transition hover:-translate-y-1 hover:shadow-[6px_6px_0_#e85a2d] active:translate-y-0 active:shadow-[2px_2px_0_#e85a2d]"
-                >
-                  Join Waitlist
-                  <ArrowRight aria-hidden="true" className="h-4 w-4" />
-                </button>
-              </div>
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="inline-flex h-14 shrink-0 items-center justify-center gap-2 border-2 border-black bg-black px-6 text-sm font-bold uppercase tracking-[0.08em] text-white shadow-[4px_4px_0_#e85a2d] transition hover:-translate-y-1 hover:shadow-[6px_6px_0_#e85a2d] active:translate-y-0 active:shadow-[2px_2px_0_#e85a2d] disabled:opacity-50"
+                    >
+                      {loading ? "Sending..." : "Join Waitlist"}
+                      {!loading && <ArrowRight aria-hidden="true" className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between">
+                    <label
+                      htmlFor="beta-otp"
+                      className="text-sm font-bold uppercase tracking-[0.14em] text-gray-700"
+                    >
+                      Verification Code
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setStep("email");
+                        setStatus("idle");
+                      }}
+                      className="text-xs font-bold uppercase text-gray-500 hover:text-black underline"
+                    >
+                      Change Email
+                    </button>
+                  </div>
+
+                  <div className="flex flex-col gap-3 sm:flex-row">
+                    <div className="relative min-w-0 flex-1">
+                      <input
+                        id="beta-otp"
+                        type="text"
+                        maxLength={6}
+                        value={otp}
+                        onChange={(event) => {
+                          setOtp(event.target.value.replace(/\D/g, ""));
+                          setStatus("idle");
+                        }}
+                        placeholder="6-digit code"
+                        className="h-14 w-full border-2 border-black bg-[#fffaf6] px-4 text-base font-semibold text-black outline-none transition focus:bg-white focus:shadow-[0_0_0_4px_rgba(232,90,45,0.2)]"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="inline-flex h-14 shrink-0 items-center justify-center gap-2 border-2 border-black bg-black px-6 text-sm font-bold uppercase tracking-[0.08em] text-white shadow-[4px_4px_0_#e85a2d] transition hover:-translate-y-1 hover:shadow-[6px_6px_0_#e85a2d] active:translate-y-0 active:shadow-[2px_2px_0_#e85a2d] disabled:opacity-50"
+                    >
+                      {loading ? "Verifying..." : "Verify OTP"}
+                      {!loading && <ArrowRight aria-hidden="true" className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </>
+              )}
 
               {status === "error" && (
                 <p className="text-sm font-semibold text-[#c2410c]">
-                  Enter a valid email so we can save your beta spot.
+                  {errorMessage}
                 </p>
               )}
 
               {status === "success" && (
                 <div className="flex items-center gap-2 border border-black bg-[#a8d85b] px-4 py-3 text-sm font-bold text-black animate-pop-in">
                   <Check aria-hidden="true" className="h-5 w-5" />
-                  You&apos;re on the list. Watch your inbox for beta access.
+                  You're on the list. Watch your inbox for beta access.
                 </div>
               )}
             </form>

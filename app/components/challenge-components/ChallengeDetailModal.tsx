@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import { X, Clock, User, Calendar, AlertCircle, ChevronDown, ChevronUp, Share2, Trophy, Target, Users, Activity, Wallet } from "lucide-react";
 import { AcceptChallengeModal } from "./AcceptChallengeModal";
@@ -652,8 +653,8 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
     const canToggleDescription = isManualResolution ? isManualDescriptionTruncatable : isDescriptionTruncatable;
     const resolutionLabel = isManualResolution ? "Community resolution" : "Price feed resolution";
 
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-black/55 p-2 backdrop-blur-sm animate-in fade-in duration-200 sm:p-4">
+    return createPortal(
+        <div className="fixed inset-0 z-[10010] flex items-center justify-center overflow-hidden bg-black/55 p-2 backdrop-blur-sm animate-in fade-in duration-200 sm:p-4">
             <div
                 ref={modalRef}
                 className="rekto-modal-panel relative flex max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden bg-[#fff8f4] animate-in zoom-in-95 duration-300"
@@ -823,18 +824,18 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
                                 <div className="rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-left sm:text-right">
                                     <div className="flex items-center gap-1.5 sm:justify-end">
                                         <p className="text-sm font-medium text-white/80">Total Pool</p>
-                                    <div className="group relative">
-                                        <svg className="w-4 h-4 text-white/70 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                        <div
-                                            className="absolute left-1/2 top-full z-50 mt-2 w-72 -translate-x-1/2 rounded-lg bg-gray-900 p-2 text-xs text-white opacity-0 invisible transition-all duration-200 group-hover:opacity-100 group-hover:visible shadow-xl"
-                                            style={{ pointerEvents: "none" }}
-                                        >
-                                            the total pool is the total money locked in the escrow smart contract which winner gets after winning
-                                            <span className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-full border-4 border-transparent border-b-gray-900"></span>
+                                        <div className="group relative">
+                                            <svg className="w-4 h-4 text-white/70 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            <div
+                                                className="absolute left-1/2 top-full z-50 mt-2 w-72 -translate-x-1/2 rounded-lg bg-gray-900 p-2 text-xs text-white opacity-0 invisible transition-all duration-200 group-hover:opacity-100 group-hover:visible shadow-xl"
+                                                style={{ pointerEvents: "none" }}
+                                            >
+                                                the total pool is the total money locked in the escrow smart contract which winner gets after winning
+                                                <span className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-full border-4 border-transparent border-b-gray-900"></span>
+                                            </div>
                                         </div>
-                                    </div>
                                     </div>
                                     <p className="mt-1 text-3xl font-black">{totalPoolLabel}</p>
                                 </div>
@@ -1273,6 +1274,7 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
                 }}
                 onJoinSideChange={(side) => setJoinSide(side)}
             />
-        </div>
+        </div>,
+        document.body,
     );
 }
