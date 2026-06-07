@@ -3,14 +3,17 @@
 import React, { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
-import { X, Clock, User, Calendar, AlertCircle, ChevronDown, ChevronUp, Share2, Trophy, Target, Users, Activity, Wallet } from "lucide-react";
+import { X, ChevronDown, ChevronUp, Share2, Trophy, Target, Users, Activity, Wallet } from "lucide-react";
 import { AcceptChallengeModal } from "./AcceptChallengeModal";
 import { ChallengeListItem, getChallengeById, joinChallenge } from "@/app/lib/challenges-service/challenges";
 import { useRouter } from "next/navigation";
 import { useUserStore } from "@/app/store/useUserStore";
-import { buildAcceptChallengeTx, fetchChallenge } from "@/app/lib/rektofun-program";
-import { PublicKey } from "@solana/web3.js";
+import { buildAcceptChallengeTx, fetchChallenge, getReadonlyConnection } from "@/app/lib/rektofun-program";
+import { useAppKitAccount, useAppKitProvider } from "@reown/appkit/react";
+import { PublicKey, Transaction } from "@solana/web3.js";
 import { useBodyScrollLock } from "@/app/lib/useBodyScrollLock";
+import { getAssociatedTokenAddress } from "@solana/spl-token";
+import { USDC_MINT } from "@/app/lib/rektofun-program";
 
 
 interface ChallengeDetailModalProps {
@@ -23,6 +26,8 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
     const modalRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
     const { user } = useUserStore();
+    const { address, isConnected } = useAppKitAccount();
+    const { walletProvider } = useAppKitProvider("solana");
 
     const [currentTime, setCurrentTime] = React.useState(() => Date.now());
     const [shareFeedback, setShareFeedback] = React.useState<string | null>(null);
@@ -37,6 +42,7 @@ export default function ChallengeDetailModal({ challenge, isOpen, onClose }: Cha
     const [escrowAddress, setEscrowAddress] = React.useState<string | undefined>(undefined);
     const [isDescriptionExpanded, setIsDescriptionExpanded] = React.useState(true);
     const [isTitleExpanded, setIsTitleExpanded] = React.useState(true);
+    const [usdcBalance, setUsdcBalance] = React.useState<number | null>(null);
     useBodyScrollLock(isOpen);
 
     const formatEndsByCountdown = (timestamp: number | null, nowMs: number): string => {
