@@ -35,20 +35,27 @@ export default function Navbar() {
                         </Link>
 
                         {/* Right side - How it works + Social Icons */}
-                        <div className="flex items-center gap-6">
-                            {/* How it works link */}
-                            <Link
-                                href="/how-it-works"
-                                className="text-sm font-bold text-black hover:text-[#9945FF] transition-colors"
+                        <div className="flex items-center gap-4 sm:gap-6">
+                            {/* How it works link - Desktop: text, Mobile: question mark icon */}
+                            <a
+                                href="https://rektofun.gitbook.io/rektofun/introduction/how-events-are-resolved"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-sm font-bold text-black hover:text-[#9945FF] transition-colors flex items-center gap-1"
                             >
-                                How it works?
-                            </Link>
+                                {/* Desktop text */}
+                                <span className="hidden sm:inline">How it works?</span>
+                                {/* Mobile icon - Simple Question Mark */}
+                                <span className="sm:hidden w-8 h-8 bg-black text-white rounded-full flex items-center justify-center hover:bg-[#9945FF] transition-colors font-bold text-lg leading-none">
+                                    ?
+                                </span>
+                            </a>
 
                             {/* Social Icons */}
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2 sm:gap-3">
                                 {/* Twitter/X */}
                                 <a
-                                    href="https://twitter.com"
+                                    href="https://x.com/Rektofun"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="w-8 h-8 bg-black text-white rounded-full flex items-center justify-center hover:bg-[#9945FF] transition-colors"
@@ -61,7 +68,7 @@ export default function Navbar() {
 
                                 {/* Discord */}
                                 <a
-                                    href="https://discord.com"
+                                    href="https://discord.gg/Uk22qDtzcQ"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="w-8 h-8 bg-black text-white rounded-full flex items-center justify-center hover:bg-[#9945FF] transition-colors"
