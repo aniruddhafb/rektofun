@@ -110,7 +110,7 @@ export function HeroSection() {
                         Permissionless
                     </span>
                     <span className="border border-black bg-[#e85a2d] px-3 py-2 text-white shadow-[2px_2px_0_#111] animate-float-diagonal">
-                        PvP Battles
+                        PvP Battle
                     </span>
                     <span className="border border-black bg-[#f5d547] px-3 py-2 shadow-[2px_2px_0_#111] animate-float-updown">
                         On Solana
