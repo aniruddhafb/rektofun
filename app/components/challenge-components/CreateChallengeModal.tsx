@@ -6,6 +6,7 @@ import { DurationPickerModal } from "./DurationPickerModal";
 import { useUserStore } from "@/app/store/useUserStore";
 import { useBodyScrollLock } from "@/app/lib/useBodyScrollLock";
 import { useAppKit, useAppKitAccount } from "@reown/appkit/react";
+import { getParentCategories, getCategoriesByParent, Category } from "@/app/lib/category-service/category";
 
 interface CreateChallengeModalProps {
     isOpen: boolean;
@@ -41,6 +42,13 @@ export function CreateChallengeModal({
     const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
     const [isDurationPickerOpen, setIsDurationPickerOpen] = useState(false);
 
+    // Category state
+    const [parentCategories, setParentCategories] = useState<Category[]>([]);
+    const [childCategories, setChildCategories] = useState<Category[]>([]);
+    const [selectedParentCategory, setSelectedParentCategory] = useState<Category | null>(null);
+    const [selectedChildCategory, setSelectedChildCategory] = useState<Category | null>(null);
+    const [isLoadingCategories, setIsLoadingCategories] = useState(false);
+    const [categoryError, setCategoryError] = useState<string | null>(null);
 
     const { user } = useUserStore();
     const { open } = useAppKit();
@@ -48,6 +56,8 @@ export function CreateChallengeModal({
 
     const dropdownRefs = {
         direction: useRef<HTMLDivElement>(null),
+        parentCategory: useRef<HTMLDivElement>(null),
+        childCategory: useRef<HTMLDivElement>(null),
     };
 
     useBodyScrollLock(isOpen);
@@ -61,6 +71,12 @@ export function CreateChallengeModal({
             if (dropdownRefs.direction.current && !dropdownRefs.direction.current.contains(target)) {
                 setOpenDropdown(prev => prev === 'direction' ? null : prev);
             }
+            if (dropdownRefs.parentCategory.current && !dropdownRefs.parentCategory.current.contains(target)) {
+                setOpenDropdown(prev => prev === 'parentCategory' ? null : prev);
+            }
+            if (dropdownRefs.childCategory.current && !dropdownRefs.childCategory.current.contains(target)) {
+                setOpenDropdown(prev => prev === 'childCategory' ? null : prev);
+            }
         };
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -69,6 +85,61 @@ export function CreateChallengeModal({
 
     const closeAllDropdowns = useCallback(() => setOpenDropdown(null), []);
 
+    // Fetch parent categories when modal opens
+    useEffect(() => {
+        if (isOpen) {
+            fetchParentCategories();
+        }
+    }, [isOpen]);
+
+    // Fetch child categories when parent category is selected
+    useEffect(() => {
+        if (selectedParentCategory) {
+            fetchChildCategories(selectedParentCategory.category);
+        } else {
+            setChildCategories([]);
+            setSelectedChildCategory(null);
+        }
+    }, [selectedParentCategory]);
+
+    const fetchParentCategories = async () => {
+        setIsLoadingCategories(true);
+        setCategoryError(null);
+        try {
+            const categories = await getParentCategories();
+            setParentCategories(categories);
+        } catch (error) {
+            setCategoryError("Failed to load categories. Please try again.");
+            console.error("Error fetching parent categories:", error);
+        } finally {
+            setIsLoadingCategories(false);
+        }
+    };
+
+    const fetchChildCategories = async (parentCategory: string) => {
+        setIsLoadingCategories(true);
+        setCategoryError(null);
+        try {
+            const categories = await getCategoriesByParent(parentCategory);
+            setChildCategories(categories);
+        } catch (error) {
+            setCategoryError("Failed to load subcategories. Please try again.");
+            console.error("Error fetching child categories:", error);
+        } finally {
+            setIsLoadingCategories(false);
+        }
+    };
+
+    const handleParentCategorySelect = (category: Category) => {
+        setSelectedParentCategory(category);
+        setSelectedChildCategory(null);
+        setOpenDropdown(null);
+    };
+
+    const handleChildCategorySelect = (category: Category) => {
+        setSelectedChildCategory(category);
+        setOpenDropdown(null);
+    };
 
     const handleModalClose = () => {
         onClose();
@@ -94,6 +165,7 @@ export function CreateChallengeModal({
     };
 
     const handleCreateChallenge = async () => {
+        console.log();
     }
 
     const stepOrder: CreateChallengeStep[] = ["mode", "category", "details"];
@@ -189,6 +261,116 @@ export function CreateChallengeModal({
                     </div>
                     )}
 
+                    {isCategoryStep && (
+                        <div className="space-y-4">
+                            {/* Parent Category Selection */}
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-gray-700">Category</label>
+                                <div className="relative" ref={dropdownRefs.parentCategory}>
+                                    <button
+                                        onClick={() => setOpenDropdown(prev => prev === 'parentCategory' ? null : 'parentCategory')}
+                                        disabled={isLoadingCategories}
+                                        className="w-full flex items-center justify-between px-3 sm:px-4 py-3 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl hover:border-[#d4b8a8] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                                    >
+                                        <span className={`font-medium text-sm sm:text-base truncate pr-2 ${selectedParentCategory ? 'text-gray-900' : 'text-gray-500'}`}>
+                                            {selectedParentCategory ? selectedParentCategory.category : "Select a category"}
+                                        </span>
+                                        {isLoadingCategories ? (
+                                            <svg className="animate-spin w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                                            </svg>
+                                        ) : (
+                                            <svg className={`w-5 h-5 text-gray-500 transition-transform ${openDropdown === 'parentCategory' ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                            </svg>
+                                        )}
+                                    </button>
+                                    {openDropdown === 'parentCategory' && (
+                                        <div className="absolute top-full left-0 right-0 mt-1 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl shadow-lg z-10 overflow-hidden max-h-60 overflow-y-auto">
+                                            {parentCategories.length === 0 ? (
+                                                <div className="px-4 py-3 text-gray-500 text-sm">No categories available</div>
+                                            ) : (
+                                                parentCategories.map((category) => (
+                                                    <button
+                                                        key={category.id}
+                                                        onClick={() => handleParentCategorySelect(category)}
+                                                        className="w-full px-4 py-3 text-left hover:bg-[#f3e1d7] transition-colors font-medium text-gray-900 flex items-center gap-2"
+                                                    >
+                                                        {category.image_url && (
+                                                            <img src={category.image_url} alt="" className="w-5 h-5 rounded-full object-cover" />
+                                                        )}
+                                                        <span>{category.category}</span>
+                                                    </button>
+                                                ))
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                                {categoryError && <p className="text-red-500 text-sm mt-1">{categoryError}</p>}
+                            </div>
+
+                            {/* Child Category Selection */}
+                            {selectedParentCategory && (
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-gray-700">Subcategory</label>
+                                    <div className="relative" ref={dropdownRefs.childCategory}>
+                                        <button
+                                            onClick={() => setOpenDropdown(prev => prev === 'childCategory' ? null : 'childCategory')}
+                                            disabled={isLoadingCategories || childCategories.length === 0}
+                                            className="w-full flex items-center justify-between px-3 sm:px-4 py-3 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl hover:border-[#d4b8a8] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                                        >
+                                            <span className={`font-medium text-sm sm:text-base truncate pr-2 ${selectedChildCategory ? 'text-gray-900' : 'text-gray-500'}`}>
+                                                {selectedChildCategory ? selectedChildCategory.category : childCategories.length === 0 ? "Loading subcategories..." : "Select a subcategory"}
+                                            </span>
+                                            {isLoadingCategories ? (
+                                                <svg className="animate-spin w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24">
+                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                                                </svg>
+                                            ) : (
+                                                <svg className={`w-5 h-5 text-gray-500 transition-transform ${openDropdown === 'childCategory' ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                </svg>
+                                            )}
+                                        </button>
+                                        {openDropdown === 'childCategory' && (
+                                            <div className="absolute top-full left-0 right-0 mt-1 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl shadow-lg z-10 overflow-hidden max-h-60 overflow-y-auto">
+                                                {childCategories.length === 0 ? (
+                                                    <div className="px-4 py-3 text-gray-500 text-sm">No subcategories available</div>
+                                                ) : (
+                                                    childCategories.map((category) => (
+                                                        <button
+                                                            key={category.id}
+                                                            onClick={() => handleChildCategorySelect(category)}
+                                                            className="w-full px-4 py-3 text-left hover:bg-[#f3e1d7] transition-colors font-medium text-gray-900 flex items-center gap-2"
+                                                        >
+                                                            {category.image_url && (
+                                                                <img src={category.image_url} alt="" className="w-5 h-5 rounded-full object-cover" />
+                                                            )}
+                                                            <span>{category.category}</span>
+                                                        </button>
+                                                    ))
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Selected Category Summary */}
+                            {selectedParentCategory && selectedChildCategory && (
+                                <div className="bg-[#faf0eb] border border-[#e8d5c8] rounded-xl p-3 sm:p-4">
+                                    <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Selected</p>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <span className="font-semibold text-gray-900">{selectedParentCategory.category}</span>
+                                        <span className="text-gray-400">→</span>
+                                        <span className="font-semibold text-gray-900">{selectedChildCategory.category}</span>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     {isDetailsStep && (
                     <div className="space-y-2">
