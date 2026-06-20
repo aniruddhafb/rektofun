@@ -21,9 +21,9 @@ export default function ChallengesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedChallenge, setSelectedChallenge] = useState<Challenge | null>(null);
-  const [challenges, setChallenges] = useState<Challenge[]>([]);
+  const [challenges, setChallenges] = useState([]);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const [rektTarget, setRektTarget] = useState<Challenge | null>(null);
+  const [rektTarget, setRektTarget] = useState(null);
   const [rektTxSig, setRektTxSig] = useState<string | null>(null);
   const [rektError, setRektError] = useState<string | null>(null);
   const [isRekting, setIsRekting] = useState(false);
@@ -104,41 +104,12 @@ export default function ChallengesPage() {
   };
 
   const handleChallengesLoaded = (loadedChallenges: Challenge[]) => {
-    setChallenges(loadedChallenges);
+    
   }
 
-  useEffect(() => {
-    // If we are intentionally ignoring deep link handling (e.g., during manual close), skip.
-    if (ignoreDeepLink) return;
 
-    if (typeof window === "undefined") return;
-    const deepLinkChallengeId = new URLSearchParams(window.location.search).get("challengeId");
-    if (!deepLinkChallengeId) {
-      lastClosedDeepLinkIdRef.current = null;
-      return;
-    }
-    if (deepLinkChallengeId === lastClosedDeepLinkIdRef.current) return;
-    if (challenges.length === 0) return;
-
-    const matchedChallenge = challenges.find((c) => String(c.id) === deepLinkChallengeId);
-    if (!matchedChallenge) return;
-    if (isDetailModalOpen && selectedChallenge?.id === matchedChallenge.id) return;
-
-    setSelectedChallenge(matchedChallenge);
-    setIsDetailModalOpen(true);
-  }, []);
 
   async function handleRekt(challenge: Challenge) {
-    setRektTarget(challenge);
-    setRektError(null);
-    setRektTxSig(null);
-    setIsRekting(true);
-
-    // Simulate transaction
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    setRektTxSig("simulated_tx_signature_" + Date.now());
-    setIsRekting(false);
   }
 
   const handleOpenCreateModal = () => {
@@ -224,7 +195,7 @@ export default function ChallengesPage() {
       <FeedbackBanner
         rektTxSig={rektTxSig}
         rektError={rektError}
-        targetCreator={rektTarget?.creator.wallet_address ? `${rektTarget.creator.wallet_address.slice(0, 6)}...` : null}
+        targetCreator={null}
       />
 
       <ChallengeGrid
