@@ -6,20 +6,8 @@ import Link from "next/link";
 export default function Navbar() {
     return (
         <>
-            {/* Beta Waitlist Banner */}
-            <div className="fixed top-0 left-0 right-0 z-[30] border-b-2 border-black bg-[#f5d547]">
-                <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-center gap-2">
-                    <svg className="w-4 h-4 text-orange-600 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 2c0 2-2 3.5-2 6 0 1.5.8 2.8 2 3.4-.6-.6-1-1.5-1-2.4 0-1.5 1-2.5 1-4 0 3-4 4.5-4 8.5 0 2.2 1.2 4.2 3 5.3-.8-1-1.2-2.2-1.2-3.5 0-2.5 1.5-4.5 3.2-6C10 6 9 7.5 9 9.5c0 1.5.8 2.8 2 3.4-.6-.6-1-1.5-1-2.4 0-3 3-5 5.5-6.5-.5 1-1.5 2-1.5 3.5 0 1.5.8 2.8 2 3.4-.6-.6-1-1.4-1-2.4 0-2 2-4 4-5.5 0 0-1 1.5-1 3 0 1.5.8 2.8 2 3.4-.6-.6-1-1.4-1-2.4 0-2.5 2-5 4-6.5 0 0-1 1.5-1 3 0 1.5.8 2.8 2 3.4-.6-.6-1-1.4-1-2.4 0-3.5 2.5-6.5 5-8-.5 1-1 2.5-1 4 0 1.5.8 2.8 2 3.4-.6-.6-1-1.4-1-2.4 0-4 3-7.5 7-8.5z" />
-                    </svg>
-                    <p className="text-sm text-black font-black text-center">
-                        Mainnet Beta Version Will Be Live Soon!!!
-                    </p>
-                </div>
-            </div>
-
             {/* Simple Header - Logo, How it works, Social Icons */}
-            <nav className="fixed top-8 left-0 right-0 z-[40] bg-[#f3e1d7]/95 shadow-[0_2px_0_#111] backdrop-blur-md">
+            <nav className="fixed top-0 left-0 right-0 z-[40] bg-[#f3e1d7]/95 shadow-[0_2px_0_#111] backdrop-blur-md">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-16">
                         {/* Original Logo */}
@@ -85,7 +73,7 @@ export default function Navbar() {
             </nav>
 
             {/* Spacer for fixed header */}
-            <div className="h-[72px]" />
+            <div className="h-16" />
         </>
     );
 }

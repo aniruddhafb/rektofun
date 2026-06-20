@@ -12,8 +12,6 @@ import {
     getReadonlyConnection,
 } from "@/app/lib/rektofun-program";
 import { createChallenge } from "@/app/lib/challenges-service/challenges";
-import { getMarkets, Market } from "@/app/lib/markets-service/market";
-import { transform } from "@/app/lib/transformation-text-ai/transform";
 import { useUserStore } from "@/app/store/useUserStore";
 import { blockedContentError, hasBlockedContent } from "@/app/lib/content-moderation";
 import { useBodyScrollLock } from "@/app/lib/useBodyScrollLock";
@@ -37,15 +35,6 @@ interface ValidationState {
     selectedSuggestion: string | null;
 }
 
-interface MarketState {
-    markets: Market[];
-    childMarkets: Market[];
-    sportsEventMarkets: Market[];
-    selected: Market | null;
-    selectedChild: Market | null;
-    selectedSportsEvent: Market | null;
-}
-
 export function CreateChallengeModal({
     isOpen,
     onClose,
@@ -54,16 +43,6 @@ export function CreateChallengeModal({
     // Step and mode
     const [currentStep, setCurrentStep] = useState<CreateChallengeStep>("mode");
     const [challengeMode, setChallengeMode] = useState<"pvp" | "multi">("pvp");
-
-    // Markets consolidated state
-    const [marketState, setMarketState] = useState<MarketState>({
-        markets: [],
-        childMarkets: [],
-        sportsEventMarkets: [],
-        selected: null,
-        selectedChild: null,
-        selectedSportsEvent: null,
-    });
 
     // Challenge details
     const [betAmount, setBetAmount] = useState(5);
@@ -101,13 +80,8 @@ export function CreateChallengeModal({
     const { address, isConnected } = useAppKitAccount();
 
     const dropdownRefs = {
-        coin: useRef<HTMLDivElement>(null),
-        sportsEvent: useRef<HTMLDivElement>(null),
         direction: useRef<HTMLDivElement>(null),
     };
-
-    const isSportsSelected = marketState.selected?.symbol?.toLowerCase() === 'sports' || 
-                            marketState.selected?.name?.toLowerCase() === 'sports';
 
     useBodyScrollLock(isOpen);
 
@@ -122,82 +96,11 @@ export function CreateChallengeModal({
         setSportsResolutionConsent(false);
     }, [isOpen]);
 
-    // Fetch markets
-    useEffect(() => {
-        if (!isOpen) return;
-        const fetchMarkets = async () => {
-            try {
-                const response = await getMarkets({ parent_id: null });
-                const fetchedMarkets = response.markets;
-                const cryptoMarket = fetchedMarkets.find(m => m.symbol?.toLowerCase() === 'crypto' || m.name?.toLowerCase() === 'crypto');
-                setMarketState(prev => ({
-                    ...prev,
-                    markets: fetchedMarkets,
-                    selected: cryptoMarket || fetchedMarkets[0] || null,
-                }));
-            } catch (error) {
-                console.error("Error fetching markets:", error);
-            }
-        };
-        fetchMarkets();
-    }, [isOpen]);
-
-    // Fetch child markets when parent changes
-    useEffect(() => {
-        if (!isOpen || !marketState.selected?.id) {
-            setMarketState(prev => ({ ...prev, childMarkets: [], selectedChild: null }));
-            return;
-        }
-        const fetchChildMarkets = async () => {
-            try {
-                const response = await getMarkets({ parent_id: marketState.selected!.id });
-                const fetchedMarkets = response.markets;
-                setMarketState(prev => ({
-                    ...prev,
-                    childMarkets: fetchedMarkets,
-                    selectedChild: fetchedMarkets[0] ?? null,
-                }));
-            } catch (error) {
-                console.error("Error fetching child markets:", error);
-                setMarketState(prev => ({ ...prev, childMarkets: [], selectedChild: null }));
-            }
-        };
-        fetchChildMarkets();
-    }, [isOpen, marketState.selected]);
-
-    // Fetch sports event markets
-    useEffect(() => {
-        if (!isOpen || !isSportsSelected || !marketState.selectedChild?.id) {
-            setMarketState(prev => ({ ...prev, sportsEventMarkets: [], selectedSportsEvent: null }));
-            return;
-        }
-        const fetchSportsEventMarkets = async () => {
-            try {
-                const response = await getMarkets({ parent_id: marketState.selectedChild!.id });
-                const fetchedMarkets = response.markets;
-                setMarketState(prev => ({
-                    ...prev,
-                    sportsEventMarkets: fetchedMarkets,
-                    selectedSportsEvent: fetchedMarkets[0] ?? null,
-                }));
-            } catch (error) {
-                console.error("Error fetching sports event markets:", error);
-                setMarketState(prev => ({ ...prev, sportsEventMarkets: [], selectedSportsEvent: null }));
-            }
-        };
-        fetchSportsEventMarkets();
-    }, [isOpen, isSportsSelected, marketState.selectedChild]);
 
     // Click outside handler
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             const target = event.target as Node;
-            if (dropdownRefs.coin.current && !dropdownRefs.coin.current.contains(target)) {
-                setOpenDropdown(prev => prev === 'coin' ? null : prev);
-            }
-            if (dropdownRefs.sportsEvent.current && !dropdownRefs.sportsEvent.current.contains(target)) {
-                setOpenDropdown(prev => prev === 'sportsEvent' ? null : prev);
-            }
             if (dropdownRefs.direction.current && !dropdownRefs.direction.current.contains(target)) {
                 setOpenDropdown(prev => prev === 'direction' ? null : prev);
             }
@@ -206,32 +109,24 @@ export function CreateChallengeModal({
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    // Reset validation when market changes
+    // Reset validation when modal opens
     useEffect(() => {
-        if (!isOpen || !marketState.selected) {
+        if (!isOpen) {
             setValidation({ suggestions: [], isValid: true, isLoading: false, error: null, selectedSuggestion: null });
             return;
         }
         setValidation({
             suggestions: [],
-            isValid: !isSportsSelected,
+            isValid: true,
             isLoading: false,
             error: null,
             selectedSuggestion: null,
         });
-    }, [isOpen, marketState.selected, isSportsSelected]);
+    }, [isOpen]);
 
     const closeAllDropdowns = useCallback(() => setOpenDropdown(null), []);
 
     const resetModalState = useCallback(() => {
-        setMarketState({
-            markets: [],
-            childMarkets: [],
-            sportsEventMarkets: [],
-            selected: null,
-            selectedChild: null,
-            selectedSportsEvent: null,
-        });
         setOpenDropdown(null);
         setBetAmount(5);
         setBetAmountError(null);
@@ -259,7 +154,6 @@ export function CreateChallengeModal({
     }, [resetModalState, onClose]);
 
     const handleValidateChallengeStatement = useCallback(async () => {
-        if (!isSportsSelected) return;
         if (!challengeStatement.trim()) {
             setChallengeStatementError("Please enter a challenge statement.");
             return;
@@ -267,8 +161,8 @@ export function CreateChallengeModal({
         setChallengeStatementError(null);
         setValidation(prev => ({ ...prev, error: null, selectedSuggestion: null, isValid: false, isLoading: true }));
         try {
-            const category = marketState.selectedChild?.symbol || marketState.selectedChild?.name || "sports";
-            const response = await transform({ category, statement: challengeStatement });
+            // TODO: Implement validation function
+            const response = { valid: true, statements: [challengeStatement] };
             setValidation(prev => ({
                 ...prev,
                 suggestions: response.statements || [],
@@ -289,7 +183,7 @@ export function CreateChallengeModal({
         } finally {
             setValidation(prev => ({ ...prev, isLoading: false }));
         }
-    }, [isSportsSelected, challengeStatement, marketState.selectedChild]);
+    }, [challengeStatement]);
 
     if (!isOpen) return null;
 
@@ -311,172 +205,11 @@ export function CreateChallengeModal({
     };
 
     const handleCreateChallenge = async () => {
-        if (!isConnected) {
-            open();
-            return;
-        }
-        if (!address) {
-            setTxError("Wallet address not found.");
-            return;
-        }
-        if (betAmount < 5) {
-            setBetAmountError("Min bet should be $5");
-            setTxError("Bet amount must be at least $5.");
-            return;
-        }
-        if (isSportsSelected) {
-            if (!challengeStatement.trim()) {
-                setChallengeStatementError("Please enter a challenge statement.");
-                setTxError("Please enter a challenge statement.");
-                return;
-            }
-            if (!validation.selectedSuggestion) {
-                setTxError("Please validate and select one suggested statement before creating the challenge.");
-                return;
-            }
-            setChallengeStatementError(null);
-            if (!sportsResolutionConsent) {
-                setSportsResolutionConsentError("Please check this box to continue.");
-                setTxError("Please check the box to confirm the sports challenge resolution terms.");
-                return;
-            }
-            setSportsResolutionConsentError(null);
-            if (hasBlockedContent(challengeStatement)) {
-                setTxError(blockedContentError("Challenge statement"));
-                return;
-            }
-        } else {
-            if (!predictionPrice || Number(predictionPrice) <= 0) {
-                setTxError("Please enter a valid prediction price.");
-                return;
-            }
-        }
-        if (duration.hours === 0 && duration.minutes === 0) {
-            setTxError("Please select a challenge expiry duration.");
-            return;
-        }
-        if (!isSportsSelected && selectedDate.getTime() <= Date.now()) {
-            setTxError("Challenge end date must be in the future.");
-            return;
-        }
-        if (!isSportsSelected) {
-            const expiryTimeMs = Date.now() + (duration.hours * 60 + duration.minutes) * 60 * 1000;
-            if (selectedDate.getTime() < expiryTimeMs) {
-                setTxError("Challenge end date cannot be earlier than challenge expiry time.");
-                return;
-            }
-        }
-
-        setTxStatus("building");
-        setTxError(null);
-        setTxSignature(null);
-
-        try {
-            const creatorPubkey = new PublicKey(address);
-            const wallet = {
-                publicKey: creatorPubkey,
-                signTransaction: async (tx: Transaction) => {
-                    const signedTx = await (window as any).solana?.signTransaction(tx);
-                    return signedTx || tx;
-                },
-                signAllTransactions: async (txs: Transaction[]) => {
-                    return await Promise.all(txs.map(tx => (window as any).solana?.signTransaction(tx) || tx));
-                }
-            };
-            
-            const program = getRektoProgram(wallet);
-            const connection = getReadonlyConnection();
-            const nowSec = Math.floor(Date.now() / 1000);
-            const expiresAt = nowSec + duration.hours * 3600 + duration.minutes * 60;
-            const resolvesAt = isSportsSelected ? expiresAt : Math.floor(selectedDate.getTime() / 1000);
-            const targetPriceUsdCents = Math.round(Number(predictionPrice) * 100);
-
-            const tx = await buildCreateChallengeTx(program, creatorPubkey, {
-                asset: marketState.selectedChild?.symbol || "",
-                betAmountUsdc: betAmount,
-                targetPriceUsdCents,
-                directionAbove: predictionDirection === "Above",
-                expiresAt,
-                resolvesAt,
-            });
-
-            setTxStatus("signing");
-            
-            const signedTx = await wallet.signTransaction(tx);
-            const signature = await connection.sendRawTransaction(signedTx.serialize());
-            
-            setTxSignature(signature);
-            setTxStatus("confirming");
-
-            const [counterPDA] = deriveCreatorCounter(creatorPubkey);
-            let challengeId = 0;
-            try {
-                const counter = await (program.account as any).creatorCounter.fetch(counterPDA);
-                challengeId = Number(counter.count) - 1;
-            } catch {
-                challengeId = 0;
-            }
-
-            const [challengePDA] = deriveChallengePDA(creatorPubkey, challengeId);
-
-            try {
-                const selectedCategory = isSportsSelected
-                    ? (marketState.selectedSportsEvent?.name || marketState.selectedSportsEvent?.symbol || "")
-                    : (marketState.selectedChild?.name || "");
-                const selectedTicker = isSportsSelected
-                    ? (marketState.selectedSportsEvent?.symbol || marketState.selectedSportsEvent?.name || "")
-                    : (marketState.selectedChild?.symbol || "");
-                const selectedAssetName = isSportsSelected
-                    ? (marketState.selectedSportsEvent?.description || marketState.selectedSportsEvent?.name || marketState.selectedSportsEvent?.symbol || "")
-                    : (marketState.selectedChild?.description || "");
-
-                await createChallenge({
-                    title: isSportsSelected ? challengeStatement : `${marketState.selectedChild?.symbol} ${predictionDirection} $${predictionPrice}`,
-                    description: isSportsSelected
-                        ? challengeStatement
-                        : `Bet ${betAmount} USDC that ${marketState.selectedChild?.symbol} will be ${predictionDirection.toLowerCase()} $${predictionPrice} by ${selectedDate.toISOString()}`,
-                    category: selectedCategory,
-                    event_type: "binary",
-                    ticker: selectedTicker,
-                    asset_name: selectedAssetName,
-                    created_by: user?.id || "",
-                    mode: challengeMode,
-                    initial_bet: betAmount,
-                    min_accept_bet: betAmount,
-                    target_price: isSportsSelected ? undefined : Number(predictionPrice),
-                    bet_unit: 1,
-                    resolution_source: isSportsSelected ? "manual" : "price_feed",
-                    expire_time: new Date(expiresAt * 1000).toISOString(),
-                    resolve_time: new Date(resolvesAt * 1000).toISOString(),
-                    metadata: {
-                        onchain: {
-                            challenge_pda: challengePDA.toBase58(),
-                            challenge_id: challengeId,
-                            creator_wallet: creatorPubkey.toBase58(),
-                            program_id: "4t5KYdKFmPw49yo6Bm1TV2ZDEi6k3Ns4eJLeNhgbVSzJ",
-                            cluster: "devnet",
-                            tx_signature: signature,
-                        },
-                    },
-                });
-            } catch (apiErr) {
-                console.warn("Backend API error (non-fatal):", apiErr);
-            }
-
-            setTxStatus("success");
-            onCreated();
-        } catch (err: unknown) {
-            console.error("Create challenge error:", err);
-            const errorMessage = err instanceof Error ? err.message : "";
-            const msg = errorMessage.includes("User rejected") ? "Transaction cancelled by user." : errorMessage || "Transaction failed. Please try again.";
-            setTxError(msg);
-            setTxStatus("error");
-        }
-    };
+    }
 
     const isLoading = txStatus === "building" || txStatus === "signing" || txStatus === "confirming";
     const hasChallengeStatement = challengeStatement.trim().length > 0;
-    const isSportsSelectionComplete = Boolean(validation.selectedSuggestion);
+    const isSelectionComplete = Boolean(validation.selectedSuggestion);
     const stepOrder: CreateChallengeStep[] = ["mode", "category", "details"];
     const currentStepIndex = stepOrder.indexOf(currentStep);
     const isModeStep = currentStep === "mode";
@@ -486,7 +219,7 @@ export function CreateChallengeModal({
     const stepSubtitle = isModeStep
         ? "Start with how players can join your challenge."
         : isCategoryStep
-            ? "Choose the market and asset or event."
+            ? "Choose the asset or event."
             : "Add the bet, prediction, timing, and review the payout.";
 
     const goToNextStep = () => {
@@ -514,7 +247,7 @@ export function CreateChallengeModal({
 
     const getButtonStyle = () => {
         if (!isConnected) return "rekto-button cursor-pointer w-full py-3 sm:py-4 bg-gray-900 hover:bg-gray-700 text-white font-black text-base sm:text-lg transition-colors";
-        if (isLoading || (isSportsSelected && (!validation.isValid || !isSportsSelectionComplete))) return "cursor-pointer w-full py-3 sm:py-4 border-2 border-black bg-gray-400 text-white font-black text-base sm:text-lg cursor-not-allowed shadow-[3px_3px_0_#111]";
+        if (isLoading || (!validation.isValid || !isSelectionComplete)) return "cursor-pointer w-full py-3 sm:py-4 border-2 border-black bg-gray-400 text-white font-black text-base sm:text-lg cursor-not-allowed shadow-[3px_3px_0_#111]";
         if (txStatus === "success") return "cursor-pointer w-full py-3 sm:py-4 border-2 border-black bg-green-500 text-white font-black text-base sm:text-lg cursor-not-allowed shadow-[1px_1px_0_#111]";
         if (txStatus === "error") return "cursor-pointer w-full py-3 sm:py-4 border-2 border-black bg-red-500 hover:bg-red-600 text-white font-black text-base sm:text-lg transition-colors shadow-[1px_1px_0_#111]";
         return "rekto-button cursor-pointer w-full py-3 sm:py-4 bg-gray-900 hover:bg-gray-700 text-white font-black text-base sm:text-lg transition-colors";
@@ -557,29 +290,6 @@ export function CreateChallengeModal({
                         </div>
                     </div>
 
-                    {isCategoryStep && (
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700">Challenge Market</label>
-                        <div className="flex items-center gap-2 p-1 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl">
-                            {marketState.markets.length === 0 ? (
-                                <div className="flex-1 py-2 px-4 text-sm text-gray-500 text-center">Loading markets...</div>
-                            ) : (
-                                marketState.markets.map((m: Market) => (
-                                    <button
-                                        key={m.id}
-                                        onClick={() => setMarketState(prev => ({ ...prev, selected: m }))}
-                                        className={`flex-1 py-2 px-4 rounded-lg text-sm font-semibold transition-colors ${marketState.selected?.id === m.id
-                                            ? "bg-gray-900 text-white"
-                                            : "bg-transparent text-gray-600 hover:bg-[#f3e1d7]"
-                                            }`}
-                                    >
-                                        {m.symbol || m.name}
-                                    </button>
-                                ))
-                            )}
-                        </div>
-                    </div>
-                    )}
 
                     {isModeStep && (
                     <div className="space-y-2">
@@ -611,120 +321,6 @@ export function CreateChallengeModal({
                     </div>
                     )}
 
-                    {isCategoryStep && (
-                    <div className="space-y-2">
-                        {isSportsSelected ? (
-                            <label className="text-sm font-medium text-gray-700">Select Sport Event</label>
-                        ) : <label className="text-sm font-medium text-gray-700">Select Token</label>}
-                        <div className="relative" ref={dropdownRefs.coin}>
-                            <button 
-                                onClick={() => setOpenDropdown(prev => prev === 'coin' ? null : 'coin')} 
-                                className="w-full flex items-center justify-between px-4 py-3 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl hover:border-[#d4b8a8] transition-colors"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden">
-                                        {marketState.selectedChild?.image ? (
-                                            <Image src={marketState.selectedChild.image} alt={marketState.selectedChild.symbol || marketState.selectedChild.name} width={24} height={24} className="w-6 h-6 object-contain" />
-                                        ) : (
-                                            <span className="text-xs font-bold text-white">
-                                                {marketState.selectedChild?.symbol?.slice(0, 2) || "?"}
-                                            </span>
-                                        )}
-                                    </div>
-                                    <span className="font-semibold text-gray-900">{marketState.selectedChild?.symbol || "Select Token"}</span>
-                                </div>
-                                <svg className={`w-5 h-5 text-gray-500 transition-transform ${openDropdown === 'coin' ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                </svg>
-                            </button>
-                            {openDropdown === 'coin' && (
-                                <div className="absolute top-full left-0 right-0 mt-1 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl shadow-lg z-10 overflow-hidden">
-                                    {marketState.childMarkets.length === 0 ? (
-                                        <div className="px-4 py-3 text-sm text-gray-500">Loading tokens...</div>
-                                    ) : (
-                                        marketState.childMarkets.map((childMarket: Market) => (
-                                            <button 
-                                                key={childMarket.id} 
-                                                onClick={() => { 
-                                                    setMarketState(prev => ({ ...prev, selectedChild: childMarket })); 
-                                                    setOpenDropdown(null); 
-                                                }} 
-                                                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#f3e1d7] transition-colors"
-                                            >
-                                                <div className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden">
-                                                    {childMarket.image ? (
-                                                        <Image src={childMarket.image} alt={childMarket.symbol || childMarket.name} width={24} height={24} className="w-6 h-6 object-contain" />
-                                                    ) : (
-                                                        <span className="text-xs font-bold text-white">
-                                                            {childMarket.symbol?.slice(0, 2) || "?"}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <span className="font-medium text-gray-900">{childMarket.symbol}</span>
-                                            </button>
-                                        ))
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                        {isSportsSelected && (
-                            <div className="space-y-2 pt-2">
-                                <label className="text-sm font-medium text-gray-700">Select Market</label>
-                                <div className="relative" ref={dropdownRefs.sportsEvent}>
-                                    <button 
-                                        onClick={() => setOpenDropdown(prev => prev === 'sportsEvent' ? null : 'sportsEvent')} 
-                                        className="w-full flex items-center justify-between px-4 py-3 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl hover:border-[#d4b8a8] transition-colors"
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden">
-                                                {marketState.selectedSportsEvent?.image ? (
-                                                    <Image src={marketState.selectedSportsEvent.image} alt={marketState.selectedSportsEvent.symbol || marketState.selectedSportsEvent.name} width={24} height={24} className="w-6 h-6 object-contain" />
-                                                ) : (
-                                                    <span className="text-xs font-bold text-white">
-                                                        {marketState.selectedSportsEvent?.symbol?.slice(0, 2) || "?"}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <span className="font-semibold text-gray-900">{marketState.selectedSportsEvent?.symbol || marketState.selectedSportsEvent?.name || "Select Market"}</span>
-                                        </div>
-                                        <svg className={`w-5 h-5 text-gray-500 transition-transform ${openDropdown === 'sportsEvent' ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                        </svg>
-                                    </button>
-                                    {openDropdown === 'sportsEvent' && (
-                                        <div className="absolute top-full left-0 right-0 mt-1 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl shadow-lg z-10 overflow-hidden">
-                                            {marketState.sportsEventMarkets.length === 0 ? (
-                                                <div className="px-4 py-3 text-sm text-gray-500">Loading markets...</div>
-                                            ) : (
-                                                marketState.sportsEventMarkets.map((market: Market) => (
-                                                    <button 
-                                                        key={market.id} 
-                                                        onClick={() => { 
-                                                            setMarketState(prev => ({ ...prev, selectedSportsEvent: market })); 
-                                                            setOpenDropdown(null); 
-                                                        }} 
-                                                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#f3e1d7] transition-colors"
-                                                    >
-                                                        <div className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden">
-                                                            {market.image ? (
-                                                                <Image src={market.image} alt={market.symbol || market.name} width={24} height={24} className="w-6 h-6 object-contain" />
-                                                            ) : (
-                                                                <span className="text-xs font-bold text-white">
-                                                                    {market.symbol?.slice(0, 2) || "?"}
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                        <span className="font-medium text-gray-900">{market.symbol || market.name}</span>
-                                                    </button>
-                                                ))
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                    )}
 
                     {isDetailsStep && (
                     <div className="space-y-2">
@@ -770,7 +366,7 @@ export function CreateChallengeModal({
                     </div>
                     )}
 
-                    {isDetailsStep && isSportsSelected && (
+                    {isDetailsStep && (
                         <div className="space-y-3">
                             <div className="flex items-center gap-2">
                                 <label className="text-sm font-medium text-gray-700">Challenge Statement</label>
@@ -794,13 +390,7 @@ export function CreateChallengeModal({
                                         if (challengeStatementError) setChallengeStatementError(null);
                                         if (txError) setTxError(null);
                                     }}
-                                    placeholder={
-                                        marketState.selectedChild?.symbol?.toLowerCase() === 'cricket'
-                                            ? "e.g. rohit sharma will hit a six in todays MI vs RCB IPL match"
-                                            : marketState.selectedChild?.symbol?.toLowerCase() === 'football'
-                                                ? "e.g. real madrid will win fifa 2026"
-                                                : "Enter your challenge statement..."
-                                    }
+                                placeholder="Enter your challenge statement..."
                                     disabled={Boolean(validation.selectedSuggestion)}
                                     className={`w-full border border-[#e8d5c8] rounded-xl text-base sm:text-lg text-gray-900 placeholder:text-gray-400 placeholder:text-xs sm:placeholder:text-sm ${validation.selectedSuggestion ? "bg-gray-100 cursor-not-allowed px-3 sm:px-4 py-3 pr-16 sm:pr-20" : "bg-[#faf0eb] focus:outline-none focus:border-[#d4b8a8] px-3 sm:px-4 py-3"}`}
                                 />
@@ -861,7 +451,7 @@ export function CreateChallengeModal({
                                     )}
                                 </div>
                             )}
-                            {validation.isValid && isSportsSelectionComplete && !validation.isLoading && (
+                            {validation.isValid && isSelectionComplete && !validation.isLoading && (
                                 <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-green-700">
                                     Your statement has been validated. Use Reset to edit again or proceed to create the challenge.
                                 </div>
@@ -875,7 +465,7 @@ export function CreateChallengeModal({
                         </div>
                     )}
 
-                    {isDetailsStep && !isSportsSelected && (
+                    {isDetailsStep && (
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-gray-700">Predict Price Movement</label>
                             <div className="flex flex-col min-[380px]:flex-row gap-2">
@@ -884,7 +474,7 @@ export function CreateChallengeModal({
                                         onClick={() => setOpenDropdown(prev => prev === 'direction' ? null : 'direction')} 
                                         className="w-full flex items-center justify-between px-3 sm:px-4 py-3 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl hover:border-[#d4b8a8] transition-colors"
                                     >
-                                        <span className="font-semibold text-sm sm:text-base text-gray-900 truncate pr-2">{marketState.selectedChild?.name} {predictionDirection}</span>
+                                        <span className="font-semibold text-sm sm:text-base text-gray-900 truncate pr-2">Token {predictionDirection}</span>
                                         <svg className={`w-5 h-5 text-gray-500 transition-transform ${openDropdown === 'direction' ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                                         </svg>
@@ -900,7 +490,7 @@ export function CreateChallengeModal({
                                                     }} 
                                                     className="w-full px-4 py-3 text-left hover:bg-[#f3e1d7] transition-colors font-medium text-gray-900"
                                                 >
-                                                    {marketState.selectedChild?.name} {dir}
+                                                    Token {dir}
                                                 </button>
                                             ))}
                                         </div>
@@ -942,7 +532,8 @@ export function CreateChallengeModal({
                     </div>
                     )}
 
-                    {isDetailsStep && (!isSportsSelected ? (
+                    {isDetailsStep && (
+                        <>
                         <div className="space-y-2">
                             <div className="flex items-center gap-2">
                                 <label className="text-sm font-medium text-gray-700">Challenge End Date</label>
@@ -962,7 +553,6 @@ export function CreateChallengeModal({
                                 </svg>
                             </button>
                         </div>
-                    ) : (
                         <div className="space-y-1">
                             <label className="flex items-start gap-2 p-3 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl cursor-pointer">
                                 <input
@@ -981,19 +571,14 @@ export function CreateChallengeModal({
                             </label>
                             {sportsResolutionConsentError && <p className="text-red-500 text-sm mt-1">{sportsResolutionConsentError}</p>}
                         </div>
-                    ))}
+                        </>
+                    )}
 
                     {isDetailsStep && (
                     <div className="text-center py-2 px-1 sm:px-2">
-                        {isSportsSelected ? (
-                            <p className="text-sm sm:text-base text-gray-700 break-words">
-                                You win <span className="font-bold text-gray-900">${(betAmount * 2 * 0.975).toFixed(4)}</span> if your statement is correct
-                            </p>
-                        ) : (
-                            <p className="text-sm sm:text-base text-gray-700 break-words">
-                                You win <span className="font-bold text-gray-900">${(betAmount * 2 * 0.975).toFixed(4)}</span> if {marketState.selectedChild?.symbol} closes {predictionDirection.toLowerCase()} ${Number(predictionPrice).toLocaleString()} in {formatDuration(duration)}
-                            </p>
-                        )}
+                        <p className="text-sm sm:text-base text-gray-700 break-words">
+                            You win <span className="font-bold text-gray-900">${(betAmount * 2 * 0.975).toFixed(4)}</span> if your statement is correct
+                        </p>
                         <p className="text-xs text-gray-500 mt-1">6% platform fee applies</p>
                     </div>
                     )}
@@ -1047,7 +632,6 @@ export function CreateChallengeModal({
                             <button
                                 type="button"
                                 onClick={goToNextStep}
-                                disabled={!marketState.selected && isCategoryStep}
                                 className="rekto-button cursor-pointer w-full py-3 sm:py-4 bg-gray-900 hover:bg-gray-700 text-white font-black text-base sm:text-lg transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
                             >
                                 Continue
@@ -1055,7 +639,7 @@ export function CreateChallengeModal({
                         ) : (
                             <button
                                 onClick={handleCreateChallenge}
-                                disabled={isLoading || txStatus === "success" || (isSportsSelected && (!validation.isValid || !isSportsSelectionComplete))}
+                                disabled={isLoading || txStatus === "success" || (!validation.isValid || !isSelectionComplete)}
                                 className={getButtonStyle()}
                             >
                                 {getButtonLabel()}
