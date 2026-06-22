@@ -209,16 +209,8 @@ export function CreateChallengeModal({
 
     const handleCreateChallenge = async () => {
         if (!validateDetails()) return;
-
-        if (!address || !isConnected) {
-            open();
-            return;
-        }
-
-        if (!walletProvider) {
-            setTxStatus("error");
-            return;
-        }
+        if (!address || !isConnected) { open(); return; }
+        if (!walletProvider) { setTxStatus("error"); return; }
 
         setIsSubmitting(true);
         setTxStatus("building");
@@ -227,19 +219,11 @@ export function CreateChallengeModal({
         try {
             const nowSec = Math.floor(Date.now() / 1000);
             const expiresAt = nowSec + duration.hours * 3600 + duration.minutes * 60;
-            const resolvesAt = Math.max(
-                Math.floor(selectedDate.getTime() / 1000),
-                expiresAt
-            );
-
+            const resolvesAt = Math.max(Math.floor(selectedDate.getTime() / 1000), expiresAt);
             const targetPriceUsdCents = Math.floor(Number(predictionPrice) * 100);
             const asset = (selectedChildCategory?.category ?? "").trim().slice(0, 10);
 
-            // Step 1: Ask the server to build the transaction.
-            //   - creator  = user's wallet (USDC debited from their ATA)
-            //   - feePayer = admin wallet  (admin pays all SOL fees)
-            // The server returns a base64-encoded, admin-partially-signed transaction.
-            setTxStatus("building");
+            // Build the transaction server-side (admin signs as fee payer) and get it back partially signed
             const response = await fetch("/api/challenges/create", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -255,35 +239,22 @@ export function CreateChallengeModal({
             });
 
             const data = await response.json();
-            console.log("the data is ", data);
-            if (!response.ok) {
-                throw new Error(data.error || "Failed to create challenge");
-            }
+            if (!response.ok) throw new Error(data.error || "Failed to create challenge");
 
-            // Step 2: Deserialize the partially-signed transaction.
-            const txBuffer = Buffer.from(data.serializedTx, "base64");
-            const tx = Transaction.from(txBuffer);
-
-            // Step 3: Have the user's wallet sign the transaction.
-            // The user signs as the creator (authorises the USDC transfer from their ATA).
-            // Admin's fee-payer signature is already present.
+            // User signs the partially-signed transaction (authorises USDC transfer from their ATA)
             setTxStatus("signing");
+            const tx = Transaction.from(Buffer.from(data.serializedTx, "base64"));
             const signedTx = await (walletProvider as any).signTransaction(tx);
 
-            // Step 4: Broadcast the fully-signed transaction.
+            // Broadcast and confirm
             setTxStatus("confirming");
             const connection = getReadonlyConnection();
-            const signature = await connection.sendRawTransaction(
-                signedTx.serialize(),
-                { skipPreflight: false, preflightCommitment: "confirmed" }
-            );
-
+            const signature = await connection.sendRawTransaction(signedTx.serialize(), {
+                skipPreflight: false,
+                preflightCommitment: "confirmed",
+            });
             await connection.confirmTransaction(
-                {
-                    signature,
-                    blockhash: data.blockhash,
-                    lastValidBlockHeight: data.lastValidBlockHeight,
-                },
+                { signature, blockhash: data.blockhash, lastValidBlockHeight: data.lastValidBlockHeight },
                 "confirmed"
             );
 
