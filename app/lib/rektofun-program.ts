@@ -137,16 +137,22 @@ export function getReadonlyConnection(): Connection {
 // ─── Instruction Builders ─────────────────────────────────────────────────────
 
 /**
- * Build a `create_challenge` transaction using USDC as the bet currency.
+ * Build a `create_challenge` transaction.
  *
- * The creator's USDC ATA must already exist and have sufficient balance.
- * The vault is a PDA-owned token account seeded from the challenge PDA.
- * The caller must sign and send the returned transaction.
+ * - `creator`  : the user's wallet — owns the USDC ATA that will be debited.
+ * - `feePayer` : the admin wallet — pays all SOL rent / transaction fees.
+ *
+ * The returned transaction has `feePayer` set to `feePayer` and is NOT yet
+ * signed.  The caller must:
+ *   1. Have the admin sign it (partialSign).
+ *   2. Send it to the user's wallet for a second partialSign.
+ *   3. Broadcast the fully-signed transaction.
  */
 export async function buildCreateChallengeTx(
   program: Program,
   creator: PublicKey,
-  args: CreateChallengeArgs
+  args: CreateChallengeArgs,
+  feePayer?: PublicKey   // optional: if provided, this wallet pays SOL fees
 ): Promise<Transaction> {
   const connection = getReadonlyConnection();
 
@@ -178,16 +184,18 @@ export async function buildCreateChallengeTx(
     false
   );
 
-  // Check if the creator's USDC ATA exists; if not, prepend an init instruction
+  // Check if the creator's USDC ATA exists; if not, prepend an init instruction.
+  // The ATA init payer is the feePayer (admin) so the user doesn't need SOL.
   const preTxInstructions: any[] = [];
   const ataInfo = await connection.getAccountInfo(creatorUsdcAta);
   if (!ataInfo) {
+    const ataPayer = feePayer ?? creator;
     preTxInstructions.push(
       createAssociatedTokenAccountInstruction(
-        creator,       // payer
+        ataPayer,       // payer (admin pays rent for ATA creation)
         creatorUsdcAta, // ata
-        creator,       // owner
-        USDC_MINT      // mint
+        creator,        // owner
+        USDC_MINT       // mint
       )
     );
   }
@@ -213,6 +221,11 @@ export async function buildCreateChallengeTx(
     })
     .preInstructions(preTxInstructions)
     .transaction();
+
+  // Override the fee payer so the admin wallet covers SOL costs
+  if (feePayer) {
+    tx.feePayer = feePayer;
+  }
 
   return tx;
 }

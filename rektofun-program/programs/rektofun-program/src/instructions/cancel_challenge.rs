@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_spl::{token::{self, CloseAccount, Token, TokenAccount, Transfer}, token_interface::TokenInterface};
+use anchor_spl::token::{self, CloseAccount, Mint, Token, TokenAccount, Transfer};
 
 use crate::{
     constants::*,
@@ -45,8 +45,8 @@ pub struct CancelChallenge<'info> {
     )]
     pub creator_usdc_account: Account<'info, TokenAccount>,
 
-    /// CHECK: USDC mint — validated by token account constraints above
-    pub usdc_mint: Interface<'info, TokenInterface>,
+    /// USDC mint — validated by token account constraints above
+    pub usdc_mint: Account<'info, Mint>,
 
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,

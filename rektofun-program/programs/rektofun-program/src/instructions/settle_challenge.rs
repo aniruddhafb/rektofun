@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_spl::{token::{self, Token, TokenAccount, Transfer}, token_interface::TokenInterface};
+use anchor_spl::token::{self, Mint, Token, TokenAccount, Transfer};
 
 use crate::{
     constants::*,
@@ -62,8 +62,8 @@ pub struct SettleChallenge<'info> {
     )]
     pub treasury_usdc_account: Account<'info, TokenAccount>,
 
-    /// CHECK: USDC mint — validated by token account constraints above
-    pub usdc_mint: Interface<'info, TokenInterface>,
+    /// USDC mint — validated by token account constraints above
+    pub usdc_mint: Account<'info, Mint>,
 
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
@@ -93,7 +93,6 @@ pub fn handler(ctx: Context<SettleChallenge>, creator_wins: bool) -> Result<()> 
     let winner_payout = total_pot.checked_sub(fee).ok_or(RektoError::Overflow)?;
 
     // PDA signer seeds for the vault (challenge PDA is the vault authority)
-    let challenge_key = ctx.accounts.challenge.key();
     let challenge_bump = challenge.bump;
     let challenge_id_bytes = challenge.challenge_id.to_le_bytes();
     let creator_key = challenge.creator;

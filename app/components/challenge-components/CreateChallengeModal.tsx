@@ -5,8 +5,10 @@ import { DatePickerModal } from "./DatePickerModal";
 import { DurationPickerModal } from "./DurationPickerModal";
 import { useUserStore } from "@/app/store/useUserStore";
 import { useBodyScrollLock } from "@/app/lib/useBodyScrollLock";
-import { useAppKit, useAppKitAccount } from "@reown/appkit/react";
+import { useAppKit, useAppKitAccount, useAppKitProvider } from "@reown/appkit/react";
 import { getParentCategories, getCategoriesByParent, Category } from "@/app/lib/category-service/category";
+import { Transaction } from "@solana/web3.js";
+import { getReadonlyConnection } from "@/app/lib/rektofun-program";
 
 interface CreateChallengeModalProps {
     isOpen: boolean;
@@ -42,6 +44,11 @@ export function CreateChallengeModal({
     const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
     const [isDurationPickerOpen, setIsDurationPickerOpen] = useState(false);
 
+    // Transaction state
+    const [txStatus, setTxStatus] = useState<TxStatus>("idle");
+    const [txSignature, setTxSignature] = useState<string | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
     // Category state
     const [parentCategories, setParentCategories] = useState<Category[]>([]);
     const [childCategories, setChildCategories] = useState<Category[]>([]);
@@ -53,6 +60,7 @@ export function CreateChallengeModal({
     const { user } = useUserStore();
     const { open } = useAppKit();
     const { address, isConnected } = useAppKitAccount();
+    const { walletProvider } = useAppKitProvider("solana");
 
     const dropdownRefs = {
         direction: useRef<HTMLDivElement>(null),
@@ -143,7 +151,25 @@ export function CreateChallengeModal({
 
     const handleModalClose = () => {
         onClose();
-    }
+    };
+
+    const getButtonLabel = () => {
+        if (txStatus === "success") return "Created!";
+        if (isSubmitting) return "Creating...";
+        return "Create Challenge";
+    };
+
+    const getButtonStyle = () => {
+        const base =
+            "rekto-button cursor-pointer w-full py-3 sm:py-4 font-black text-base sm:text-lg transition-colors shadow-[2px_2px_0_#111] ";
+        if (txStatus === "success") {
+            return base + "bg-green-600 hover:bg-green-700 text-white";
+        }
+        if (isSubmitting) {
+            return base + "bg-gray-500 text-white cursor-not-allowed";
+        }
+        return base + "bg-gray-900 hover:bg-gray-700 text-white";
+    };
 
     if (!isOpen) return null;
 
@@ -164,9 +190,113 @@ export function CreateChallengeModal({
         return result.trim();
     };
 
+    const validateDetails = () => {
+        let isValid = true;
+        if (betAmount < 5) {
+            setBetAmountError("Min bet should be $5");
+            isValid = false;
+        }
+        if (!selectedParentCategory || !selectedChildCategory) {
+            setCategoryError("Please select a category and subcategory.");
+            isValid = false;
+        }
+        if (!sportsResolutionConsent) {
+            setSportsResolutionConsentError("You must agree to the resolution terms.");
+            isValid = false;
+        }
+        return isValid;
+    };
+
     const handleCreateChallenge = async () => {
-        console.log();
-    }
+        if (!validateDetails()) return;
+
+        if (!address || !isConnected) {
+            open();
+            return;
+        }
+
+        if (!walletProvider) {
+            setTxStatus("error");
+            return;
+        }
+
+        setIsSubmitting(true);
+        setTxStatus("building");
+        setTxSignature(null);
+
+        try {
+            const nowSec = Math.floor(Date.now() / 1000);
+            const expiresAt = nowSec + duration.hours * 3600 + duration.minutes * 60;
+            const resolvesAt = Math.max(
+                Math.floor(selectedDate.getTime() / 1000),
+                expiresAt
+            );
+
+            const targetPriceUsdCents = Math.floor(Number(predictionPrice) * 100);
+            const asset = (selectedChildCategory?.category ?? "").trim().slice(0, 10);
+
+            // Step 1: Ask the server to build the transaction.
+            //   - creator  = user's wallet (USDC debited from their ATA)
+            //   - feePayer = admin wallet  (admin pays all SOL fees)
+            // The server returns a base64-encoded, admin-partially-signed transaction.
+            setTxStatus("building");
+            const response = await fetch("/api/challenges/create", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    userWallet: address,
+                    asset,
+                    betAmountUsdc: betAmount,
+                    targetPriceUsdCents,
+                    directionAbove: predictionDirection === "Above",
+                    expiresAt,
+                    resolvesAt,
+                }),
+            });
+
+            const data = await response.json();
+            console.log("the data is ", data);
+            if (!response.ok) {
+                throw new Error(data.error || "Failed to create challenge");
+            }
+
+            // Step 2: Deserialize the partially-signed transaction.
+            const txBuffer = Buffer.from(data.serializedTx, "base64");
+            const tx = Transaction.from(txBuffer);
+
+            // Step 3: Have the user's wallet sign the transaction.
+            // The user signs as the creator (authorises the USDC transfer from their ATA).
+            // Admin's fee-payer signature is already present.
+            setTxStatus("signing");
+            const signedTx = await (walletProvider as any).signTransaction(tx);
+
+            // Step 4: Broadcast the fully-signed transaction.
+            setTxStatus("confirming");
+            const connection = getReadonlyConnection();
+            const signature = await connection.sendRawTransaction(
+                signedTx.serialize(),
+                { skipPreflight: false, preflightCommitment: "confirmed" }
+            );
+
+            await connection.confirmTransaction(
+                {
+                    signature,
+                    blockhash: data.blockhash,
+                    lastValidBlockHeight: data.lastValidBlockHeight,
+                },
+                "confirmed"
+            );
+
+            setTxStatus("success");
+            setTxSignature(signature);
+            onCreated();
+        } catch (error: any) {
+            console.error("Error creating challenge:", error);
+            setTxStatus("error");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     const stepOrder: CreateChallengeStep[] = ["mode", "category", "details"];
     const currentStepIndex = stepOrder.indexOf(currentStep);
@@ -549,14 +679,34 @@ export function CreateChallengeModal({
                         </div>
                     )} */}
 
-                    {isDetailsStep && (
+                    {isDetailsStep && txStatus !== "idle" && txStatus !== "success" && (
                         <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-sm text-blue-700 flex items-center gap-2">
-                            <svg className="animate-spin w-4 h-4 text-blue-500 flex-shrink-0" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                            </svg>
+                            {isSubmitting && (
+                                <svg className="animate-spin w-4 h-4 text-blue-500 flex-shrink-0" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                                </svg>
+                            )}
                             <span>
+                                {txStatus === "building" && "Preparing challenge transaction..."}
+                                {txStatus === "signing" && "Waiting for wallet signature..."}
+                                {txStatus === "confirming" && "Confirming on-chain..."}
+                                {txStatus === "error" && "Something went wrong. Please try again."}
                             </span>
+                        </div>
+                    )}
+
+                    {isDetailsStep && txStatus === "success" && txSignature && (
+                        <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-green-700">
+                            <p className="font-semibold">Challenge created on-chain!</p>
+                            <a
+                                href={`https://explorer.solana.com/tx/${txSignature}?cluster=devnet`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-green-600 underline break-all text-xs mt-1 block"
+                            >
+                                View on Solana Explorer ↗
+                            </a>
                         </div>
                     )}
 
@@ -580,14 +730,14 @@ export function CreateChallengeModal({
                                 Continue
                             </button>
                         ) : (
-                            <></>
-                            // <button
-                            //     onClick={handleCreateChallenge}
-                            //     disabled={isLoading || txStatus === "success" || (!validation.isValid || !isSelectionComplete)}
-                            //     className={getButtonStyle()}
-                            // >
-                            //     {getButtonLabel()}
-                            // </button>
+                            <button
+                                type="button"
+                                onClick={handleCreateChallenge}
+                                disabled={isSubmitting || txStatus === "success" || !selectedParentCategory || !selectedChildCategory}
+                                className={getButtonStyle()}
+                            >
+                                {getButtonLabel()}
+                            </button>
                         )}
                     </div>
                 </div>

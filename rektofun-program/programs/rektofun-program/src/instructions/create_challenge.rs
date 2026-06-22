@@ -1,6 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Token, TokenAccount, Transfer};
-use anchor_spl::token_interface::{TokenInterface, Mint};
+use anchor_spl::token::{self, Mint, Token, TokenAccount, Transfer};
 use crate::{
     constants::*,
     error::RektoError,
@@ -74,8 +73,7 @@ pub struct CreateChallenge<'info> {
     pub creator_usdc_account: Account<'info, TokenAccount>,
 
     /// USDC mint — must match the devnet USDC address
-    /// CHECK: validated by token account constraints above
-    pub usdc_mint: Interface<'info, TokenInterface>,
+    pub usdc_mint: Account<'info, Mint>,
 
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,

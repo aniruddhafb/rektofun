@@ -2,11 +2,59 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useNavbar } from "@/app/hooks/useNavbar";
+import {
+    NavbarAuthSection,
+    CreateProfileModal,
+} from "@/app/components/navbar-components";
+import { DepositModal } from "@/app/components/DepositModal";
 
 export default function Navbar() {
+    const {
+        // UI state
+        isDropdownOpen,
+        setIsDropdownOpen,
+        isDepositModalOpen,
+        setIsDepositModalOpen,
+        fundsModalMode,
+        setFundsModalMode,
+        isProfileModalOpen,
+        setIsProfileModalOpen,
+        isMobileViewport,
+
+        // Profile form state
+        editUsername,
+        setEditUsername,
+        editBio,
+        setEditBio,
+        editProfileIndex,
+        editInviteCode,
+        setEditInviteCode,
+        profileFormError,
+
+        // User data
+        userProfileData,
+        displayAddress,
+        displayUsername,
+
+        // Connection state
+        address,
+        isConnected,
+
+        // Handlers
+        handleProfileSubmit,
+        generateRandomUsername,
+        randomizeProfile,
+        handleConnect,
+        handleLogout,
+        profileHref,
+    } = useNavbar();
+
+    const usdcBalance = null; // fetched inside DepositModal / NavbarAuthSection independently
+
     return (
         <>
-            {/* Simple Header - Logo, How it works, Social Icons */}
+            {/* Simple Header - Logo, How it works, Social Icons, User Auth */}
             <nav className="fixed top-0 left-0 right-0 z-[40] bg-[#f3e1d7]/95 shadow-[0_2px_0_#111] backdrop-blur-md">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-16">
@@ -22,7 +70,7 @@ export default function Navbar() {
                             />
                         </Link>
 
-                        {/* Right side - How it works + Social Icons */}
+                        {/* Right side */}
                         <div className="flex items-center gap-4 sm:gap-6">
                             {/* How it works link - Desktop: text, Mobile: question mark icon */}
                             <a
@@ -67,6 +115,32 @@ export default function Navbar() {
                                     </svg>
                                 </a>
                             </div>
+
+                            {/* User Auth Section */}
+                            <NavbarAuthSection
+                                authenticated={isConnected && !!address}
+                                displayAddress={displayAddress || ""}
+                                displayUsername={displayUsername}
+                                displayProfileImage={userProfileData?.profileImage || null}
+                                usdcBalance={usdcBalance}
+                                isDropdownOpen={isDropdownOpen}
+                                onAuth={handleConnect}
+                                onCloseDropdown={() => setIsDropdownOpen(false)}
+                                onLogout={handleLogout}
+                                onMouseEnterDropdown={() => setIsDropdownOpen(true)}
+                                onMouseLeaveDropdown={() => setIsDropdownOpen(false)}
+                                onToggleDropdown={() => setIsDropdownOpen((prev) => !prev)}
+                                onOpenDeposit={() => {
+                                    setFundsModalMode("deposit");
+                                    setIsDepositModalOpen(true);
+                                }}
+                                onOpenWithdraw={() => {
+                                    setFundsModalMode("withdraw");
+                                    setIsDepositModalOpen(true);
+                                }}
+                                profileHref={profileHref}
+                                isMobileViewport={isMobileViewport}
+                            />
                         </div>
                     </div>
                 </div>
@@ -74,6 +148,29 @@ export default function Navbar() {
 
             {/* Spacer for fixed header */}
             <div className="h-16" />
+
+            {/* Deposit / Withdraw Modal */}
+            <DepositModal
+                isOpen={isDepositModalOpen}
+                onClose={() => setIsDepositModalOpen(false)}
+                initialMode={fundsModalMode}
+            />
+
+            {/* Create / Edit Profile Modal */}
+            <CreateProfileModal
+                isOpen={isProfileModalOpen}
+                editProfileIndex={editProfileIndex}
+                editUsername={editUsername}
+                editBio={editBio}
+                editInviteCode={editInviteCode}
+                profileFormError={profileFormError}
+                onRandomizeProfile={randomizeProfile}
+                onRandomizeUsername={generateRandomUsername}
+                onEditUsernameChange={setEditUsername}
+                onEditBioChange={setEditBio}
+                onEditInviteCodeChange={setEditInviteCode}
+                onSubmit={handleProfileSubmit}
+            />
         </>
     );
 }
