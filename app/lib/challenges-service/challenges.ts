@@ -52,7 +52,7 @@ export interface GetChallengesParams {
   offset?: number;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export async function createChallenge(params: CreateChallengeParams): Promise<Challenge> {
   const response = await fetch(`${API_BASE_URL}/challenges`, {
@@ -63,6 +63,8 @@ export async function createChallenge(params: CreateChallengeParams): Promise<Ch
     },
     body: JSON.stringify(params),
   });
+
+  console.log("response", response);
 
   if (!response.ok) {
     throw new Error(`Failed to create challenge: ${response.statusText}`);

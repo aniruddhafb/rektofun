@@ -87,3 +87,22 @@ export async function getUserById(id: number): Promise<User> {
 
   return response.json();
 }
+
+export async function getUserByPubkey(pubkey: string): Promise<User> {
+  const response = await fetch(`${API_BASE_URL}/users/by-pubkey/${pubkey}`, {
+    method: 'GET',
+    headers: {
+      'accept': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    if (response.status === 404) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || `User with pubkey ${pubkey} not found`);
+    }
+    throw new Error(`Failed to fetch user by pubkey: ${response.statusText}`);
+  }
+
+  return response.json();
+}

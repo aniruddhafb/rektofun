@@ -7,6 +7,7 @@ import { useUserStore } from "@/app/store/useUserStore";
 import { useBodyScrollLock } from "@/app/lib/useBodyScrollLock";
 import { useAppKit, useAppKitAccount, useAppKitProvider } from "@reown/appkit/react";
 import { getParentCategories, getCategoriesByParent, Category } from "@/app/lib/category-service/category";
+import { createChallenge } from "@/app/lib/challenges-service/challenges";
 import { Transaction } from "@solana/web3.js";
 import { getReadonlyConnection } from "@/app/lib/rektofun-program";
 
@@ -224,42 +225,64 @@ export function CreateChallengeModal({
             const asset = (selectedChildCategory?.category ?? "").trim().slice(0, 10);
 
             // Build the transaction server-side (admin signs as fee payer) and get it back partially signed
-            const response = await fetch("/api/challenges/create", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    userWallet: address,
-                    asset,
-                    betAmountUsdc: betAmount,
-                    targetPriceUsdCents,
-                    directionAbove: predictionDirection === "Above",
-                    expiresAt,
-                    resolvesAt,
-                }),
+            // const response = await fetch("/api/challenges/create", {
+            //     method: "POST",
+            //     headers: { "Content-Type": "application/json" },
+            //     body: JSON.stringify({
+            //         userWallet: address,
+            //         asset,
+            //         betAmountUsdc: betAmount,
+            //         targetPriceUsdCents,
+            //         directionAbove: predictionDirection === "Above",
+            //         expiresAt,
+            //         resolvesAt,
+            //     }),
+            // });
+
+            // const data = await response.json();
+            // if (!response.ok) throw new Error(data.error || "Failed to create challenge");
+
+            // // User signs the partially-signed transaction (authorises USDC transfer from their ATA)
+            // setTxStatus("signing");
+            // const tx = Transaction.from(Buffer.from(data.serializedTx, "base64"));
+            // const signedTx = await (walletProvider as any).signTransaction(tx);
+
+            // // Broadcast and confirm
+            // setTxStatus("confirming");
+            // const connection = getReadonlyConnection();
+            // const signature = await connection.sendRawTransaction(signedTx.serialize(), {
+            //     skipPreflight: false,
+            //     preflightCommitment: "confirmed",
+            // });
+            // await connection.confirmTransaction(
+            //     { signature, blockhash: data.blockhash, lastValidBlockHeight: data.lastValidBlockHeight },
+            //     "confirmed"
+            // );
+
+            // Persist the challenge to the backend database
+            await createChallenge({
+                statement: `${selectedChildCategory?.category ?? asset} will be ${predictionDirection} $${predictionPrice}`,
+                ticker: asset,
+                trading_pair: `${asset}`,
+                target: Number(predictionPrice),
+                initial_bet: betAmount,
+                pool_size: betAmount,
+                resolution_source: "PRICE_FEED",
+                metadata: {},
+                creator: user?.id ?? 0,
+                resolution_method: "PRICE_FEED",
+                participants: 1,
+                status: "OPEN",
+                mode: challengeMode === "pvp" ? "PVP" : "MULTI",
+                result: "TEAM_A",
+                direction: predictionDirection === "Above" ? "UP" : "DOWN",
+                expiry: new Date(expiresAt * 1000).toISOString().split("T")[0],
+                resolution_date: new Date(resolvesAt * 1000).toISOString().split("T")[0],
+                final_price: 0,
             });
-
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.error || "Failed to create challenge");
-
-            // User signs the partially-signed transaction (authorises USDC transfer from their ATA)
-            setTxStatus("signing");
-            const tx = Transaction.from(Buffer.from(data.serializedTx, "base64"));
-            const signedTx = await (walletProvider as any).signTransaction(tx);
-
-            // Broadcast and confirm
-            setTxStatus("confirming");
-            const connection = getReadonlyConnection();
-            const signature = await connection.sendRawTransaction(signedTx.serialize(), {
-                skipPreflight: false,
-                preflightCommitment: "confirmed",
-            });
-            await connection.confirmTransaction(
-                { signature, blockhash: data.blockhash, lastValidBlockHeight: data.lastValidBlockHeight },
-                "confirmed"
-            );
 
             setTxStatus("success");
-            setTxSignature(signature);
+            // setTxSignature(signature);
             onCreated();
         } catch (error: any) {
             console.error("Error creating challenge:", error);
