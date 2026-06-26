@@ -31,7 +31,7 @@ export function CreateChallengeModal({
     const [challengeMode, setChallengeMode] = useState<"pvp" | "multi">("pvp");
 
     // Challenge details
-    const [betAmount, setBetAmount] = useState(5);
+    const [betAmount, setBetAmount] = useState(1);
     const [betAmountError, setBetAmountError] = useState<string | null>(null);
     const [predictionDirection, setPredictionDirection] = useState("Above");
     const [predictionPrice, setPredictionPrice] = useState("66500");
@@ -193,10 +193,10 @@ export function CreateChallengeModal({
 
     const validateDetails = () => {
         let isValid = true;
-        if (betAmount < 5) {
-            setBetAmountError("Min bet should be $5");
-            isValid = false;
-        }
+        // if (betAmount < 5) {
+        //     setBetAmountError("Min bet should be $5");
+        //     isValid = false;
+        // }
         if (!selectedParentCategory || !selectedChildCategory) {
             setCategoryError("Please select a category and subcategory.");
             isValid = false;
@@ -271,7 +271,13 @@ export function CreateChallengeModal({
                 initial_bet: betAmount,
                 pool_size: betAmount,
                 resolution_source: "PRICE_FEED",
-                metadata: {},
+                metadata: {
+                    onchain: {
+                        challenge_pda: data.challengePDA,
+                        creator_wallet: data.creator,
+                        on_chain_challenge_id: data.challengeId,
+                    },
+                },
                 creator: user?.id ?? 0,
                 resolution_method: "PRICE_FEED",
                 participants: 1,
@@ -505,9 +511,9 @@ export function CreateChallengeModal({
                         <div className="flex items-center gap-2">
                             <button
                                 onClick={() => {
-                                    const newVal = Math.max(5, betAmount - 1);
+                                    const newVal = Math.max(1, betAmount - 1);
                                     setBetAmount(newVal);
-                                    setBetAmountError(newVal < 5 ? "Min bet should be $5" : null);
+                                    setBetAmountError(newVal < 1 ? "Min bet should be $1" : null);
                                 }}
                                 className="w-10 h-10 flex items-center justify-center bg-[#faf0eb] border border-[#e8d5c8] rounded-xl hover:bg-[#f3e1d7] transition-colors text-gray-700 font-bold text-lg"
                             >
@@ -521,10 +527,10 @@ export function CreateChallengeModal({
                                     onChange={(e) => {
                                         const val = Number(e.target.value);
                                         setBetAmount(val);
-                                        setBetAmountError(val < 5 ? "Min bet should be $5" : null);
+                                        setBetAmountError(val < 1 ? "Min bet should be $1" : null);
                                     }}
                                     step="1"
-                                    min="5"
+                                    min="1"
                                     className="w-full pl-8 pr-4 py-3 bg-[#faf0eb] border border-[#e8d5c8] rounded-xl text-lg font-semibold text-gray-900 focus:outline-none focus:border-[#d4b8a8]"
                                 />
                             </div>

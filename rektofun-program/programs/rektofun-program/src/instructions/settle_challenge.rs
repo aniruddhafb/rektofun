@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Mint, Token, TokenAccount, Transfer};
+use anchor_spl::token_interface::{self, Mint, TokenAccount, TokenInterface, TransferChecked};
 
 use crate::{
     constants::*,
@@ -45,42 +45,37 @@ pub struct SettleChallenge<'info> {
         bump = challenge.vault_bump,
         token::mint = usdc_mint,
         token::authority = challenge,
+        token::token_program = token_program,
     )]
-    pub vault: Account<'info, TokenAccount>,
+    pub vault: InterfaceAccount<'info, TokenAccount>,
 
     /// PVP only: winner's USDC token account (creator or challenger depending on outcome).
     /// For TEAM challenges pass any valid USDC token account — it won't be written to.
     #[account(
         mut,
         token::mint = usdc_mint,
+        token::token_program = token_program,
     )]
-    pub winner_usdc_account: Account<'info, TokenAccount>,
+    pub winner_usdc_account: InterfaceAccount<'info, TokenAccount>,
 
     /// Platform treasury USDC token account (receives the fee for both PVP and TEAM)
     #[account(
         mut,
         token::mint = usdc_mint,
+        token::token_program = token_program,
     )]
-    pub treasury_usdc_account: Account<'info, TokenAccount>,
+    pub treasury_usdc_account: InterfaceAccount<'info, TokenAccount>,
 
     /// USDC mint — validated by token account constraints above
-    pub usdc_mint: Account<'info, Mint>,
+    pub usdc_mint: InterfaceAccount<'info, Mint>,
 
-    pub token_program: Program<'info, Token>,
+    pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
 }
 
 pub(crate) fn handler(ctx: Context<SettleChallenge>, creator_wins: bool) -> Result<()> {
-    let clock = Clock::get()?;
-    let now = clock.unix_timestamp;
-
-    // Must be past the resolve time
-    require!(
-        now >= ctx.accounts.challenge.resolves_at,
-        RektoError::NotExpired
-    );
-
     let challenge = &ctx.accounts.challenge;
+    let decimals = ctx.accounts.usdc_mint.decimals;
 
     // PDA signer seeds for the challenge PDA (vault authority)
     let challenge_bump = challenge.bump;
@@ -124,31 +119,35 @@ pub(crate) fn handler(ctx: Context<SettleChallenge>, creator_wins: bool) -> Resu
             );
 
             // Pay winner USDC
-            token::transfer(
+            token_interface::transfer_checked(
                 CpiContext::new_with_signer(
                     ctx.accounts.token_program.key(),
-                    Transfer {
+                    TransferChecked {
                         from: ctx.accounts.vault.to_account_info(),
+                        mint: ctx.accounts.usdc_mint.to_account_info(),
                         to: ctx.accounts.winner_usdc_account.to_account_info(),
                         authority: ctx.accounts.challenge.to_account_info(),
                     },
                     signer_seeds,
                 ),
                 winner_payout,
+                decimals,
             )?;
 
             // Pay platform fee to treasury
-            token::transfer(
+            token_interface::transfer_checked(
                 CpiContext::new_with_signer(
                     ctx.accounts.token_program.key(),
-                    Transfer {
+                    TransferChecked {
                         from: ctx.accounts.vault.to_account_info(),
+                        mint: ctx.accounts.usdc_mint.to_account_info(),
                         to: ctx.accounts.treasury_usdc_account.to_account_info(),
                         authority: ctx.accounts.challenge.to_account_info(),
                     },
                     signer_seeds,
                 ),
                 fee,
+                decimals,
             )?;
 
             let challenge = &mut ctx.accounts.challenge;
@@ -205,17 +204,19 @@ pub(crate) fn handler(ctx: Context<SettleChallenge>, creator_wins: bool) -> Resu
                 .ok_or(RektoError::Overflow)?;
 
             // Pay platform fee to treasury now
-            token::transfer(
+            token_interface::transfer_checked(
                 CpiContext::new_with_signer(
                     ctx.accounts.token_program.key(),
-                    Transfer {
+                    TransferChecked {
                         from: ctx.accounts.vault.to_account_info(),
+                        mint: ctx.accounts.usdc_mint.to_account_info(),
                         to: ctx.accounts.treasury_usdc_account.to_account_info(),
                         authority: ctx.accounts.challenge.to_account_info(),
                     },
                     signer_seeds,
                 ),
                 fee,
+                decimals,
             )?;
 
             // Record the winning side — individual winners claim via claim_winnings

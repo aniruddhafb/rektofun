@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Mint, Token, TokenAccount, Transfer};
+use anchor_spl::token_interface::{self, Mint, TokenAccount, TokenInterface, TransferChecked};
 
 use crate::{
     constants::*,
@@ -40,16 +40,18 @@ pub struct ClaimWinnings<'info> {
         bump = challenge.vault_bump,
         token::mint = usdc_mint,
         token::authority = challenge,
+        token::token_program = token_program,
     )]
-    pub vault: Account<'info, TokenAccount>,
+    pub vault: InterfaceAccount<'info, TokenAccount>,
 
     /// Participant's USDC token account (payout destination)
     #[account(
         mut,
         token::mint = usdc_mint,
         token::authority = participant,
+        token::token_program = token_program,
     )]
-    pub participant_usdc_account: Account<'info, TokenAccount>,
+    pub participant_usdc_account: InterfaceAccount<'info, TokenAccount>,
 
     /// Claim record — created here; its existence prevents double-claiming.
     /// Seeds: [b"claim", challenge.key(), participant.key()]
@@ -63,15 +65,16 @@ pub struct ClaimWinnings<'info> {
     pub claim_record: Account<'info, ClaimRecord>,
 
     /// USDC mint
-    pub usdc_mint: Account<'info, Mint>,
+    pub usdc_mint: InterfaceAccount<'info, Mint>,
 
-    pub token_program: Program<'info, Token>,
+    pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
 }
 
 pub(crate) fn handler(ctx: Context<ClaimWinnings>) -> Result<()> {
     let challenge = &ctx.accounts.challenge;
     let participant_key = ctx.accounts.participant.key();
+    let decimals = ctx.accounts.usdc_mint.decimals;
 
     // ── 1. Verify the participant is on the winning side ─────────────────────
     let on_winning_side = match challenge.winning_side {
@@ -134,17 +137,19 @@ pub(crate) fn handler(ctx: Context<ClaimWinnings>) -> Result<()> {
     let signer_seeds = &[vault_signer_seeds];
 
     // ── 4. Transfer payout to participant ────────────────────────────────────
-    token::transfer(
+    token_interface::transfer_checked(
         CpiContext::new_with_signer(
             ctx.accounts.token_program.key(),
-            Transfer {
+            TransferChecked {
                 from: ctx.accounts.vault.to_account_info(),
+                mint: ctx.accounts.usdc_mint.to_account_info(),
                 to: ctx.accounts.participant_usdc_account.to_account_info(),
                 authority: ctx.accounts.challenge.to_account_info(),
             },
             signer_seeds,
         ),
         payout,
+        decimals,
     )?;
 
     // ── 5. Record the claim ───────────────────────────────────────────────────

@@ -1,8 +1,8 @@
 /// Platform fee in basis points (e.g. 200 = 2%)
 pub const PLATFORM_FEE_BPS: u64 = 200;
 
-/// Minimum bet amount: 5 USDC (5_000_000 micro-USDC, 6 decimals)
-pub const MIN_BET_AMOUNT: u64 = 5_000_000;
+/// Minimum bet amount: 1 USDC (1_000_000 micro-USDC, 6 decimals)
+pub const MIN_BET_AMOUNT: u64 = 1_000_000;
 
 /// Maximum challenge duration: 7 days in seconds
 pub const MAX_DURATION_SECS: i64 = 7 * 24 * 60 * 60;

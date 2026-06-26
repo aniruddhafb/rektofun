@@ -115,3 +115,21 @@ export async function getChallengeById(id: number): Promise<Challenge> {
 
   return response.json();
 }
+
+export async function updateChallengeMetadata(
+  challengeId: number,
+  metadata: Record<string, unknown>
+): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/challenges/${challengeId}`, {
+    method: 'PATCH',
+    headers: {
+      'accept': 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ metadata }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to update challenge metadata: ${response.statusText}`);
+  }
+}

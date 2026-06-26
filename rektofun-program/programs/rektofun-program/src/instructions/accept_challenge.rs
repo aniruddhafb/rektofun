@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Mint, Token, TokenAccount, Transfer};
+use anchor_spl::token_interface::{self, Mint, TokenAccount, TokenInterface, TransferChecked};
 
 use crate::{
     constants::*,
@@ -47,21 +47,23 @@ pub struct AcceptChallenge<'info> {
         bump = challenge.vault_bump,
         token::mint = usdc_mint,
         token::authority = challenge,
+        token::token_program = token_program,
     )]
-    pub vault: Account<'info, TokenAccount>,
+    pub vault: InterfaceAccount<'info, TokenAccount>,
 
     /// Challenger's USDC token account (source of the matching bet)
     #[account(
         mut,
         token::mint = usdc_mint,
         token::authority = challenger,
+        token::token_program = token_program,
     )]
-    pub challenger_usdc_account: Account<'info, TokenAccount>,
+    pub challenger_usdc_account: InterfaceAccount<'info, TokenAccount>,
 
     /// USDC mint — validated by token account constraints above
-    pub usdc_mint: Account<'info, Mint>,
+    pub usdc_mint: InterfaceAccount<'info, Mint>,
 
-    pub token_program: Program<'info, Token>,
+    pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
 }
 
@@ -76,6 +78,7 @@ pub(crate) fn handler(ctx: Context<AcceptChallenge>, params: AcceptChallengePara
 
     let bet_amount = challenge.bet_amount;
     let challenger_key = ctx.accounts.challenger.key();
+    let decimals = ctx.accounts.usdc_mint.decimals;
 
     match challenge.challenge_type {
         // ── PVP ─────────────────────────────────────────────────────────────
@@ -87,16 +90,18 @@ pub(crate) fn handler(ctx: Context<AcceptChallenge>, params: AcceptChallengePara
             );
 
             // Transfer matching USDC bet from challenger to vault
-            token::transfer(
+            token_interface::transfer_checked(
                 CpiContext::new(
                     ctx.accounts.token_program.key(),
-                    Transfer {
+                    TransferChecked {
                         from: ctx.accounts.challenger_usdc_account.to_account_info(),
+                        mint: ctx.accounts.usdc_mint.to_account_info(),
                         to: ctx.accounts.vault.to_account_info(),
                         authority: ctx.accounts.challenger.to_account_info(),
                     },
                 ),
                 bet_amount,
+                decimals,
             )?;
 
             challenge.challenger = challenger_key;
@@ -155,16 +160,18 @@ pub(crate) fn handler(ctx: Context<AcceptChallenge>, params: AcceptChallengePara
             }
 
             // Transfer this participant's bet to the vault
-            token::transfer(
+            token_interface::transfer_checked(
                 CpiContext::new(
                     ctx.accounts.token_program.key(),
-                    Transfer {
+                    TransferChecked {
                         from: ctx.accounts.challenger_usdc_account.to_account_info(),
+                        mint: ctx.accounts.usdc_mint.to_account_info(),
                         to: ctx.accounts.vault.to_account_info(),
                         authority: ctx.accounts.challenger.to_account_info(),
                     },
                 ),
                 bet_amount,
+                decimals,
             )?;
 
             // TEAM challenges stay Open until the creator locks them (or expiry passes).

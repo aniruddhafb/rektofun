@@ -62,4 +62,13 @@ pub mod rektofun_program {
     pub fn claim_winnings(ctx: Context<ClaimWinnings>) -> Result<()> {
         instructions::claim_winnings::handler(ctx)
     }
+
+    /// TEAM mode only: a creator-side participant reclaims their bet after the creator
+    /// has cancelled a challenge where no opponents joined.
+    /// The creator's own refund is issued in `cancel_challenge`; this covers everyone
+    /// who joined the creator's side. Each participant can only call this once
+    /// (enforced by the ClaimRecord PDA).
+    pub fn claim_refund(ctx: Context<ClaimRefund>) -> Result<()> {
+        instructions::claim_refund::handler(ctx)
+    }
 }

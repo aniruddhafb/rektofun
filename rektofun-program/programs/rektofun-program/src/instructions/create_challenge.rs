@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Mint, Token, TokenAccount, Transfer};
+use anchor_spl::token_interface::{self, Mint, TokenAccount, TokenInterface, TransferChecked};
 use crate::{
     constants::*,
     error::RektoError,
@@ -67,23 +67,25 @@ pub struct CreateChallenge<'info> {
         payer = creator,
         token::mint = usdc_mint,
         token::authority = challenge,
+        token::token_program = token_program,
         seeds = [VAULT_SEED, challenge.key().as_ref()],
         bump,
     )]
-    pub vault: Account<'info, TokenAccount>,
+    pub vault: InterfaceAccount<'info, TokenAccount>,
 
     /// Creator's USDC token account (source of the bet)
     #[account(
         mut,
         token::mint = usdc_mint,
         token::authority = creator,
+        token::token_program = token_program,
     )]
-    pub creator_usdc_account: Account<'info, TokenAccount>,
+    pub creator_usdc_account: InterfaceAccount<'info, TokenAccount>,
 
     /// USDC mint — must match the devnet USDC address
-    pub usdc_mint: Account<'info, Mint>,
+    pub usdc_mint: InterfaceAccount<'info, Mint>,
 
-    pub token_program: Program<'info, Token>,
+    pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
 }
 
@@ -153,16 +155,19 @@ pub(crate) fn handler(ctx: Context<CreateChallenge>, params: CreateChallengePara
 
     // --- Transfer USDC bet from creator to vault ---
     // Creator always puts in their own bet_amount regardless of challenge type.
-    token::transfer(
+    let decimals = ctx.accounts.usdc_mint.decimals;
+    token_interface::transfer_checked(
         CpiContext::new(
             ctx.accounts.token_program.key(),
-            Transfer {
+            TransferChecked {
                 from: ctx.accounts.creator_usdc_account.to_account_info(),
+                mint: ctx.accounts.usdc_mint.to_account_info(),
                 to: ctx.accounts.vault.to_account_info(),
                 authority: ctx.accounts.creator.to_account_info(),
             },
         ),
         params.bet_amount,
+        decimals,
     )?;
 
     msg!(

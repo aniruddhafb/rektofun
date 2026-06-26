@@ -66,4 +66,13 @@ pub enum RektoError {
 
     #[msg("The winning side has not been determined (no participants on one side)")]
     NoWinningSide,
+
+    #[msg("Cannot cancel: one or more opponents have already joined this challenge")]
+    OpponentsJoined,
+
+    #[msg("Challenge has not been cancelled")]
+    NotCancelled,
+
+    #[msg("You are not eligible for a refund (you are not on the creator's team)")]
+    NotEligibleForRefund,
 }
