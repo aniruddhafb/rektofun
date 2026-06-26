@@ -10,7 +10,13 @@
     {
       "name": "accept_challenge",
       "docs": [
-        "Challenger accepts the challenge by matching the bet amount (REKT HIM)."
+        "PVP: Challenger accepts the challenge by matching the bet amount (REKT HIM).",
+        "TEAM: A participant joins either the creator's side or the opponent's side.",
+        "",
+        "`params.join_creator_side` is only meaningful for TEAM challenges:",
+        "- true  → join the creator's side",
+        "- false → join the opponent's side",
+        "For PVP challenges this field is ignored."
       ],
       "discriminator": [
         195,
@@ -95,7 +101,10 @@
           "writable": true
         },
         {
-          "name": "usdc_mint"
+          "name": "usdc_mint",
+          "docs": [
+            "USDC mint — validated by token account constraints above"
+          ]
         },
         {
           "name": "token_program",
@@ -106,7 +115,16 @@
           "address": "11111111111111111111111111111111"
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "params",
+          "type": {
+            "defined": {
+              "name": "AcceptChallengeParams"
+            }
+          }
+        }
+      ]
     },
     {
       "name": "cancel_challenge",
@@ -193,7 +211,149 @@
           "writable": true
         },
         {
-          "name": "usdc_mint"
+          "name": "usdc_mint",
+          "docs": [
+            "USDC mint — validated by token account constraints above"
+          ]
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "claim_winnings",
+      "docs": [
+        "TEAM mode only: a winner on the winning side claims their proportional",
+        "share of the pot after the challenge has been settled.",
+        "Each participant can only call this once (enforced by the ClaimRecord PDA)."
+      ],
+      "discriminator": [
+        161,
+        215,
+        24,
+        59,
+        14,
+        236,
+        242,
+        221
+      ],
+      "accounts": [
+        {
+          "name": "participant",
+          "docs": [
+            "The participant claiming their winnings"
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "creator"
+        },
+        {
+          "name": "challenge",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  104,
+                  97,
+                  108,
+                  108,
+                  101,
+                  110,
+                  103,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "creator"
+              },
+              {
+                "kind": "account",
+                "path": "challenge.challenge_id",
+                "account": "ChallengeAccount"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "docs": [
+            "USDC vault token account — owned by the challenge PDA"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "challenge"
+              }
+            ]
+          }
+        },
+        {
+          "name": "participant_usdc_account",
+          "docs": [
+            "Participant's USDC token account (payout destination)"
+          ],
+          "writable": true
+        },
+        {
+          "name": "claim_record",
+          "docs": [
+            "Claim record — created here; its existence prevents double-claiming.",
+            "Seeds: [b\"claim\", challenge.key(), participant.key()]"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  108,
+                  97,
+                  105,
+                  109
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "challenge"
+              },
+              {
+                "kind": "account",
+                "path": "participant"
+              }
+            ]
+          }
+        },
+        {
+          "name": "usdc_mint",
+          "docs": [
+            "USDC mint"
+          ]
         },
         {
           "name": "token_program",
@@ -209,7 +369,9 @@
     {
       "name": "create_challenge",
       "docs": [
-        "Creator posts a new challenge, locking their SOL bet into escrow."
+        "Creator posts a new challenge, locking their SOL bet into escrow.",
+        "Specify `challenge_type = ChallengeType::Pvp` for a 1-vs-1 challenge or",
+        "`ChallengeType::Team` for a multi-participant team challenge."
       ],
       "discriminator": [
         170,
@@ -300,7 +462,7 @@
           "name": "vault",
           "docs": [
             "USDC vault token account — an ATA owned by the challenge PDA.",
-            "Holds both bets in USDC."
+            "Holds all bets (creator's + all participants')."
           ],
           "writable": true,
           "pda": {
@@ -358,7 +520,11 @@
     {
       "name": "settle_challenge",
       "docs": [
-        "Admin/oracle settles the challenge after expiry, sending funds to winner."
+        "Admin/oracle settles the challenge after expiry.",
+        "",
+        "PVP: funds are sent directly to the winner's USDC account.",
+        "TEAM: the winning side is recorded on-chain; each winner must call",
+        "`claim_winnings` separately to pull their proportional share."
       ],
       "discriminator": [
         242,
@@ -384,7 +550,10 @@
           "name": "creator"
         },
         {
-          "name": "challenger"
+          "name": "challenger",
+          "docs": [
+            "For TEAM challenges pass any pubkey (e.g. creator again) — it won't be paid out here."
+          ]
         },
         {
           "name": "challenge",
@@ -446,19 +615,23 @@
         {
           "name": "winner_usdc_account",
           "docs": [
-            "Winner's USDC token account (creator or challenger depending on outcome)"
+            "PVP only: winner's USDC token account (creator or challenger depending on outcome).",
+            "For TEAM challenges pass any valid USDC token account — it won't be written to."
           ],
           "writable": true
         },
         {
           "name": "treasury_usdc_account",
           "docs": [
-            "Platform treasury USDC token account (receives the fee)"
+            "Platform treasury USDC token account (receives the fee for both PVP and TEAM)"
           ],
           "writable": true
         },
         {
-          "name": "usdc_mint"
+          "name": "usdc_mint",
+          "docs": [
+            "USDC mint — validated by token account constraints above"
+          ]
         },
         {
           "name": "token_program",
@@ -489,6 +662,19 @@
         172,
         60,
         12
+      ]
+    },
+    {
+      "name": "ClaimRecord",
+      "discriminator": [
+        57,
+        229,
+        0,
+        9,
+        65,
+        62,
+        96,
+        7
       ]
     },
     {
@@ -575,14 +761,74 @@
       "code": 6013,
       "name": "InvalidResolvesAt",
       "msg": "Resolve time must be after expiry time"
+    },
+    {
+      "code": 6014,
+      "name": "TeamFull",
+      "msg": "Team is full; max_team_size has been reached"
+    },
+    {
+      "code": 6015,
+      "name": "AlreadyJoined",
+      "msg": "You have already joined this challenge"
+    },
+    {
+      "code": 6016,
+      "name": "WrongChallengeType",
+      "msg": "This operation is not valid for the challenge type (PVP vs TEAM mismatch)"
+    },
+    {
+      "code": 6017,
+      "name": "AlreadyClaimed",
+      "msg": "Winnings have already been claimed for this challenge"
+    },
+    {
+      "code": 6018,
+      "name": "NotAWinner",
+      "msg": "You are not on the winning team"
+    },
+    {
+      "code": 6019,
+      "name": "NotSettled",
+      "msg": "Challenge has not been settled yet"
+    },
+    {
+      "code": 6020,
+      "name": "NoWinningSide",
+      "msg": "The winning side has not been determined (no participants on one side)"
     }
   ],
   "types": [
     {
+      "name": "AcceptChallengeParams",
+      "docs": [
+        "`side` is only meaningful for TEAM challenges:",
+        "- `true`  → join the **creator's** side",
+        "- `false` → join the **opponent's** side",
+        "",
+        "For PVP challenges `side` is ignored; the caller becomes the single challenger."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "join_creator_side",
+            "docs": [
+              "TEAM only: which side to join (true = creator's side, false = opponent's side).",
+              "Ignored for PVP."
+            ],
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
       "name": "ChallengeAccount",
       "docs": [
         "The main challenge account stored on-chain.",
-        "Seeds: [b\"challenge\", creator.key(), challenge_id.to_le_bytes()]"
+        "",
+        "PVP seeds:  [b\"challenge\", creator.key(), challenge_id.to_le_bytes()]",
+        "TEAM seeds: same — challenge_type differentiates behaviour at runtime."
       ],
       "type": {
         "kind": "struct",
@@ -597,9 +843,56 @@
           {
             "name": "challenger",
             "docs": [
-              "The wallet that accepted the challenge (zero if not yet accepted)"
+              "PVP only: the single wallet that accepted the challenge (zero if not yet accepted)"
             ],
             "type": "pubkey"
+          },
+          {
+            "name": "creator_team",
+            "docs": [
+              "TEAM only: participants who joined the creator's side (creator is implicitly included)"
+            ],
+            "type": {
+              "vec": "pubkey"
+            }
+          },
+          {
+            "name": "opponent_team",
+            "docs": [
+              "TEAM only: participants who joined the opponent's side"
+            ],
+            "type": {
+              "vec": "pubkey"
+            }
+          },
+          {
+            "name": "max_team_size",
+            "docs": [
+              "TEAM only: maximum participants per side (0 = no limit up to 50)"
+            ],
+            "type": "u8"
+          },
+          {
+            "name": "winning_side",
+            "docs": [
+              "TEAM only: which side won (set during settle_challenge)"
+            ],
+            "type": {
+              "defined": {
+                "name": "WinningSide"
+              }
+            }
+          },
+          {
+            "name": "challenge_type",
+            "docs": [
+              "Whether this is a PVP or TEAM challenge"
+            ],
+            "type": {
+              "defined": {
+                "name": "ChallengeType"
+              }
+            }
           },
           {
             "name": "challenge_id",
@@ -618,7 +911,7 @@
           {
             "name": "bet_amount",
             "docs": [
-              "Bet amount in lamports (both sides must match)"
+              "Bet amount in USDC micro-units per participant (both sides must match per person)"
             ],
             "type": "u64"
           },
@@ -643,7 +936,7 @@
           {
             "name": "expires_at",
             "docs": [
-              "Unix timestamp when the challenge expires (no more accepts after this)"
+              "Unix timestamp when the challenge expires (no more accepts/joins after this)"
             ],
             "type": "i64"
           },
@@ -706,6 +999,54 @@
       }
     },
     {
+      "name": "ChallengeType",
+      "docs": [
+        "Whether the challenge is 1-vs-1 or team-based"
+      ],
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Pvp"
+          },
+          {
+            "name": "Team"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ClaimRecord",
+      "docs": [
+        "Tracks whether a TEAM participant has already claimed their winnings.",
+        "Seeds: [b\"claim\", challenge.key(), participant.key()]",
+        "",
+        "Created (init) when the participant calls claim_winnings for the first time.",
+        "Its existence is the double-claim guard."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "challenge",
+            "type": "pubkey"
+          },
+          {
+            "name": "participant",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount_claimed",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
       "name": "CreateChallengeParams",
       "type": {
         "kind": "struct",
@@ -720,7 +1061,7 @@
           {
             "name": "bet_amount",
             "docs": [
-              "Bet amount in USDC micro-units (6 decimals, e.g. $5 = 5_000_000)"
+              "Bet amount in USDC micro-units per participant (6 decimals, e.g. $5 = 5_000_000)"
             ],
             "type": "u64"
           },
@@ -741,7 +1082,7 @@
           {
             "name": "expires_at",
             "docs": [
-              "Unix timestamp: last moment another user can accept this challenge"
+              "Unix timestamp: last moment another user can accept / join this challenge"
             ],
             "type": "i64"
           },
@@ -751,6 +1092,25 @@
               "Unix timestamp: when the price outcome is evaluated"
             ],
             "type": "i64"
+          },
+          {
+            "name": "challenge_type",
+            "docs": [
+              "PVP = single opponent; Team = any number of participants per side"
+            ],
+            "type": {
+              "defined": {
+                "name": "ChallengeType"
+              }
+            }
+          },
+          {
+            "name": "max_team_size",
+            "docs": [
+              "TEAM only: max participants per side (0 = no limit, capped at MAX_TEAM_SIZE = 50).",
+              "Ignored for PVP challenges."
+            ],
+            "type": "u8"
           }
         ]
       }
@@ -792,6 +1152,26 @@
           },
           {
             "name": "Below"
+          }
+        ]
+      }
+    },
+    {
+      "name": "WinningSide",
+      "docs": [
+        "Which side won a TEAM challenge (stored after settlement so claim_winnings can verify)"
+      ],
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "None"
+          },
+          {
+            "name": "CreatorTeam"
+          },
+          {
+            "name": "OpponentTeam"
           }
         ]
       }

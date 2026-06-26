@@ -86,24 +86,6 @@ export function HeroSection() {
             </div>
 
             <div className="pointer-events-none relative z-10 mx-auto w-full max-w-4xl px-2 text-center sm:px-6">
-                {/* <div className="absolute -top-12 right-[5%] md:right-[2%]">
-                    <div className="relative w-16 h-16 md:w-20 md:h-20">
-                        <svg viewBox="0 0 80 80" className="w-full h-full rotate-12">
-                            <polygon
-                                points="40,0 45,15 60,10 52,25 65,35 50,40 55,55 40,48 25,55 30,40 15,35 28,25 20,10 35,15"
-                                fill="#e85a2d"
-                            />
-                        </svg>
-                        <span className="absolute inset-0 mb-4 flex items-center justify-center text-white text-[10px] md:text-xs font-bold rotate-12">
-                            Beta
-                        </span>
-                    </div>
-                </div> */}
-
-                {/* <div className="mx-auto mb-5 inline-flex items-center gap-2 border border-black bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-black shadow-[3px_3px_0_#111] animate-pop-in">
-                    <span className="h-2 w-2 bg-[#e85a2d]" />
-                    PvP Prediction Arena
-                </div> */}
 
                 <div className="mb-10 flex flex-wrap items-center justify-center gap-3 text-[11px] font-black uppercase tracking-[0.14em] text-black">
                     <span className="border border-black bg-[#a8d85b] px-3 py-2 shadow-[2px_2px_0_#111] animate-float-gentle">
@@ -131,7 +113,7 @@ export function HeroSection() {
                     href="/challenges"
                     className="pointer-events-auto inline-flex max-w-full items-center justify-center border-2 border-black bg-black px-5 py-2.5 text-xs font-black uppercase tracking-[0.08em] text-white shadow-[4px_4px_0_#e85a2d] transition-all hover:-translate-y-1 hover:shadow-[6px_6px_0_#e85a2d] active:translate-y-0 active:shadow-[2px_2px_0_#e85a2d] min-[380px]:px-7 min-[380px]:text-sm sm:px-8 sm:py-3 cursor-pointer"
                 >
-                    View Challenges {"\u279D"}
+                    Start Battling {"\u279D"}
                 </Link>
 
             </div>

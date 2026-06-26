@@ -7,6 +7,7 @@ import {
   ChallengeListItem,
   getChallengeById,
   joinChallenge,
+  updateChallengeMetadata,
 } from "@/app/lib/challenges-service/challenges";
 import { useUserStore } from "@/app/store/useUserStore";
 import {
@@ -425,6 +426,12 @@ export function useChallengeCard(challenge: ChallengeListItem) {
           side: challenge.mode === "pool" ? joinSide : "opponent",
           bet_amount: parsedBetAmount,
         });
+
+        // Store challenger wallet so the backend can include it in on-chain settlement
+        const existingOnchain = (challengeDetails.metadata as Record<string, unknown> | undefined)?.onchain as Record<string, unknown> ?? {};
+        await updateChallengeMetadata(challenge.id, {
+          onchain: { ...existingOnchain, challenger_wallet: address },
+        }).catch((err) => console.error("Failed to persist challenger_wallet:", err));
 
         setIsBetFormOpen(false);
         if (onRekt) onRekt(challenge);
